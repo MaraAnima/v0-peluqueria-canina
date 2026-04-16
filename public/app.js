@@ -40,7 +40,7 @@ const TIME_SLOTS = ['12:00', '14:00', '16:00', '18:00'];
 const SLOT_DURATION_HOURS = 2; // Duracion de cada cita en horas
 
 // URL del AppScript - REEMPLAZAR CON TU URL
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzrWn3tLUZql0AKYnDgta_iKVQodsEOYGQArKIIQ0ECxle9AuvWd6Pnc5BaUjD6c5aiMg/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby9I_ZF8pqkYX6WW4NOB-kpx-Tz5AS74Wfv9ZtrzrnuocyogefPkX7RM1fWv-gJqubhNA/exec';
 
 // ==================== STATE ====================
 let currentStep = 1;
@@ -215,7 +215,7 @@ function renderContactStep(container) {
 function saveContactAndNext() {
   const name = document.getElementById('client-name').value.trim();
   const phone = document.getElementById('client-phone').value.trim();
-  
+
   // Validacion del nombre
   if (!name) {
     alert('El nombre es obligatorio');
@@ -229,7 +229,7 @@ function saveContactAndNext() {
     alert('El nombre no puede contener numeros');
     return;
   }
-  
+
   // Validacion del telefono
   if (!phone) {
     alert('El telefono es obligatorio');
@@ -390,7 +390,7 @@ let isLoadingSlots = false;
 function renderDateTimeStep(container) {
   // Asegurarse de que estamos en el paso correcto
   if (currentStep !== 5) {
-    
+
     return;
   }
   const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -468,17 +468,17 @@ function renderDateTimeStep(container) {
     ${bookingData.date ? `
       <h3 style="margin: 20px 0 12px; font-family: 'Fredoka', sans-serif; font-size: 1.1rem;">Horarios disponibles</h3>
       <div class="time-slots">
-        ${isLoadingSlots 
-          ? '<p style="text-align: center; color: var(--text-muted); grid-column: 1/-1;">Cargando horarios...</p>'
-          : (availableTimeSlots.length > 0 
-              ? availableTimeSlots.map(time => `
+        ${isLoadingSlots
+        ? '<p style="text-align: center; color: var(--text-muted); grid-column: 1/-1;">Cargando horarios...</p>'
+        : (availableTimeSlots.length > 0
+          ? availableTimeSlots.map(time => `
                   <button class="time-slot ${bookingData.time === time ? 'selected' : ''}" onclick="selectTime('${time}')">
                     ${time}
                   </button>
-                `).join('') 
-              : '<p style="text-align: center; color: var(--text-muted); grid-column: 1/-1;">No hay horarios disponibles para esta fecha</p>'
-            )
-        }
+                `).join('')
+          : '<p style="text-align: center; color: var(--text-muted); grid-column: 1/-1;">No hay horarios disponibles para esta fecha</p>'
+        )
+      }
       </div>
     ` : ''}
     
@@ -500,10 +500,10 @@ let availableTimeSlots = [...TIME_SLOTS];
 async function selectDate(year, month, day) {
   // Verificar que seguimos en el paso correcto
   if (currentStep !== 5) {
-    
+
     return;
   }
-  
+
   bookingData.date = new Date(year, month, day);
   bookingData.time = null;
   isLoadingSlots = true;
@@ -514,15 +514,15 @@ async function selectDate(year, month, day) {
 
   // Cargar horarios disponibles del AppScript
   await loadAvailableSlots();
-  
+
   isLoadingSlots = false;
 
   // Verificar que seguimos en el paso correcto despues de la carga async
   if (currentStep !== 5) {
-    
+
     return;
   }
-  
+
   renderDateTimeStep(container);
 }
 
@@ -530,7 +530,7 @@ async function loadAvailableSlots() {
   try {
     const fecha = bookingData.date.toISOString().split('T')[0];
     const url = `${SCRIPT_URL}?fecha=${encodeURIComponent(fecha)}`;
-    
+
     console.log('[v0] Cargando horarios para fecha:', fecha);
     console.log('[v0] URL:', url);
 
@@ -538,9 +538,9 @@ async function loadAvailableSlots() {
       method: 'GET',
       redirect: 'follow'
     });
-    
+
     console.log('[v0] Response status:', response.status);
-    
+
     const data = await response.json();
     console.log('[v0] Data recibida:', data);
 
@@ -716,7 +716,7 @@ async function confirmBooking() {
     const checkUrl = `${SCRIPT_URL}?fecha=${encodeURIComponent(fecha)}`;
     const checkResponse = await fetch(checkUrl);
     const checkData = await checkResponse.json();
-    
+
     if (checkData.horarios && !checkData.horarios.includes(bookingData.time)) {
       // El horario ya no esta disponible
       alert('Lo sentimos, el horario ' + bookingData.time + ' ya fue reservado por otra persona. Por favor elige otro horario.');
@@ -756,13 +756,13 @@ async function confirmBooking() {
     });
 
     const result = await response.json();
-    
+
     if (result.error) {
       // El servidor retorno un error (ej: horario ya tomado)
       alert(result.error);
       btn.textContent = originalText;
       btn.disabled = false;
-      
+
       // Si es error de horario, volver a seleccion de fecha/hora
       if (result.error.includes('horario')) {
         currentStep = 5;
@@ -794,7 +794,7 @@ async function confirmBooking() {
         duracion: calculateDuration(),
         precio: calculateSubtotal()
       };
-      
+
       await fetch(SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
@@ -803,7 +803,7 @@ async function confirmBooking() {
         },
         body: JSON.stringify(datosReserva)
       });
-      
+
       showScreen('confirmation-screen');
     } catch (fallbackError) {
       alert('Hubo un error al procesar tu reserva. Por favor intenta de nuevo.');
