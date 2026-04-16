@@ -481,18 +481,29 @@ async function loadAvailableSlots() {
   try {
     const fecha = bookingData.date.toISOString().split('T')[0];
     const url = `${SCRIPT_URL}?fecha=${encodeURIComponent(fecha)}`;
+    
+    console.log('[v0] Cargando horarios para fecha:', fecha);
+    console.log('[v0] URL:', url);
 
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      method: 'GET',
+      redirect: 'follow'
+    });
+    
+    console.log('[v0] Response status:', response.status);
+    
     const data = await response.json();
+    console.log('[v0] Data recibida:', data);
 
     if (data.success && data.horarios) {
       availableTimeSlots = data.horarios;
+      console.log('[v0] Horarios disponibles:', availableTimeSlots);
     } else {
-      // Si hay error, mostrar todos los horarios
+      console.log('[v0] No se encontraron horarios, usando todos');
       availableTimeSlots = [...TIME_SLOTS];
     }
   } catch (error) {
-    console.error('Error al cargar horarios:', error);
+    console.error('[v0] Error al cargar horarios:', error);
     // En caso de error, mostrar todos los horarios
     availableTimeSlots = [...TIME_SLOTS];
   }
