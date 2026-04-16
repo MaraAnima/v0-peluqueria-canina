@@ -13,18 +13,30 @@ interface PetDetailsStepProps {
   onContinue: (petName: string, notes: string) => void
 }
 
+const validatePetName = (name: string): string | null => {
+  const trimmed = name.trim()
+  if (trimmed.length === 0) {
+    return "El nombre de la mascota es obligatorio"
+  }
+  return null
+}
+
 export function PetDetailsStep({ initialPetName = "", initialNotes = "", onContinue }: PetDetailsStepProps) {
   const [petName, setPetName] = useState(initialPetName)
   const [notes, setNotes] = useState(initialNotes)
+  const [touched, setTouched] = useState(false)
+
+  const petNameError = validatePetName(petName)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (petName.trim()) {
+    setTouched(true)
+    if (!petNameError) {
       onContinue(petName.trim(), notes.trim())
     }
   }
 
-  const isValid = petName.trim().length > 0
+  const isValid = !petNameError
 
   return (
     <div className="w-full max-w-md mx-auto px-4">
@@ -44,17 +56,24 @@ export function PetDetailsStep({ initialPetName = "", initialNotes = "", onConti
         <div className="space-y-2">
           <Label htmlFor="petName" className="flex items-center gap-2">
             <Heart className="w-4 h-4 text-[#f9c74f]" />
-            ¿Cómo se llama tu mascota?
+            ¿Cómo se llama tu mascota? <span className="text-destructive">*</span>
           </Label>
           <Input
             id="petName"
             placeholder="Ej: Firulais, Luna, Max..."
             value={petName}
             onChange={(e) => setPetName(e.target.value)}
+            onBlur={() => setTouched(true)}
             required
-            className="h-12"
+            className={`h-12 ${touched && petNameError ? "border-destructive focus-visible:ring-destructive" : ""}`}
             autoFocus
           />
+          {touched && petNameError && (
+            <p className="text-sm text-destructive flex items-center gap-1">
+              <AlertCircle className="w-4 h-4" />
+              {petNameError}
+            </p>
+          )}
         </div>
 
         <div className="space-y-2">

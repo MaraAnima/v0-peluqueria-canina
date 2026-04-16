@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { User, Phone } from "lucide-react"
+import { User, Phone, AlertCircle } from "lucide-react"
 
 interface ContactStepProps {
   initialName?: string
@@ -12,18 +12,51 @@ interface ContactStepProps {
   onContinue: (name: string, phone: string) => void
 }
 
+// Validation helpers
+const validateName = (name: string): string | null => {
+  const trimmed = name.trim()
+  if (trimmed.length === 0) {
+    return "El nombre es obligatorio"
+  }
+  if (trimmed.length <= 3) {
+    return "El nombre debe tener más de 3 letras"
+  }
+  if (/\d/.test(trimmed)) {
+    return "El nombre no puede contener números"
+  }
+  return null
+}
+
+const validatePhone = (phone: string): string | null => {
+  const trimmed = phone.trim()
+  if (trimmed.length === 0) {
+    return "El teléfono es obligatorio"
+  }
+  // Count only digits
+  const digitsOnly = trimmed.replace(/\D/g, "")
+  if (digitsOnly.length < 6) {
+    return "El teléfono debe tener al menos 6 dígitos"
+  }
+  return null
+}
+
 export function ContactStep({ initialName = "", initialPhone = "", onContinue }: ContactStepProps) {
   const [name, setName] = useState(initialName)
   const [phone, setPhone] = useState(initialPhone)
+  const [touched, setTouched] = useState({ name: false, phone: false })
+
+  const nameError = validateName(name)
+  const phoneError = validatePhone(phone)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (name.trim() && phone.trim()) {
+    setTouched({ name: true, phone: true })
+    if (!nameError && !phoneError) {
       onContinue(name.trim(), phone.trim())
     }
   }
 
-  const isValid = name.trim().length > 0 && phone.trim().length > 0
+  const isValid = !nameError && !phoneError
 
   return (
     <div className="w-full max-w-md mx-auto px-4">
@@ -43,23 +76,30 @@ export function ContactStep({ initialName = "", initialPhone = "", onContinue }:
         <div className="space-y-2">
           <Label htmlFor="name" className="flex items-center gap-2">
             <User className="w-4 h-4 text-muted-foreground" />
-            Tu nombre
+            Tu nombre <span className="text-destructive">*</span>
           </Label>
           <Input
             id="name"
             placeholder="Ej: Juan Pérez"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            onBlur={() => setTouched((prev) => ({ ...prev, name: true }))}
             required
-            className="h-12"
+            className={`h-12 ${touched.name && nameError ? "border-destructive focus-visible:ring-destructive" : ""}`}
             autoFocus
           />
+          {touched.name && nameError && (
+            <p className="text-sm text-destructive flex items-center gap-1">
+              <AlertCircle className="w-4 h-4" />
+              {nameError}
+            </p>
+          )}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="phone" className="flex items-center gap-2">
             <Phone className="w-4 h-4 text-muted-foreground" />
-            Tu teléfono
+            Tu teléfono <span className="text-destructive">*</span>
           </Label>
           <Input
             id="phone"
@@ -67,9 +107,16 @@ export function ContactStep({ initialName = "", initialPhone = "", onContinue }:
             placeholder="Ej: 099 123 456"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
+            onBlur={() => setTouched((prev) => ({ ...prev, phone: true }))}
             required
-            className="h-12"
+            className={`h-12 ${touched.phone && phoneError ? "border-destructive focus-visible:ring-destructive" : ""}`}
           />
+          {touched.phone && phoneError && (
+            <p className="text-sm text-destructive flex items-center gap-1">
+              <AlertCircle className="w-4 h-4" />
+              {phoneError}
+            </p>
+          )}
         </div>
 
         <Button
