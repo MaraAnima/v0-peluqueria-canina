@@ -449,7 +449,7 @@ body {
 .booking-container {
   max-width: 600px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 70px 20px 20px;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -463,8 +463,12 @@ body {
   padding: 10px 0 20px;
 }
 
-/* Integrated Back Button */
+/* Integrated Back Button - Fixed to top left corner */
 .back-button-integrated {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 100;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -479,14 +483,13 @@ body {
   font-weight: 500;
   color: var(--primary-blue);
   box-shadow: 0 2px 8px rgba(168, 216, 234, 0.4);
-  margin-bottom: 20px;
 }
 
 .back-button-integrated:hover {
-  background: linear-gradient(135deg, var(--accent-cyan) 0%, #3bb8be 100%);
-  color: var(--white);
+  background: linear-gradient(135deg, var(--accent-yellow) 0%, #e5b445 100%);
+  color: var(--text-dark);
   transform: translateX(-4px);
-  box-shadow: 0 4px 12px rgba(67, 199, 205, 0.4);
+  box-shadow: 0 4px 12px rgba(249, 199, 79, 0.4);
 }
 
 .back-button-icon {
@@ -512,7 +515,7 @@ body {
 }
 
 .back-button-integrated:hover .back-button-icon svg {
-  color: var(--primary-blue);
+  color: var(--accent-yellow);
   transform: translateX(-2px);
 }
 
@@ -1113,9 +1116,10 @@ body {
 }
 
 .continue-btn:hover {
-  background: var(--primary-blue);
+  background: var(--accent-yellow);
+  color: var(--text-dark);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(26, 75, 140, 0.3);
+  box-shadow: 0 6px 20px rgba(249, 199, 79, 0.4);
 }
 
 .continue-btn:disabled {
@@ -1331,15 +1335,38 @@ body {
 
 .success-title {
   font-family: 'Fredoka', sans-serif;
-  font-size: 2rem;
-  color: var(--text-dark);
-  margin-bottom: 12px;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: -1px;
+}
+
+.title-tr {
+  color: var(--accent-cyan);
+  text-shadow: 2px 2px 0 var(--bubble-medium);
+}
+
+.title-grooming {
+  color: var(--accent-yellow);
+  text-shadow: 2px 2px 0 #e5b445;
+}
+
+.success-tagline {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: var(--accent-cyan);
+  margin-bottom: 16px;
 }
 
 .success-message {
   color: var(--text-muted);
-  font-size: 1.1rem;
-  margin-bottom: 40px;
+  font-size: 1rem;
+  margin-bottom: 32px;
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 30px;
+  display: inline-block;
 }
 
 .new-booking-btn {
@@ -1356,8 +1383,10 @@ body {
 }
 
 .new-booking-btn:hover {
-  background: var(--primary-dark);
+  background: var(--accent-yellow);
+  color: var(--text-dark);
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(249, 199, 79, 0.4);
 }
 
 /* Celebration Bubbles */
@@ -1581,6 +1610,37 @@ body {
   .step-pill.completed .step-name {
     display: inline;
   }
+}
+
+/* Booking Footer */
+.booking-footer {
+  padding: 20px;
+  text-align: center;
+  margin-top: auto;
+}
+
+.terms-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.terms-link:hover {
+  color: var(--accent-cyan);
+  background: var(--white);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.terms-link svg {
+  width: 16px;
+  height: 16px;
 }
 
 /* Textarea */
