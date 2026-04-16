@@ -704,14 +704,33 @@ function renderSummaryStep(container) {
 async function confirmBooking() {
   const btn = document.querySelector('.continue-btn');
   const originalText = btn.textContent;
-  btn.textContent = 'Enviando...';
+  btn.textContent = 'Verificando disponibilidad...';
   btn.disabled = true;
 
   try {
     // Formatear fecha para AppScript (YYYY-MM-DD)
     const fecha = bookingData.date.toISOString().split('T')[0];
 
-    // Preparar datos para enviar
+    // PASO 1: Verificar que el horario sigue disponible antes de enviar
+    btn.textContent = 'Verificando horario...';
+    const checkUrl = `${SCRIPT_URL}?fecha=${encodeURIComponent(fecha)}`;
+    const checkResponse = await fetch(checkUrl);
+    const checkData = await checkResponse.json();
+    
+    if (checkData.horarios && !checkData.horarios.includes(bookingData.time)) {
+      // El horario ya no esta disponible
+      alert('Lo sentimos, el horario ' + bookingData.time + ' ya fue reservado por otra persona. Por favor elige otro horario.');
+      btn.textContent = originalText;
+      btn.disabled = false;
+      // Volver al paso de fecha/hora para elegir otro
+      currentStep = 5;
+      await loadAvailableSlots();
+      renderCurrentStep();
+      return;
+    }
+
+    // PASO 2: Preparar datos para enviar
+    btn.textContent = 'Enviando reserva...';
     const datosReserva = {
       nombre: bookingData.clientName,
       telefono: bookingData.clientPhone,
@@ -727,25 +746,70 @@ async function confirmBooking() {
       precio: calculateSubtotal()
     };
 
-    // Enviar al AppScript
+    // PASO 3: Enviar al AppScript
     const response = await fetch(SCRIPT_URL, {
       method: 'POST',
-      mode: 'no-cors',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'text/plain', // Usar text/plain para evitar preflight CORS
       },
       body: JSON.stringify(datosReserva)
     });
 
-    // Con no-cors no podemos leer la respuesta, asumimos exito
-    console.log('Reserva enviada:', datosReserva);
+    const result = await response.json();
+    
+    if (result.error) {
+      // El servidor retorno un error (ej: horario ya tomado)
+      alert(result.error);
+      btn.textContent = originalText;
+      btn.disabled = false;
+      
+      // Si es error de horario, volver a seleccion de fecha/hora
+      if (result.error.includes('horario')) {
+        currentStep = 5;
+        await loadAvailableSlots();
+        renderCurrentStep();
+      }
+      return;
+    }
+
+    // Exito!
     showScreen('confirmation-screen');
 
   } catch (error) {
     console.error('Error al enviar reserva:', error);
-    alert('Hubo un error al procesar tu reserva. Por favor intenta de nuevo.');
-    btn.textContent = originalText;
-    btn.disabled = false;
+    // Si falla la verificacion/envio, intentar con no-cors como fallback
+    try {
+      const fecha = bookingData.date.toISOString().split('T')[0];
+      const datosReserva = {
+        nombre: bookingData.clientName,
+        telefono: bookingData.clientPhone,
+        fecha: fecha,
+        hora: bookingData.time,
+        servicio: bookingData.service?.name || '',
+        tamano: bookingData.service?.size || '',
+        pelaje: bookingData.category?.name || '',
+        nombreMascota: bookingData.petName,
+        notasMascota: bookingData.petNotes,
+        extras: bookingData.extras.map(e => e.name),
+        duracion: calculateDuration(),
+        precio: calculateSubtotal()
+      };
+      
+      await fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(datosReserva)
+      });
+      
+      showScreen('confirmation-screen');
+    } catch (fallbackError) {
+      alert('Hubo un error al procesar tu reserva. Por favor intenta de nuevo.');
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
   }
 }
 
