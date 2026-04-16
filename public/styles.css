@@ -77,15 +77,15 @@ body {
 }
 
 .logo-grooming {
-  color: var(--primary-blue);
-  text-shadow: 2px 2px 0 var(--bubble-medium);
+  color: var(--accent-yellow);
+  text-shadow: 2px 2px 0 #e5b445;
 }
 
 .tagline {
   font-family: 'Fredoka', sans-serif;
   font-size: 1.8rem;
   font-weight: 600;
-  color: var(--text-dark);
+  color: var(--accent-cyan);
   margin-bottom: 12px;
 }
 
@@ -101,7 +101,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  background: var(--primary-blue);
+  background: var(--accent-cyan);
   color: var(--white);
   border: none;
   padding: 12px 28px 12px 12px;
@@ -115,7 +115,8 @@ body {
 }
 
 .cta-button:hover {
-  background: var(--primary-dark);
+  background: var(--accent-yellow);
+  color: var(--text-dark);
   transform: translateY(-2px);
   box-shadow: var(--shadow-lg);
 }
@@ -458,7 +459,7 @@ body {
 .booking-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 10px 0 20px;
 }
 
@@ -487,20 +488,7 @@ body {
   color: var(--text-dark);
 }
 
-.header-logo {
-  font-family: 'Fredoka', sans-serif;
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--accent-cyan);
-}
 
-.header-logo span {
-  color: var(--primary-blue);
-}
-
-.header-spacer {
-  width: 44px;
-}
 
 /* Progress Steps Bar */
 .progress-bar-container {
