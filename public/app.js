@@ -38,7 +38,7 @@ const STEPS = [
 const TIME_SLOTS = ['12:00', '14:00', '16:00', '18:00'];
 
 // URL del AppScript - REEMPLAZAR CON TU URL
-const SCRIPT_URL = 'TU_URL_DE_APPSCRIPT_AQUI';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzrWn3tLUZql0AKYnDgta_iKVQodsEOYGQArKIIQ0ECxle9AuvWd6Pnc5BaUjD6c5aiMg/exec';
 
 // ==================== STATE ====================
 let currentStep = 1;
@@ -105,8 +105,8 @@ function renderStep() {
   renderProgressSteps();
   const content = document.getElementById('step-content');
   content.innerHTML = '';
-  
-  switch(currentStep) {
+
+  switch (currentStep) {
     case 1: renderContactStep(content); break;
     case 2: renderCategoryStep(content); break;
     case 3: renderServiceStep(content); break;
@@ -115,7 +115,7 @@ function renderStep() {
     case 6: renderPetStep(content); break;
     case 7: renderSummaryStep(content); break;
   }
-  
+
   // Animate
   content.style.animation = 'none';
   setTimeout(() => content.style.animation = 'fadeIn 0.4s ease', 10);
@@ -123,7 +123,7 @@ function renderStep() {
 
 function renderProgressSteps() {
   const container = document.getElementById('progress-steps');
-  
+
   // Get completed step values
   const completedValues = {
     1: bookingData.clientName || null,
@@ -133,16 +133,16 @@ function renderProgressSteps() {
     5: bookingData.date && bookingData.time ? `${formatDate(bookingData.date)} ${bookingData.time}` : null,
     6: bookingData.petName || null
   };
-  
+
   container.innerHTML = STEPS.map((step, i) => {
     const isCompleted = step.id < currentStep;
     const isActive = step.id === currentStep;
     let className = 'step-item';
     if (isActive) className += ' active';
     else if (isCompleted) className += ' completed';
-    
+
     const completedValue = completedValues[step.id];
-    
+
     const stepHtml = `
       <div class="${className}">
         <div class="step-item-content">
@@ -158,7 +158,7 @@ function renderProgressSteps() {
         </div>
       </div>
     `;
-    
+
     // Add separator except for last item
     if (i < STEPS.length - 1) {
       return stepHtml + `
@@ -213,12 +213,12 @@ function renderContactStep(container) {
 function saveContactAndNext() {
   const name = document.getElementById('client-name').value.trim();
   const phone = document.getElementById('client-phone').value.trim();
-  
+
   if (!name || !phone) {
     alert('Por favor completa todos los campos');
     return;
   }
-  
+
   bookingData.clientName = name;
   bookingData.clientPhone = phone;
   nextStep();
@@ -250,7 +250,7 @@ function selectCategory(categoryId) {
 // ==================== STEP 3: SERVICE ====================
 function renderServiceStep(container) {
   const services = SERVICES.filter(s => s.categoryId === bookingData.category?.id);
-  
+
   container.innerHTML = `
     <h2 class="step-title">Tamano de tu mascota</h2>
     <p class="step-subtitle">Selecciona segun el peso</p>
@@ -290,7 +290,7 @@ function selectService(serviceId) {
 function renderExtrasStep(container) {
   const subtotal = calculateSubtotal();
   const duration = calculateDuration();
-  
+
   container.innerHTML = `
     <h2 class="step-title">Servicios adicionales</h2>
     <p class="step-subtitle">Mejora la experiencia de tu mascota</p>
@@ -327,13 +327,13 @@ function renderExtrasStep(container) {
 function toggleExtra(extraId) {
   const extra = EXTRAS.find(e => e.id === extraId);
   const index = bookingData.extras.findIndex(e => e.id === extraId);
-  
+
   if (index > -1) {
     bookingData.extras.splice(index, 1);
   } else {
     bookingData.extras.push(extra);
   }
-  
+
   renderExtrasStep(document.getElementById('step-content'));
 }
 
@@ -355,7 +355,7 @@ function calculateDuration() {
     const match = e.duration.match(/(\d+)/);
     if (match) minutes += parseInt(match[1]);
   });
-  
+
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
   return hours > 0 ? `${hours} h ${mins > 0 ? mins + ' min' : ''}` : `${mins} min`;
@@ -363,10 +363,10 @@ function calculateDuration() {
 
 // ==================== STEP 5: DATE & TIME ====================
 function renderDateTimeStep(container) {
-  const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
-                      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
   const dayNames = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'];
-  
+
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
   const firstDay = new Date(year, month, 1);
@@ -374,24 +374,24 @@ function renderDateTimeStep(container) {
   const startDay = firstDay.getDay();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  
+
   let daysHtml = '';
-  
+
   // Previous month days
   const prevLastDay = new Date(year, month, 0).getDate();
   for (let i = startDay - 1; i >= 0; i--) {
     daysHtml += `<button class="calendar-day other-month" disabled>${prevLastDay - i}</button>`;
   }
-  
+
   // Current month days
   for (let day = 1; day <= lastDay.getDate(); day++) {
     const date = new Date(year, month, day);
     const isPast = date < today;
-    const isSelected = bookingData.date && 
-      bookingData.date.getDate() === day && 
-      bookingData.date.getMonth() === month && 
+    const isSelected = bookingData.date &&
+      bookingData.date.getDate() === day &&
+      bookingData.date.getMonth() === month &&
       bookingData.date.getFullYear() === year;
-    
+
     daysHtml += `
       <button class="calendar-day ${isSelected ? 'selected' : ''}" 
               ${isPast ? 'disabled' : ''} 
@@ -400,13 +400,13 @@ function renderDateTimeStep(container) {
       </button>
     `;
   }
-  
+
   // Next month days
   const remaining = 42 - (startDay + lastDay.getDate());
   for (let i = 1; i <= remaining; i++) {
     daysHtml += `<button class="calendar-day other-month" disabled>${i}</button>`;
   }
-  
+
   container.innerHTML = `
     <h2 class="step-title">Fecha y hora</h2>
     <p class="step-subtitle">Cuando te gustaria venir?</p>
@@ -463,17 +463,17 @@ let availableTimeSlots = [...TIME_SLOTS];
 async function selectDate(year, month, day) {
   bookingData.date = new Date(year, month, day);
   bookingData.time = null;
-  
+
   // Mostrar loading mientras cargamos horarios
   const container = document.getElementById('step-content');
   const timeSlotsContainer = container.querySelector('.time-slots');
   if (timeSlotsContainer) {
     timeSlotsContainer.innerHTML = '<p style="text-align: center; color: var(--text-muted);">Cargando horarios...</p>';
   }
-  
+
   // Cargar horarios disponibles del AppScript
   await loadAvailableSlots();
-  
+
   renderDateTimeStep(container);
 }
 
@@ -481,10 +481,10 @@ async function loadAvailableSlots() {
   try {
     const fecha = bookingData.date.toISOString().split('T')[0];
     const url = `${SCRIPT_URL}?fecha=${encodeURIComponent(fecha)}`;
-    
+
     const response = await fetch(url);
     const data = await response.json();
-    
+
     if (data.success && data.horarios) {
       availableTimeSlots = data.horarios;
     } else {
@@ -531,12 +531,12 @@ function renderPetStep(container) {
 function savePetAndNext() {
   const name = document.getElementById('pet-name').value.trim();
   const notes = document.getElementById('pet-notes').value.trim();
-  
+
   if (!name) {
     alert('Por favor ingresa el nombre de tu mascota');
     return;
   }
-  
+
   bookingData.petName = name;
   bookingData.petNotes = notes;
   nextStep();
@@ -546,12 +546,12 @@ function savePetAndNext() {
 function renderSummaryStep(container) {
   const subtotal = calculateSubtotal();
   const duration = calculateDuration();
-  const dateStr = bookingData.date?.toLocaleDateString('es-ES', { 
-    weekday: 'long', 
-    day: 'numeric', 
-    month: 'long' 
+  const dateStr = bookingData.date?.toLocaleDateString('es-ES', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long'
   });
-  
+
   container.innerHTML = `
     <h2 class="step-title">Confirma tu reserva</h2>
     <p class="step-subtitle">Revisa que todo este correcto</p>
@@ -645,11 +645,11 @@ async function confirmBooking() {
   const originalText = btn.textContent;
   btn.textContent = 'Enviando...';
   btn.disabled = true;
-  
+
   try {
     // Formatear fecha para AppScript (YYYY-MM-DD)
     const fecha = bookingData.date.toISOString().split('T')[0];
-    
+
     // Preparar datos para enviar
     const datosReserva = {
       nombre: bookingData.clientName,
@@ -665,7 +665,7 @@ async function confirmBooking() {
       duracion: calculateDuration(),
       precio: calculateSubtotal()
     };
-    
+
     // Enviar al AppScript
     const response = await fetch(SCRIPT_URL, {
       method: 'POST',
@@ -675,11 +675,11 @@ async function confirmBooking() {
       },
       body: JSON.stringify(datosReserva)
     });
-    
+
     // Con no-cors no podemos leer la respuesta, asumimos exito
     console.log('Reserva enviada:', datosReserva);
     showScreen('confirmation-screen');
-    
+
   } catch (error) {
     console.error('Error al enviar reserva:', error);
     alert('Hubo un error al procesar tu reserva. Por favor intenta de nuevo.');
