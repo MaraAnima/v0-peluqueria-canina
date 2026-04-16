@@ -1265,6 +1265,10 @@ body {
 /* ==================== CONFIRMATION SCREEN ==================== */
 #confirmation-screen {
   background: linear-gradient(135deg, var(--bg-light) 0%, #e8f4f8 100%);
+  overflow: hidden;
+}
+
+#confirmation-screen.active {
   display: flex;
   align-items: center;
   justify-content: center;
