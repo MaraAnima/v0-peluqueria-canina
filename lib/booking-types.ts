@@ -212,9 +212,11 @@ export const PROFESSIONALS: Professional[] = [
 ]
 
 export const STEPS = [
-  { id: 1, name: "Categoría" },
-  { id: 2, name: "Servicio" },
-  { id: 3, name: "Servicios extra" },
-  { id: 4, name: "Hora" },
-  { id: 5, name: "Cliente" }
+  { id: 1, name: "Contacto" },
+  { id: 2, name: "Categoría" },
+  { id: 3, name: "Servicio" },
+  { id: 4, name: "Extras" },
+  { id: 5, name: "Hora" },
+  { id: 6, name: "Mascota" },
+  { id: 7, name: "Confirmar" }
 ]

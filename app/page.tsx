@@ -1,13 +1,16 @@
 "use client"
 
 import { useState, useCallback, useEffect } from "react"
-import { ChevronLeft, Clock } from "lucide-react"
+import { ChevronLeft, Clock, MapPin } from "lucide-react"
+import { HomeScreen } from "@/components/booking/home-screen"
 import { StepIndicator } from "@/components/booking/step-indicator"
+import { ContactStep } from "@/components/booking/contact-step"
 import { CategoryStep } from "@/components/booking/category-step"
 import { ServiceStep } from "@/components/booking/service-step"
 import { ExtrasStep } from "@/components/booking/extras-step"
 import { DateTimeStep } from "@/components/booking/datetime-step"
-import { ClientStep } from "@/components/booking/client-step"
+import { PetDetailsStep } from "@/components/booking/pet-details-step"
+import { SummaryStep } from "@/components/booking/summary-step"
 import {
   Category,
   Service,
@@ -20,6 +23,7 @@ import {
 } from "@/lib/booking-types"
 
 export default function BookingPage() {
+  const [showHome, setShowHome] = useState(true)
   const [step, setStep] = useState(1)
   const [selectedLocation] = useState(LOCATIONS[0])
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
@@ -29,6 +33,12 @@ export default function BookingPage() {
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
   const [bookingComplete, setBookingComplete] = useState(false)
   const [currentTime, setCurrentTime] = useState<string>("")
+  
+  // Client data
+  const [clientName, setClientName] = useState("")
+  const [clientPhone, setClientPhone] = useState("")
+  const [petName, setPetName] = useState("")
+  const [petNotes, setPetNotes] = useState("")
 
   useEffect(() => {
     setCurrentTime(new Date().toLocaleTimeString("es-ES", {
@@ -38,24 +48,32 @@ export default function BookingPage() {
   }, [])
 
   const completedSteps: Record<number, string> = {
-    ...(selectedCategory && { 1: selectedCategory.name }),
-    ...(selectedService && { 2: selectedService.name.replace("Baño ", "") }),
-    ...(selectedExtras.length > 0 && { 3: selectedExtras.map(e => e.name.split(" ")[0]).join(", ") }),
-    ...(selectedDate && selectedTime && { 4: `${selectedDate.toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "numeric" })} ${selectedTime}` })
+    ...(clientName && { 1: clientName }),
+    ...(selectedCategory && { 2: selectedCategory.name }),
+    ...(selectedService && { 3: selectedService.name.replace("Baño ", "") }),
+    ...(selectedExtras.length > 0 && { 4: selectedExtras.map(e => e.name.split(" ")[0]).join(", ") }),
+    ...(selectedDate && selectedTime && { 5: `${selectedDate.toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit" })} ${selectedTime}` }),
+    ...(petName && { 6: petName })
   }
 
   const goBack = () => {
     if (step > 1) setStep(step - 1)
   }
 
+  const handleContactSubmit = useCallback((name: string, phone: string) => {
+    setClientName(name)
+    setClientPhone(phone)
+    setTimeout(() => setStep(2), 200)
+  }, [])
+
   const handleCategorySelect = useCallback((category: Category) => {
     setSelectedCategory(category)
-    setTimeout(() => setStep(2), 200)
+    setTimeout(() => setStep(3), 200)
   }, [])
 
   const handleServiceSelect = useCallback((service: Service) => {
     setSelectedService(service)
-    setTimeout(() => setStep(3), 200)
+    setTimeout(() => setStep(4), 200)
   }, [])
 
   const handleExtraToggle = useCallback((extra: ExtraService) => {
@@ -66,7 +84,13 @@ export default function BookingPage() {
     )
   }, [])
 
-  const handleSubmit = useCallback((data: { name: string; email: string; phone: string; petName: string; notes: string }) => {
+  const handlePetDetailsSubmit = useCallback((name: string, notes: string) => {
+    setPetName(name)
+    setPetNotes(notes)
+    setTimeout(() => setStep(7), 200)
+  }, [])
+
+  const handleSubmit = useCallback(() => {
     console.log("Booking submitted:", {
       location: selectedLocation,
       category: selectedCategory,
@@ -74,10 +98,11 @@ export default function BookingPage() {
       extras: selectedExtras,
       date: selectedDate,
       time: selectedTime,
-      client: data
+      client: { name: clientName, phone: clientPhone },
+      pet: { name: petName, notes: petNotes }
     })
     setBookingComplete(true)
-  }, [selectedLocation, selectedCategory, selectedService, selectedExtras, selectedDate, selectedTime])
+  }, [selectedLocation, selectedCategory, selectedService, selectedExtras, selectedDate, selectedTime, clientName, clientPhone, petName, petNotes])
 
   const filteredServices = SERVICES.filter(s => s.categoryId === selectedCategory?.id)
 
@@ -106,10 +131,15 @@ export default function BookingPage() {
     return (selectedService?.price || 0) + selectedExtras.reduce((sum, e) => sum + e.price, 0)
   }
 
+  // Show Home screen
+  if (showHome) {
+    return <HomeScreen onStart={() => setShowHome(false)} />
+  }
+
   if (bookingComplete) {
     return (
       <main className="min-h-screen bg-background">
-        <StepIndicator steps={STEPS} currentStep={6} completedSteps={completedSteps} />
+        <StepIndicator steps={STEPS} currentStep={8} completedSteps={completedSteps} />
         <div className="flex flex-col items-center justify-center py-20 px-4">
           <div className="bg-card rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -119,7 +149,7 @@ export default function BookingPage() {
             </div>
             <h1 className="text-2xl font-bold text-foreground mb-2">¡Reserva confirmada!</h1>
             <p className="text-muted-foreground mb-6">
-              Tu cita ha sido reservada exitosamente. Te enviamos un email con los detalles.
+              Tu cita ha sido reservada exitosamente. Te contactaremos al {clientPhone} para confirmar.
             </p>
             <div className="bg-muted rounded-lg p-4 text-left space-y-2 text-sm">
               <div className="flex items-center gap-2">
@@ -152,7 +182,13 @@ export default function BookingPage() {
               <span>Atrás</span>
             </button>
           ) : (
-            <div />
+            <button 
+              onClick={() => setShowHome(true)}
+              className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5" />
+              <span>Inicio</span>
+            </button>
           )}
           <div className="text-sm text-muted-foreground">
             <span className="font-semibold text-foreground">Nuestra hora:</span> {currentTime} America/Montevideo
@@ -161,6 +197,14 @@ export default function BookingPage() {
 
         <div className="animate-in fade-in slide-in-from-right-4 duration-300">
           {step === 1 && (
+            <ContactStep 
+              initialName={clientName}
+              initialPhone={clientPhone}
+              onContinue={handleContactSubmit}
+            />
+          )}
+
+          {step === 2 && (
             <CategoryStep 
               categories={CATEGORIES}
               selected={selectedCategory}
@@ -168,7 +212,7 @@ export default function BookingPage() {
             />
           )}
 
-          {step === 2 && (
+          {step === 3 && (
             <ServiceStep 
               services={filteredServices}
               selected={selectedService}
@@ -176,29 +220,41 @@ export default function BookingPage() {
             />
           )}
 
-          {step === 3 && (
+          {step === 4 && (
             <ExtrasStep 
               extras={EXTRA_SERVICES}
               selected={selectedExtras}
               onToggle={handleExtraToggle}
-              onContinue={() => setStep(4)}
+              onContinue={() => setStep(5)}
               totalDuration={calculateTotalDuration()}
               subtotal={calculateSubtotal()}
             />
           )}
 
-          {step === 4 && (
+          {step === 5 && (
             <DateTimeStep 
               selectedDate={selectedDate}
               selectedTime={selectedTime}
               onSelectDate={setSelectedDate}
               onSelectTime={setSelectedTime}
-              onContinue={() => setStep(5)}
+              onContinue={() => setStep(6)}
             />
           )}
 
-          {step === 5 && (
-            <ClientStep 
+          {step === 6 && (
+            <PetDetailsStep 
+              initialPetName={petName}
+              initialNotes={petNotes}
+              onContinue={handlePetDetailsSubmit}
+            />
+          )}
+
+          {step === 7 && (
+            <SummaryStep 
+              clientName={clientName}
+              clientPhone={clientPhone}
+              petName={petName}
+              petNotes={petNotes}
               service={selectedService}
               extras={selectedExtras}
               date={selectedDate}
@@ -206,6 +262,7 @@ export default function BookingPage() {
               location={selectedLocation.address}
               category={selectedCategory?.name || ""}
               onSubmit={handleSubmit}
+              onEdit={setStep}
             />
           )}
         </div>
