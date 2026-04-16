@@ -463,29 +463,57 @@ body {
   padding: 10px 0 20px;
 }
 
-.back-button {
-  width: 44px;
-  height: 44px;
+/* Integrated Back Button */
+.back-button-integrated {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px 10px 12px;
   border: none;
-  background: var(--white);
-  border-radius: 12px;
+  background: linear-gradient(135deg, var(--bubble-light) 0%, var(--bubble-medium) 100%);
+  border-radius: 50px;
   cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--primary-blue);
+  box-shadow: 0 2px 8px rgba(168, 216, 234, 0.4);
+  margin-bottom: 20px;
+}
+
+.back-button-integrated:hover {
+  background: linear-gradient(135deg, var(--accent-cyan) 0%, #3bb8be 100%);
+  color: var(--white);
+  transform: translateX(-4px);
+  box-shadow: 0 4px 12px rgba(67, 199, 205, 0.4);
+}
+
+.back-button-icon {
+  width: 28px;
+  height: 28px;
+  background: var(--white);
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow);
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
-.back-button:hover {
-  background: var(--bubble-light);
-  transform: scale(1.05);
+.back-button-integrated:hover .back-button-icon {
+  background: rgba(255, 255, 255, 0.9);
 }
 
-.back-button svg {
-  width: 24px;
-  height: 24px;
-  color: var(--text-dark);
+.back-button-icon svg {
+  width: 16px;
+  height: 16px;
+  color: var(--accent-cyan);
+  transition: all 0.3s ease;
+}
+
+.back-button-integrated:hover .back-button-icon svg {
+  color: var(--primary-blue);
+  transform: translateX(-2px);
 }
 
 
@@ -1167,6 +1195,73 @@ body {
   animation: float 7s ease-in-out infinite 1s;
 }
 
+/* Floating Soap Bubbles for Booking Flow */
+.booking-floating-bubbles {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.booking-bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, 
+    rgba(255, 255, 255, 0.9) 0%, 
+    rgba(212, 238, 247, 0.5) 40%, 
+    rgba(168, 216, 234, 0.3) 100%);
+  box-shadow: 
+    inset -3px -3px 10px rgba(255, 255, 255, 0.4),
+    inset 3px 3px 10px rgba(168, 216, 234, 0.2),
+    0 0 15px rgba(168, 216, 234, 0.2);
+  animation: bookingBubbleFloat 15s ease-in-out infinite;
+}
+
+.booking-bubble::before {
+  content: '';
+  position: absolute;
+  top: 15%;
+  left: 20%;
+  width: 25%;
+  height: 25%;
+  background: radial-gradient(circle, rgba(255,255,255,0.7) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.bb-1 { width: 40px; height: 40px; left: 5%; animation-delay: 0s; }
+.bb-2 { width: 25px; height: 25px; right: 8%; animation-delay: 3s; }
+.bb-3 { width: 35px; height: 35px; left: 15%; animation-delay: 6s; }
+.bb-4 { width: 20px; height: 20px; right: 20%; animation-delay: 2s; }
+.bb-5 { width: 30px; height: 30px; left: 3%; animation-delay: 8s; }
+.bb-6 { width: 22px; height: 22px; right: 5%; animation-delay: 4s; }
+
+@keyframes bookingBubbleFloat {
+  0% {
+    bottom: -60px;
+    opacity: 0;
+    transform: translateX(0) scale(0.8);
+  }
+  10% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 0.5;
+    transform: translateX(30px) scale(1);
+  }
+  90% {
+    opacity: 0.3;
+  }
+  100% {
+    bottom: 110%;
+    opacity: 0;
+    transform: translateX(-20px) scale(0.9);
+  }
+}
+
 /* ==================== CONFIRMATION SCREEN ==================== */
 #confirmation-screen {
   background: linear-gradient(135deg, var(--bg-light) 0%, #e8f4f8 100%);
@@ -1178,18 +1273,20 @@ body {
 .confirmation-container {
   text-align: center;
   padding: 40px;
+  position: relative;
+  z-index: 10;
 }
 
 .success-animation {
   position: relative;
-  width: 120px;
-  height: 120px;
-  margin: 0 auto 30px;
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 15px;
 }
 
 .checkmark-circle {
-  width: 120px;
-  height: 120px;
+  width: 100px;
+  height: 100px;
   animation: scaleIn 0.5s ease-out;
 }
 
@@ -1257,6 +1354,157 @@ body {
 .new-booking-btn:hover {
   background: var(--primary-dark);
   transform: translateY(-2px);
+}
+
+/* Celebration Bubbles */
+.celebration-bubbles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.celeb-bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, 
+    rgba(255, 255, 255, 0.95) 0%, 
+    rgba(212, 238, 247, 0.6) 40%, 
+    rgba(168, 216, 234, 0.4) 100%);
+  box-shadow: 
+    inset -4px -4px 12px rgba(255, 255, 255, 0.5),
+    inset 4px 4px 12px rgba(168, 216, 234, 0.3),
+    0 0 20px rgba(168, 216, 234, 0.3);
+  animation: celebBubbleRise 8s ease-out infinite;
+}
+
+.celeb-bubble::before {
+  content: '';
+  position: absolute;
+  top: 12%;
+  left: 18%;
+  width: 30%;
+  height: 30%;
+  background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.cb-1 { width: 50px; height: 50px; left: 5%; animation-delay: 0s; }
+.cb-2 { width: 35px; height: 35px; left: 15%; animation-delay: 0.5s; }
+.cb-3 { width: 45px; height: 45px; left: 25%; animation-delay: 1s; }
+.cb-4 { width: 30px; height: 30px; left: 35%; animation-delay: 0.3s; }
+.cb-5 { width: 55px; height: 55px; left: 50%; animation-delay: 0.8s; }
+.cb-6 { width: 40px; height: 40px; left: 60%; animation-delay: 1.2s; }
+.cb-7 { width: 25px; height: 25px; left: 70%; animation-delay: 0.2s; }
+.cb-8 { width: 48px; height: 48px; left: 80%; animation-delay: 0.7s; }
+.cb-9 { width: 32px; height: 32px; left: 90%; animation-delay: 1.5s; }
+.cb-10 { width: 38px; height: 38px; left: 10%; animation-delay: 2s; }
+.cb-11 { width: 28px; height: 28px; left: 45%; animation-delay: 2.5s; }
+.cb-12 { width: 42px; height: 42px; left: 75%; animation-delay: 3s; }
+
+@keyframes celebBubbleRise {
+  0% {
+    bottom: -80px;
+    opacity: 0;
+    transform: translateX(0) scale(0.5) rotate(0deg);
+  }
+  15% {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translateX(40px) scale(1.1) rotate(10deg);
+  }
+  75% {
+    opacity: 0.5;
+    transform: translateX(-30px) scale(0.95) rotate(-5deg);
+  }
+  100% {
+    bottom: 120%;
+    opacity: 0;
+    transform: translateX(20px) scale(0.8) rotate(15deg);
+  }
+}
+
+/* Happy Dog Container */
+.happy-dog-container {
+  margin: 20px auto 30px;
+  animation: dogBounce 2s ease-in-out infinite;
+}
+
+.happy-dog {
+  width: 180px;
+  height: 160px;
+}
+
+@keyframes dogBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Dog sparkle animations */
+.sparkle {
+  animation: sparkleShine 1.5s ease-in-out infinite;
+}
+
+.sparkle-1 { animation-delay: 0s; }
+.sparkle-2 { animation-delay: 0.5s; }
+.sparkle-3 { animation-delay: 1s; }
+
+@keyframes sparkleShine {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+/* Dog bubbles animation */
+.dog-bubble {
+  animation: dogBubbleFloat 3s ease-in-out infinite;
+}
+
+.db-1 { animation-delay: 0s; }
+.db-2 { animation-delay: 0.4s; }
+.db-3 { animation-delay: 0.8s; }
+.db-4 { animation-delay: 1.2s; }
+.db-5 { animation-delay: 1.6s; }
+
+@keyframes dogBubbleFloat {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-8px) scale(1.1);
+    opacity: 0.9;
+  }
+}
+
+/* Blink animation for dog eyes */
+.blink-eye {
+  opacity: 0;
+  animation: blinkEyes 4s ease-in-out infinite;
+}
+
+@keyframes blinkEyes {
+  0%, 45%, 55%, 100% {
+    opacity: 0;
+  }
+  48%, 52% {
+    opacity: 1;
+  }
 }
 
 /* ==================== RESPONSIVE ==================== */

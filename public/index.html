@@ -123,15 +123,15 @@
     </div>
 
     <div class="booking-container">
-      <!-- Back Button -->
-      <div class="back-row">
-        <button class="back-button" onclick="goBack()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <!-- Back Button - Integrated Style -->
+      <button class="back-button-integrated" onclick="goBack()">
+        <div class="back-button-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <path d="M19 12H5M12 19l-7-7 7-7"/>
           </svg>
-          <span>Volver</span>
-        </button>
-      </div>
+        </div>
+        <span>Volver</span>
+      </button>
 
       <!-- Step Content -->
       <main class="step-content" id="step-content">
@@ -145,10 +145,36 @@
       <div class="bg-bubble bg-b2"></div>
       <div class="bg-bubble bg-b3"></div>
     </div>
+    
+    <!-- Floating soap bubbles for booking flow -->
+    <div class="booking-floating-bubbles">
+      <div class="booking-bubble bb-1"></div>
+      <div class="booking-bubble bb-2"></div>
+      <div class="booking-bubble bb-3"></div>
+      <div class="booking-bubble bb-4"></div>
+      <div class="booking-bubble bb-5"></div>
+      <div class="booking-bubble bb-6"></div>
+    </div>
   </section>
 
   <!-- Confirmation Screen -->
   <section id="confirmation-screen" class="screen">
+    <!-- Celebration bubbles -->
+    <div class="celebration-bubbles">
+      <div class="celeb-bubble cb-1"></div>
+      <div class="celeb-bubble cb-2"></div>
+      <div class="celeb-bubble cb-3"></div>
+      <div class="celeb-bubble cb-4"></div>
+      <div class="celeb-bubble cb-5"></div>
+      <div class="celeb-bubble cb-6"></div>
+      <div class="celeb-bubble cb-7"></div>
+      <div class="celeb-bubble cb-8"></div>
+      <div class="celeb-bubble cb-9"></div>
+      <div class="celeb-bubble cb-10"></div>
+      <div class="celeb-bubble cb-11"></div>
+      <div class="celeb-bubble cb-12"></div>
+    </div>
+    
     <div class="confirmation-container">
       <div class="success-animation">
         <div class="checkmark-circle">
@@ -157,8 +183,55 @@
             <path fill="none" stroke="#43c7cd" stroke-width="3" d="M14 27l7 7 16-16"/>
           </svg>
         </div>
-        <div class="confetti"></div>
       </div>
+      
+      <!-- Happy bathed dog illustration -->
+      <div class="happy-dog-container">
+        <svg class="happy-dog" viewBox="0 0 200 180">
+          <!-- Body -->
+          <ellipse cx="100" cy="130" rx="55" ry="40" fill="#f5e6d3"/>
+          <!-- Head -->
+          <circle cx="100" cy="70" r="45" fill="#f5e6d3"/>
+          <!-- Ears -->
+          <ellipse cx="55" cy="50" rx="15" ry="25" fill="#d4b896" transform="rotate(-15 55 50)"/>
+          <ellipse cx="145" cy="50" rx="15" ry="25" fill="#d4b896" transform="rotate(15 145 50)"/>
+          <!-- Eyes -->
+          <ellipse cx="82" cy="65" rx="8" ry="10" fill="#1a365d"/>
+          <ellipse cx="118" cy="65" rx="8" ry="10" fill="#1a365d"/>
+          <circle cx="84" cy="62" r="3" fill="#fff"/>
+          <circle cx="120" cy="62" r="3" fill="#fff"/>
+          <!-- Happy closed eyes (smile lines) -->
+          <path d="M76 63 Q82 58 88 63" stroke="#1a365d" stroke-width="2" fill="none" class="blink-eye"/>
+          <path d="M112 63 Q118 58 124 63" stroke="#1a365d" stroke-width="2" fill="none" class="blink-eye"/>
+          <!-- Nose -->
+          <ellipse cx="100" cy="82" rx="8" ry="6" fill="#1a365d"/>
+          <ellipse cx="100" cy="80" rx="3" ry="2" fill="#4a5568" opacity="0.5"/>
+          <!-- Happy mouth -->
+          <path d="M85 92 Q100 108 115 92" stroke="#1a365d" stroke-width="2.5" fill="none"/>
+          <!-- Tongue -->
+          <ellipse cx="100" cy="100" rx="8" ry="10" fill="#f687b3"/>
+          <!-- Cheeks (blush) -->
+          <circle cx="68" cy="78" r="8" fill="#fbb6ce" opacity="0.5"/>
+          <circle cx="132" cy="78" r="8" fill="#fbb6ce" opacity="0.5"/>
+          <!-- Sparkle clean effect -->
+          <g class="sparkle sparkle-1">
+            <path d="M40 30 L42 38 L50 40 L42 42 L40 50 L38 42 L30 40 L38 38 Z" fill="#43c7cd"/>
+          </g>
+          <g class="sparkle sparkle-2">
+            <path d="M160 25 L161.5 31 L167 32.5 L161.5 34 L160 40 L158.5 34 L153 32.5 L158.5 31 Z" fill="#f9c74f"/>
+          </g>
+          <g class="sparkle sparkle-3">
+            <path d="M170 70 L171 74 L175 75 L171 76 L170 80 L169 76 L165 75 L169 74 Z" fill="#43c7cd"/>
+          </g>
+          <!-- Bubbles around dog -->
+          <circle cx="35" cy="60" r="10" fill="#a8d8ea" opacity="0.6" class="dog-bubble db-1"/>
+          <circle cx="165" cy="55" r="8" fill="#d4eef7" opacity="0.7" class="dog-bubble db-2"/>
+          <circle cx="25" cy="90" r="6" fill="#a8d8ea" opacity="0.5" class="dog-bubble db-3"/>
+          <circle cx="175" cy="95" r="7" fill="#d4eef7" opacity="0.6" class="dog-bubble db-4"/>
+          <circle cx="45" cy="120" r="5" fill="#a8d8ea" opacity="0.4" class="dog-bubble db-5"/>
+        </svg>
+      </div>
+      
       <h2 class="success-title">Reserva Confirmada!</h2>
       <p class="success-message">Te enviamos los detalles por WhatsApp</p>
       <button class="new-booking-btn" onclick="resetBooking()">Nueva Reserva</button>
