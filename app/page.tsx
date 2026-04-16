@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, useEffect } from "react"
-import { ChevronLeft, Clock, MapPin } from "lucide-react"
+import { ChevronLeft, Clock } from "lucide-react"
 import { StepIndicator } from "@/components/booking/step-indicator"
 import { CategoryStep } from "@/components/booking/category-step"
 import { ServiceStep } from "@/components/booking/service-step"
@@ -38,11 +38,10 @@ export default function BookingPage() {
   }, [])
 
   const completedSteps: Record<number, string> = {
-    1: selectedLocation.name,
-    ...(selectedCategory && { 2: selectedCategory.name }),
-    ...(selectedService && { 3: selectedService.name.replace("Baño ", "") }),
-    ...(selectedExtras.length > 0 && { 4: selectedExtras.map(e => e.name.split(" ")[0]).join(", ") }),
-    ...(selectedDate && selectedTime && { 5: `${selectedDate.toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "numeric" })} ${selectedTime}` })
+    ...(selectedCategory && { 1: selectedCategory.name }),
+    ...(selectedService && { 2: selectedService.name.replace("Baño ", "") }),
+    ...(selectedExtras.length > 0 && { 3: selectedExtras.map(e => e.name.split(" ")[0]).join(", ") }),
+    ...(selectedDate && selectedTime && { 4: `${selectedDate.toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "numeric" })} ${selectedTime}` })
   }
 
   const goBack = () => {
@@ -51,12 +50,12 @@ export default function BookingPage() {
 
   const handleCategorySelect = useCallback((category: Category) => {
     setSelectedCategory(category)
-    setTimeout(() => setStep(3), 200)
+    setTimeout(() => setStep(2), 200)
   }, [])
 
   const handleServiceSelect = useCallback((service: Service) => {
     setSelectedService(service)
-    setTimeout(() => setStep(4), 200)
+    setTimeout(() => setStep(3), 200)
   }, [])
 
   const handleExtraToggle = useCallback((extra: ExtraService) => {
@@ -110,7 +109,7 @@ export default function BookingPage() {
   if (bookingComplete) {
     return (
       <main className="min-h-screen bg-background">
-        <StepIndicator steps={STEPS} currentStep={7} completedSteps={completedSteps} />
+        <StepIndicator steps={STEPS} currentStep={6} completedSteps={completedSteps} />
         <div className="flex flex-col items-center justify-center py-20 px-4">
           <div className="bg-card rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -162,25 +161,6 @@ export default function BookingPage() {
 
         <div className="animate-in fade-in slide-in-from-right-4 duration-300">
           {step === 1 && (
-            <div className="w-full max-w-xl mx-auto px-4 text-center">
-              <h2 className="text-2xl font-semibold text-foreground mb-2">Ubicación seleccionada</h2>
-              <div className="bg-card rounded-2xl shadow-md p-6 mt-6">
-                <div className="flex items-center justify-center gap-3 mb-4">
-                  <MapPin className="w-6 h-6 text-[#43c7cd]" />
-                  <span className="text-xl font-semibold">{selectedLocation.name}</span>
-                </div>
-                <p className="text-muted-foreground">{selectedLocation.address}</p>
-                <button 
-                  onClick={() => setStep(2)}
-                  className="mt-6 w-full py-3 bg-[#43c7cd] text-white font-semibold rounded-xl hover:bg-[#f9c74f] hover:text-foreground transition-colors"
-                >
-                  Continuar
-                </button>
-              </div>
-            </div>
-          )}
-
-          {step === 2 && (
             <CategoryStep 
               categories={CATEGORIES}
               selected={selectedCategory}
@@ -188,7 +168,7 @@ export default function BookingPage() {
             />
           )}
 
-          {step === 3 && (
+          {step === 2 && (
             <ServiceStep 
               services={filteredServices}
               selected={selectedService}
@@ -196,28 +176,28 @@ export default function BookingPage() {
             />
           )}
 
-          {step === 4 && (
+          {step === 3 && (
             <ExtrasStep 
               extras={EXTRA_SERVICES}
               selected={selectedExtras}
               onToggle={handleExtraToggle}
-              onContinue={() => setStep(5)}
+              onContinue={() => setStep(4)}
               totalDuration={calculateTotalDuration()}
               subtotal={calculateSubtotal()}
             />
           )}
 
-          {step === 5 && (
+          {step === 4 && (
             <DateTimeStep 
               selectedDate={selectedDate}
               selectedTime={selectedTime}
               onSelectDate={setSelectedDate}
               onSelectTime={setSelectedTime}
-              onContinue={() => setStep(6)}
+              onContinue={() => setStep(5)}
             />
           )}
 
-          {step === 6 && (
+          {step === 5 && (
             <ClientStep 
               service={selectedService}
               extras={selectedExtras}

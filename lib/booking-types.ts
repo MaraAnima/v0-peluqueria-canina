@@ -80,6 +80,7 @@ export const CATEGORIES: Category[] = [
 ]
 
 export const SERVICES: Service[] = [
+  // Pelo corto
   {
     id: "bano-s",
     name: "Baño (S - Pelo corto)",
@@ -115,6 +116,43 @@ export const SERVICES: Service[] = [
     price: 1250,
     image: "/images/dog-xl.png",
     categoryId: "pelo-corto"
+  },
+  // Pelo largo
+  {
+    id: "bano-s-largo",
+    name: "Baño (S - Pelo largo)",
+    description: "Tamaño de la mascota: hasta 10 kg",
+    duration: "1 h 30 mins.",
+    price: 1000,
+    image: "/images/dog-s.png",
+    categoryId: "pelo-largo"
+  },
+  {
+    id: "bano-m-largo",
+    name: "Baño (M - Pelo largo)",
+    description: "Tamaño de la mascota: desde 10 kg a 20 kg",
+    duration: "1 h 30 mins.",
+    price: 1100,
+    image: "/images/dog-m.png",
+    categoryId: "pelo-largo"
+  },
+  {
+    id: "bano-l-largo",
+    name: "Baño (L - Pelo largo)",
+    description: "Tamaño de la mascota: desde 20 kg a 40 kg",
+    duration: "2 h",
+    price: 1200,
+    image: "/images/dog-l.png",
+    categoryId: "pelo-largo"
+  },
+  {
+    id: "bano-xl-largo",
+    name: "Baño (XL - Pelo largo)",
+    description: "Tamaño de la mascota: 40 kg o más",
+    duration: "2 h 30 mins.",
+    price: 1450,
+    image: "/images/dog-xl.png",
+    categoryId: "pelo-largo"
   }
 ]
 
@@ -174,10 +212,9 @@ export const PROFESSIONALS: Professional[] = [
 ]
 
 export const STEPS = [
-  { id: 1, name: "Ubicación" },
-  { id: 2, name: "Categoría" },
-  { id: 3, name: "Servicio" },
-  { id: 4, name: "Servicios extra" },
-  { id: 5, name: "Hora" },
-  { id: 6, name: "Cliente" }
+  { id: 1, name: "Categoría" },
+  { id: 2, name: "Servicio" },
+  { id: 3, name: "Servicios extra" },
+  { id: 4, name: "Hora" },
+  { id: 5, name: "Cliente" }
 ]

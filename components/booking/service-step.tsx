@@ -14,14 +14,22 @@ const SERVICE_IMAGES: Record<string, string> = {
   "bano-s": "/images/dog-s.jpg",
   "bano-m": "/images/dog-m.jpg",
   "bano-l": "/images/dog-l.jpg",
-  "bano-xl": "/images/dog-xl.jpg"
+  "bano-xl": "/images/dog-xl.jpg",
+  "bano-s-largo": "/images/dog-s.jpg",
+  "bano-m-largo": "/images/dog-m.jpg",
+  "bano-l-largo": "/images/dog-l.jpg",
+  "bano-xl-largo": "/images/dog-xl.jpg"
 }
 
 const IMAGE_SIZES: Record<string, string> = {
   "bano-s": "w-20 h-20",
   "bano-m": "w-24 h-24",
   "bano-l": "w-28 h-28",
-  "bano-xl": "w-32 h-32"
+  "bano-xl": "w-32 h-32",
+  "bano-s-largo": "w-20 h-20",
+  "bano-m-largo": "w-24 h-24",
+  "bano-l-largo": "w-28 h-28",
+  "bano-xl-largo": "w-32 h-32"
 }
 
 export function ServiceStep({ services, selected, onSelect }: ServiceStepProps) {
