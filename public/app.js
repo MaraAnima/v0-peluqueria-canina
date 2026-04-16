@@ -34,10 +34,11 @@ const STEPS = [
   { id: 7, name: 'Confirmar' }
 ];
 
-const TIME_SLOTS = [
-  '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-  '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00'
-];
+// Horarios disponibles (deben coincidir con AppScript)
+const TIME_SLOTS = ['12:00', '14:00', '16:00', '18:00'];
+
+// URL del AppScript - REEMPLAZAR CON TU URL
+const SCRIPT_URL = 'TU_URL_DE_APPSCRIPT_AQUI';
 
 // ==================== STATE ====================
 let currentStep = 1;
@@ -437,11 +438,11 @@ function renderDateTimeStep(container) {
     ${bookingData.date ? `
       <h3 style="margin: 20px 0 12px; font-family: 'Fredoka', sans-serif; font-size: 1.1rem;">Horarios disponibles</h3>
       <div class="time-slots">
-        ${TIME_SLOTS.map(time => `
+        ${availableTimeSlots.length > 0 ? availableTimeSlots.map(time => `
           <button class="time-slot ${bookingData.time === time ? 'selected' : ''}" onclick="selectTime('${time}')">
             ${time}
           </button>
-        `).join('')}
+        `).join('') : '<p style="text-align: center; color: var(--text-muted); grid-column: 1/-1;">No hay horarios disponibles para esta fecha</p>'}
       </div>
     ` : ''}
     
@@ -456,10 +457,45 @@ function changeMonth(delta) {
   renderDateTimeStep(document.getElementById('step-content'));
 }
 
-function selectDate(year, month, day) {
+// Variable para guardar horarios disponibles
+let availableTimeSlots = [...TIME_SLOTS];
+
+async function selectDate(year, month, day) {
   bookingData.date = new Date(year, month, day);
   bookingData.time = null;
-  renderDateTimeStep(document.getElementById('step-content'));
+  
+  // Mostrar loading mientras cargamos horarios
+  const container = document.getElementById('step-content');
+  const timeSlotsContainer = container.querySelector('.time-slots');
+  if (timeSlotsContainer) {
+    timeSlotsContainer.innerHTML = '<p style="text-align: center; color: var(--text-muted);">Cargando horarios...</p>';
+  }
+  
+  // Cargar horarios disponibles del AppScript
+  await loadAvailableSlots();
+  
+  renderDateTimeStep(container);
+}
+
+async function loadAvailableSlots() {
+  try {
+    const fecha = bookingData.date.toISOString().split('T')[0];
+    const url = `${SCRIPT_URL}?fecha=${encodeURIComponent(fecha)}`;
+    
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (data.success && data.horarios) {
+      availableTimeSlots = data.horarios;
+    } else {
+      // Si hay error, mostrar todos los horarios
+      availableTimeSlots = [...TIME_SLOTS];
+    }
+  } catch (error) {
+    console.error('Error al cargar horarios:', error);
+    // En caso de error, mostrar todos los horarios
+    availableTimeSlots = [...TIME_SLOTS];
+  }
 }
 
 function selectTime(time) {
@@ -604,10 +640,52 @@ function renderSummaryStep(container) {
   `;
 }
 
-function confirmBooking() {
-  // Here you would send data to backend
-  console.log('Booking confirmed:', bookingData);
-  showScreen('confirmation-screen');
+async function confirmBooking() {
+  const btn = document.querySelector('.continue-btn');
+  const originalText = btn.textContent;
+  btn.textContent = 'Enviando...';
+  btn.disabled = true;
+  
+  try {
+    // Formatear fecha para AppScript (YYYY-MM-DD)
+    const fecha = bookingData.date.toISOString().split('T')[0];
+    
+    // Preparar datos para enviar
+    const datosReserva = {
+      nombre: bookingData.clientName,
+      telefono: bookingData.clientPhone,
+      fecha: fecha,
+      hora: bookingData.time,
+      servicio: bookingData.service?.name || '',
+      tamano: bookingData.service?.size || '',
+      pelaje: bookingData.category?.name || '',
+      nombreMascota: bookingData.petName,
+      notasMascota: bookingData.petNotes,
+      extras: bookingData.extras.map(e => e.name),
+      duracion: calculateDuration(),
+      precio: calculateSubtotal()
+    };
+    
+    // Enviar al AppScript
+    const response = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(datosReserva)
+    });
+    
+    // Con no-cors no podemos leer la respuesta, asumimos exito
+    console.log('Reserva enviada:', datosReserva);
+    showScreen('confirmation-screen');
+    
+  } catch (error) {
+    console.error('Error al enviar reserva:', error);
+    alert('Hubo un error al procesar tu reserva. Por favor intenta de nuevo.');
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
 }
 
 // ==================== INIT ====================
