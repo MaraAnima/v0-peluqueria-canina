@@ -1,24 +1,21 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { ChevronLeft, Clock, MapPin } from "lucide-react"
 import { StepIndicator } from "@/components/booking/step-indicator"
 import { CategoryStep } from "@/components/booking/category-step"
 import { ServiceStep } from "@/components/booking/service-step"
 import { ExtrasStep } from "@/components/booking/extras-step"
-import { ProfessionalStep } from "@/components/booking/professional-step"
 import { DateTimeStep } from "@/components/booking/datetime-step"
 import { ClientStep } from "@/components/booking/client-step"
 import {
   Category,
   Service,
   ExtraService,
-  Professional,
   LOCATIONS,
   CATEGORIES,
   SERVICES,
   EXTRA_SERVICES,
-  PROFESSIONALS,
   STEPS
 } from "@/lib/booking-types"
 
@@ -28,23 +25,24 @@ export default function BookingPage() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
   const [selectedService, setSelectedService] = useState<Service | null>(null)
   const [selectedExtras, setSelectedExtras] = useState<ExtraService[]>([])
-  const [selectedProfessional, setSelectedProfessional] = useState<Professional | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
   const [bookingComplete, setBookingComplete] = useState(false)
+  const [currentTime, setCurrentTime] = useState<string>("")
 
-  const currentTime = new Date().toLocaleTimeString("es-ES", {
-    hour: "2-digit",
-    minute: "2-digit"
-  })
+  useEffect(() => {
+    setCurrentTime(new Date().toLocaleTimeString("es-ES", {
+      hour: "2-digit",
+      minute: "2-digit"
+    }))
+  }, [])
 
   const completedSteps: Record<number, string> = {
     1: selectedLocation.name,
     ...(selectedCategory && { 2: selectedCategory.name }),
     ...(selectedService && { 3: selectedService.name.replace("Baño ", "") }),
     ...(selectedExtras.length > 0 && { 4: selectedExtras.map(e => e.name.split(" ")[0]).join(", ") }),
-    ...(selectedProfessional && { 5: selectedProfessional.name }),
-    ...(selectedDate && selectedTime && { 6: `${selectedDate.toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "numeric" })} ${selectedTime}` })
+    ...(selectedDate && selectedTime && { 5: `${selectedDate.toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "numeric" })} ${selectedTime}` })
   }
 
   const goBack = () => {
@@ -69,24 +67,18 @@ export default function BookingPage() {
     )
   }, [])
 
-  const handleProfessionalSelect = useCallback((professional: Professional) => {
-    setSelectedProfessional(professional)
-    setTimeout(() => setStep(6), 200)
-  }, [])
-
   const handleSubmit = useCallback((data: { name: string; email: string; phone: string; petName: string; notes: string }) => {
     console.log("Booking submitted:", {
       location: selectedLocation,
       category: selectedCategory,
       service: selectedService,
       extras: selectedExtras,
-      professional: selectedProfessional,
       date: selectedDate,
       time: selectedTime,
       client: data
     })
     setBookingComplete(true)
-  }, [selectedLocation, selectedCategory, selectedService, selectedExtras, selectedProfessional, selectedDate, selectedTime])
+  }, [selectedLocation, selectedCategory, selectedService, selectedExtras, selectedDate, selectedTime])
 
   const filteredServices = SERVICES.filter(s => s.categoryId === selectedCategory?.id)
 
@@ -132,11 +124,11 @@ export default function BookingPage() {
             </p>
             <div className="bg-muted rounded-lg p-4 text-left space-y-2 text-sm">
               <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-primary" />
+                <Clock className="w-4 h-4 text-[#43c7cd]" />
                 <span>{selectedDate?.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })} a las {selectedTime}</span>
               </div>
               <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-primary" />
+                <MapPin className="w-4 h-4 text-[#43c7cd]" />
                 <span>{selectedLocation.address}</span>
               </div>
             </div>
@@ -174,13 +166,13 @@ export default function BookingPage() {
               <h2 className="text-2xl font-semibold text-foreground mb-2">Ubicación seleccionada</h2>
               <div className="bg-card rounded-2xl shadow-md p-6 mt-6">
                 <div className="flex items-center justify-center gap-3 mb-4">
-                  <MapPin className="w-6 h-6 text-primary" />
+                  <MapPin className="w-6 h-6 text-[#43c7cd]" />
                   <span className="text-xl font-semibold">{selectedLocation.name}</span>
                 </div>
                 <p className="text-muted-foreground">{selectedLocation.address}</p>
                 <button 
                   onClick={() => setStep(2)}
-                  className="mt-6 w-full py-3 bg-primary text-primary-foreground font-semibold rounded-xl hover:bg-primary/90 transition-colors"
+                  className="mt-6 w-full py-3 bg-[#43c7cd] text-white font-semibold rounded-xl hover:bg-[#f9c74f] hover:text-foreground transition-colors"
                 >
                   Continuar
                 </button>
@@ -216,28 +208,19 @@ export default function BookingPage() {
           )}
 
           {step === 5 && (
-            <ProfessionalStep 
-              professionals={PROFESSIONALS}
-              selected={selectedProfessional}
-              onSelect={handleProfessionalSelect}
-            />
-          )}
-
-          {step === 6 && (
             <DateTimeStep 
               selectedDate={selectedDate}
               selectedTime={selectedTime}
               onSelectDate={setSelectedDate}
               onSelectTime={setSelectedTime}
-              onContinue={() => setStep(7)}
+              onContinue={() => setStep(6)}
             />
           )}
 
-          {step === 7 && (
+          {step === 6 && (
             <ClientStep 
               service={selectedService}
               extras={selectedExtras}
-              professional={selectedProfessional}
               date={selectedDate}
               time={selectedTime}
               location={selectedLocation.address}
@@ -248,8 +231,21 @@ export default function BookingPage() {
         </div>
       </div>
 
-      <footer className="mt-auto py-6 text-center text-sm text-muted-foreground border-t border-border">
-        <p>Términos y condiciones de la Peluquería</p>
+      <footer className="mt-auto py-8 text-center text-sm text-muted-foreground">
+        <div className="w-full h-6 overflow-hidden mb-4">
+          <svg 
+            viewBox="0 0 1200 120" 
+            preserveAspectRatio="none" 
+            className="w-full h-full"
+          >
+            <path 
+              d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" 
+              fill="#43c7cd"
+              opacity="0.2"
+            />
+          </svg>
+        </div>
+        <p className="text-[#43c7cd] font-medium">Términos y condiciones de Tu Ración</p>
         <p className="mt-1">© 2013-2026</p>
       </footer>
     </main>

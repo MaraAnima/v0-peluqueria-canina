@@ -4,7 +4,6 @@ import { ExtraService } from "@/lib/booking-types"
 import { cn } from "@/lib/utils"
 import { Scissors, Sparkles, Brush, Ear } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 
 interface ExtrasStepProps {
   extras: ExtraService[]
@@ -27,7 +26,7 @@ export function ExtrasStep({ extras, selected, onToggle, onContinue, totalDurati
   return (
     <div className="w-full max-w-3xl mx-auto px-4">
       <div className="bg-card rounded-2xl shadow-md p-6">
-        <h2 className="text-xl font-semibold text-primary mb-6">
+        <h2 className="text-xl font-semibold text-[#43c7cd] mb-6">
           ¿Querés agregar algún servicio extra?
         </h2>
         
@@ -37,21 +36,24 @@ export function ExtrasStep({ extras, selected, onToggle, onContinue, totalDurati
             const isSelected = selected.some(s => s.id === extra.id)
             
             return (
-              <button
+              <div
                 key={extra.id}
                 onClick={() => onToggle(extra)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && onToggle(extra)}
                 className={cn(
-                  "relative p-4 rounded-xl border-2 text-left transition-all duration-200",
+                  "relative p-4 rounded-xl border-2 text-left transition-all duration-200 cursor-pointer",
                   "hover:shadow-md",
                   isSelected 
-                    ? "border-primary bg-primary/5" 
-                    : "border-border bg-card hover:border-primary/50"
+                    ? "border-[#43c7cd] bg-[#43c7cd]/5" 
+                    : "border-border bg-card hover:border-[#43c7cd]/50"
                 )}
               >
                 <div className="flex items-start gap-3">
                   <div className={cn(
                     "w-10 h-10 rounded-lg flex items-center justify-center",
-                    isSelected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                    isSelected ? "bg-[#43c7cd] text-white" : "bg-muted text-muted-foreground"
                   )}>
                     <Icon className="w-5 h-5" />
                   </div>
@@ -71,12 +73,20 @@ export function ExtrasStep({ extras, selected, onToggle, onContinue, totalDurati
                       </p>
                     )}
                   </div>
-                  <Checkbox 
-                    checked={isSelected}
-                    className="mt-1"
-                  />
+                  <div 
+                    className={cn(
+                      "w-5 h-5 rounded border-2 flex items-center justify-center mt-1",
+                      isSelected ? "bg-[#43c7cd] border-[#43c7cd]" : "border-muted-foreground/30"
+                    )}
+                  >
+                    {isSelected && (
+                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
                 </div>
-              </button>
+              </div>
             )
           })}
         </div>
@@ -95,7 +105,7 @@ export function ExtrasStep({ extras, selected, onToggle, onContinue, totalDurati
         </div>
         <Button 
           onClick={onContinue}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground px-8"
+          className="bg-[#43c7cd] hover:bg-[#f9c74f] hover:text-foreground text-white px-8 rounded-xl font-semibold transition-colors"
         >
           Siguiente
         </Button>

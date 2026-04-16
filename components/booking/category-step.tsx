@@ -41,11 +41,11 @@ export function CategoryStep({ categories, selected, onSelect }: CategoryStepPro
                 />
               </div>
             </div>
-            <div className="p-5 bg-primary">
-              <h3 className="text-lg font-semibold text-primary-foreground mb-2">
+            <div className="p-5 bg-[#43c7cd]">
+              <h3 className="text-lg font-semibold text-white mb-2">
                 {category.name}
               </h3>
-              <span className="block w-full py-2.5 px-4 bg-white text-primary font-medium rounded-lg group-hover:bg-white/90 transition-colors">
+              <span className="block w-full py-2.5 px-4 bg-white text-[#43c7cd] font-semibold rounded-xl group-hover:bg-[#f9c74f] group-hover:text-foreground transition-colors">
                 Seleccionar
               </span>
             </div>

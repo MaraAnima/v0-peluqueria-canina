@@ -71,8 +71,8 @@ export function DateTimeStep({ selectedDate, selectedTime, onSelectDate, onSelec
         disabled={!selectable}
         className={cn(
           "w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200",
-          selectable ? "hover:bg-primary/20 cursor-pointer" : "text-muted-foreground/40 cursor-not-allowed",
-          selected && "bg-primary text-primary-foreground hover:bg-primary"
+          selectable ? "hover:bg-[#43c7cd]/20 cursor-pointer" : "text-muted-foreground/40 cursor-not-allowed",
+          selected && "bg-[#43c7cd] text-white hover:bg-[#43c7cd]"
         )}
       >
         {day}
@@ -91,7 +91,7 @@ export function DateTimeStep({ selectedDate, selectedTime, onSelectDate, onSelec
             <ChevronLeft className="w-4 h-4" />
             <span className="text-sm">Mes Ant.</span>
           </button>
-          <h2 className="text-lg font-semibold text-primary capitalize">
+          <h2 className="text-lg font-semibold text-[#43c7cd] capitalize">
             {monthName}
           </h2>
           <button 
@@ -109,7 +109,7 @@ export function DateTimeStep({ selectedDate, selectedTime, onSelectDate, onSelec
               key={day} 
               className={cn(
                 "w-10 h-8 flex items-center justify-center text-xs font-semibold",
-                index < 5 ? "text-primary" : "text-muted-foreground"
+                index < 5 ? "text-[#43c7cd]" : "text-muted-foreground"
               )}
             >
               {day}
@@ -134,9 +134,9 @@ export function DateTimeStep({ selectedDate, selectedTime, onSelectDate, onSelec
                 onClick={() => onSelectTime(time)}
                 className={cn(
                   "px-6 py-3 rounded-xl border-2 font-medium transition-all duration-200",
-                  "hover:border-primary hover:bg-primary/5",
+                  "hover:border-[#43c7cd] hover:bg-[#43c7cd]/5",
                   selectedTime === time 
-                    ? "border-primary bg-primary text-primary-foreground" 
+                    ? "border-[#43c7cd] bg-[#43c7cd] text-white" 
                     : "border-border bg-card text-foreground"
                 )}
               >
@@ -155,7 +155,7 @@ export function DateTimeStep({ selectedDate, selectedTime, onSelectDate, onSelec
         <div className="mt-6 flex justify-end">
           <Button 
             onClick={onContinue}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground px-8"
+            className="bg-[#43c7cd] hover:bg-[#f9c74f] hover:text-foreground text-white px-8 rounded-xl font-semibold transition-colors"
           >
             Siguiente
           </Button>

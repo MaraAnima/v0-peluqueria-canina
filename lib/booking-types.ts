@@ -178,7 +178,6 @@ export const STEPS = [
   { id: 2, name: "Categoría" },
   { id: 3, name: "Servicio" },
   { id: 4, name: "Servicios extra" },
-  { id: 5, name: "Profesional" },
-  { id: 6, name: "Hora" },
-  { id: 7, name: "Cliente" }
+  { id: 5, name: "Hora" },
+  { id: 6, name: "Cliente" }
 ]

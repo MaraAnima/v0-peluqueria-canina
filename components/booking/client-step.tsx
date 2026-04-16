@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Service, ExtraService, Professional } from "@/lib/booking-types"
+import { Service, ExtraService } from "@/lib/booking-types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -12,7 +12,6 @@ import { ChevronDown } from "lucide-react"
 interface ClientStepProps {
   service: Service | null
   extras: ExtraService[]
-  professional: Professional | null
   date: Date | null
   time: string | null
   location: string
@@ -29,7 +28,6 @@ interface ClientStepProps {
 export function ClientStep({ 
   service, 
   extras, 
-  professional, 
   date, 
   time, 
   location,
@@ -65,7 +63,7 @@ export function ClientStep({
   return (
     <div className="w-full max-w-4xl mx-auto px-4">
       <div className="bg-card rounded-2xl shadow-md p-6 md:p-8">
-        <h2 className="text-xl font-semibold text-primary text-center mb-8">
+        <h2 className="text-xl font-semibold text-[#43c7cd] text-center mb-8">
           Por favor, confirmá los datos
         </h2>
         
@@ -146,21 +144,17 @@ export function ClientStep({
           
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold text-primary">
+              <h3 className="text-lg font-semibold text-[#43c7cd]">
                 {service?.name}
               </h3>
               <div className="mt-4 space-y-2 text-sm">
                 <div className="flex">
                   <span className="text-muted-foreground w-24">Fecha:</span>
-                  <span className="text-primary font-medium">{formattedDate} {time}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">Profesional:</span>
-                  <span className="text-primary font-medium">{professional?.name}</span>
+                  <span className="text-[#43c7cd] font-medium">{formattedDate} {time}</span>
                 </div>
                 <div className="flex">
                   <span className="text-muted-foreground w-24">Ubicación:</span>
-                  <span className="text-primary font-medium">{location}</span>
+                  <span className="text-[#43c7cd] font-medium">{location}</span>
                 </div>
                 <div className="flex">
                   <span className="text-muted-foreground w-24">Categoría:</span>
@@ -204,7 +198,7 @@ export function ClientStep({
                   id="terms"
                   checked={acceptTerms}
                   onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
-                  className="mt-0.5 border-red-500 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                  className="mt-0.5 border-red-500 data-[state=checked]:bg-[#43c7cd] data-[state=checked]:border-[#43c7cd]"
                 />
                 <Label htmlFor="terms" className="text-sm leading-relaxed">
                   Acepto los Términos y condiciones <span className="text-red-500">*</span>
@@ -216,7 +210,7 @@ export function ClientStep({
                   id="sucan-terms"
                   checked={acceptSucanTerms}
                   onCheckedChange={(checked) => setAcceptSucanTerms(checked as boolean)}
-                  className="mt-0.5 border-red-500 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                  className="mt-0.5 border-red-500 data-[state=checked]:bg-[#43c7cd] data-[state=checked]:border-[#43c7cd]"
                 />
                 <Label htmlFor="sucan-terms" className="text-sm leading-relaxed">
                   Acepto los Términos y condiciones de la peluquería <span className="text-red-500">*</span>
@@ -227,7 +221,7 @@ export function ClientStep({
             <Button 
               onClick={handleSubmit}
               disabled={!acceptTerms || !acceptSucanTerms || !formData.name || !formData.email || !formData.phone || !formData.petName}
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-base font-semibold disabled:opacity-50"
+              className="w-full bg-[#43c7cd] hover:bg-[#f9c74f] hover:text-foreground text-white h-12 text-base font-semibold rounded-xl disabled:opacity-50 transition-colors"
             >
               Reservar
             </Button>

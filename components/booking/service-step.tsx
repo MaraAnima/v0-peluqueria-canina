@@ -50,22 +50,22 @@ export function ServiceStep({ services, selected, onSelect }: ServiceStepProps) 
                 />
               </div>
             </div>
-            <div className="p-4 bg-primary">
-              <h3 className="text-base font-semibold text-primary-foreground">
+            <div className="p-4 bg-[#43c7cd]">
+              <h3 className="text-base font-semibold text-white">
                 {service.name}
               </h3>
-              <p className="text-sm text-primary-foreground/80 mt-1">
+              <p className="text-sm text-white/80 mt-1">
                 {service.description}
               </p>
               <div className="flex items-center justify-between mt-2">
-                <span className="text-sm text-primary-foreground/80">
+                <span className="text-sm text-white/80">
                   {service.duration}
                 </span>
-                <span className="text-lg font-bold text-primary-foreground">
+                <span className="text-lg font-bold text-[#f9c74f]">
                   ${service.price}
                 </span>
               </div>
-              <span className="block w-full mt-3 py-2 px-4 bg-white text-primary font-medium rounded-lg text-center group-hover:bg-white/90 transition-colors">
+              <span className="block w-full mt-3 py-2 px-4 bg-white text-[#43c7cd] font-semibold rounded-xl text-center group-hover:bg-[#f9c74f] group-hover:text-foreground transition-colors">
                 Seleccionar
               </span>
             </div>
