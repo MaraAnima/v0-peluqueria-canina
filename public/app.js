@@ -35,7 +35,9 @@ const STEPS = [
 ];
 
 // Horarios disponibles (deben coincidir con AppScript)
+// Cada cita dura 2 horas, asi que los slots son cada 2 horas
 const TIME_SLOTS = ['12:00', '14:00', '16:00', '18:00'];
+const SLOT_DURATION_HOURS = 2; // Duracion de cada cita en horas
 
 // URL del AppScript - REEMPLAZAR CON TU URL
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzrWn3tLUZql0AKYnDgta_iKVQodsEOYGQArKIIQ0ECxle9AuvWd6Pnc5BaUjD6c5aiMg/exec';
@@ -186,23 +188,23 @@ function renderContactStep(container) {
     <p class="step-subtitle">Contanos como podemos contactarte</p>
     
     <div class="form-group">
-      <label class="form-label">Tu nombre</label>
+      <label class="form-label">Tu nombre <span style="color: #ef4444;">*</span></label>
       <div class="input-icon-wrapper">
         <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
           <circle cx="12" cy="7" r="4"/>
         </svg>
-        <input type="text" class="form-input" id="client-name" placeholder="Ej: Maria Garcia" value="${bookingData.clientName}">
+        <input type="text" class="form-input" id="client-name" placeholder="Ej: Maria Garcia (mas de 3 letras, sin numeros)" value="${bookingData.clientName}">
       </div>
     </div>
     
     <div class="form-group">
-      <label class="form-label">Tu telefono</label>
+      <label class="form-label">Tu telefono <span style="color: #ef4444;">*</span></label>
       <div class="input-icon-wrapper">
         <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
         </svg>
-        <input type="tel" class="form-input" id="client-phone" placeholder="Ej: 11 1234-5678" value="${bookingData.clientPhone}">
+        <input type="tel" class="form-input" id="client-phone" placeholder="Ej: 11 1234-5678 (minimo 6 digitos)" value="${bookingData.clientPhone}">
       </div>
     </div>
     
@@ -213,9 +215,29 @@ function renderContactStep(container) {
 function saveContactAndNext() {
   const name = document.getElementById('client-name').value.trim();
   const phone = document.getElementById('client-phone').value.trim();
-
-  if (!name || !phone) {
-    alert('Por favor completa todos los campos');
+  
+  // Validacion del nombre
+  if (!name) {
+    alert('El nombre es obligatorio');
+    return;
+  }
+  if (name.length <= 3) {
+    alert('El nombre debe tener mas de 3 letras');
+    return;
+  }
+  if (/\d/.test(name)) {
+    alert('El nombre no puede contener numeros');
+    return;
+  }
+  
+  // Validacion del telefono
+  if (!phone) {
+    alert('El telefono es obligatorio');
+    return;
+  }
+  const digitsOnly = phone.replace(/\D/g, '');
+  if (digitsOnly.length < 6) {
+    alert('El telefono debe tener al menos 6 digitos');
     return;
   }
 
@@ -362,7 +384,15 @@ function calculateDuration() {
 }
 
 // ==================== STEP 5: DATE & TIME ====================
+// Variable para indicar si estamos cargando horarios
+let isLoadingSlots = false;
+
 function renderDateTimeStep(container) {
+  // Asegurarse de que estamos en el paso correcto
+  if (currentStep !== 5) {
+    
+    return;
+  }
   const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
   const dayNames = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'];
@@ -438,11 +468,17 @@ function renderDateTimeStep(container) {
     ${bookingData.date ? `
       <h3 style="margin: 20px 0 12px; font-family: 'Fredoka', sans-serif; font-size: 1.1rem;">Horarios disponibles</h3>
       <div class="time-slots">
-        ${availableTimeSlots.length > 0 ? availableTimeSlots.map(time => `
-          <button class="time-slot ${bookingData.time === time ? 'selected' : ''}" onclick="selectTime('${time}')">
-            ${time}
-          </button>
-        `).join('') : '<p style="text-align: center; color: var(--text-muted); grid-column: 1/-1;">No hay horarios disponibles para esta fecha</p>'}
+        ${isLoadingSlots 
+          ? '<p style="text-align: center; color: var(--text-muted); grid-column: 1/-1;">Cargando horarios...</p>'
+          : (availableTimeSlots.length > 0 
+              ? availableTimeSlots.map(time => `
+                  <button class="time-slot ${bookingData.time === time ? 'selected' : ''}" onclick="selectTime('${time}')">
+                    ${time}
+                  </button>
+                `).join('') 
+              : '<p style="text-align: center; color: var(--text-muted); grid-column: 1/-1;">No hay horarios disponibles para esta fecha</p>'
+            )
+        }
       </div>
     ` : ''}
     
@@ -453,6 +489,7 @@ function renderDateTimeStep(container) {
 }
 
 function changeMonth(delta) {
+  if (currentStep !== 5) return;
   currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + delta, 1);
   renderDateTimeStep(document.getElementById('step-content'));
 }
@@ -461,19 +498,31 @@ function changeMonth(delta) {
 let availableTimeSlots = [...TIME_SLOTS];
 
 async function selectDate(year, month, day) {
+  // Verificar que seguimos en el paso correcto
+  if (currentStep !== 5) {
+    
+    return;
+  }
+  
   bookingData.date = new Date(year, month, day);
   bookingData.time = null;
+  isLoadingSlots = true;
 
-  // Mostrar loading mientras cargamos horarios
+  // Re-renderizar para mostrar loading
   const container = document.getElementById('step-content');
-  const timeSlotsContainer = container.querySelector('.time-slots');
-  if (timeSlotsContainer) {
-    timeSlotsContainer.innerHTML = '<p style="text-align: center; color: var(--text-muted);">Cargando horarios...</p>';
-  }
+  renderDateTimeStep(container);
 
   // Cargar horarios disponibles del AppScript
   await loadAvailableSlots();
+  
+  isLoadingSlots = false;
 
+  // Verificar que seguimos en el paso correcto despues de la carga async
+  if (currentStep !== 5) {
+    
+    return;
+  }
+  
   renderDateTimeStep(container);
 }
 
@@ -510,6 +559,7 @@ async function loadAvailableSlots() {
 }
 
 function selectTime(time) {
+  if (currentStep !== 5) return;
   bookingData.time = time;
   renderDateTimeStep(document.getElementById('step-content'));
 }
@@ -521,7 +571,7 @@ function renderPetStep(container) {
     <p class="step-subtitle">Queremos conocer mejor a tu mascota</p>
     
     <div class="form-group">
-      <label class="form-label">Como se llama tu mascota?</label>
+      <label class="form-label">Como se llama tu mascota? <span style="color: #ef4444;">*</span></label>
       <div class="input-icon-wrapper">
         <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2a4 4 0 0 1 4 4c0 1.5-.8 2.8-2 3.5v1l3 3.5c.7.8 1 1.9 1 3v3H6v-3c0-1.1.3-2.2 1-3l3-3.5v-1c-1.2-.7-2-2-2-3.5a4 4 0 0 1 4-4z"/>
@@ -531,7 +581,7 @@ function renderPetStep(container) {
     </div>
     
     <div class="form-group">
-      <label class="form-label">Hay algo que debamos saber?</label>
+      <label class="form-label">Hay algo que debamos saber? <span style="color: var(--text-muted); font-weight: normal;">(opcional)</span></label>
       <textarea class="form-textarea" id="pet-notes" placeholder="Contanos si tiene algun miedo, alergia, o algo especial que debamos tener en cuenta...">${bookingData.petNotes}</textarea>
     </div>
     
@@ -544,7 +594,7 @@ function savePetAndNext() {
   const notes = document.getElementById('pet-notes').value.trim();
 
   if (!name) {
-    alert('Por favor ingresa el nombre de tu mascota');
+    alert('El nombre de la mascota es obligatorio');
     return;
   }
 
