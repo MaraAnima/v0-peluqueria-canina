@@ -122,18 +122,60 @@ function renderStep() {
 
 function renderProgressSteps() {
   const container = document.getElementById('progress-steps');
+  
+  // Get completed step values
+  const completedValues = {
+    1: bookingData.clientName || null,
+    2: bookingData.category?.name || null,
+    3: bookingData.service?.name?.replace('Bano ', '') || null,
+    4: bookingData.extras.length > 0 ? bookingData.extras.map(e => e.name.split(' ')[0]).join(', ') : null,
+    5: bookingData.date && bookingData.time ? `${formatDate(bookingData.date)} ${bookingData.time}` : null,
+    6: bookingData.petName || null
+  };
+  
   container.innerHTML = STEPS.map((step, i) => {
-    let className = 'step-pill';
-    if (step.id === currentStep) className += ' active';
-    else if (step.id < currentStep) className += ' completed';
+    const isCompleted = step.id < currentStep;
+    const isActive = step.id === currentStep;
+    let className = 'step-item';
+    if (isActive) className += ' active';
+    else if (isCompleted) className += ' completed';
     
-    return `
+    const completedValue = completedValues[step.id];
+    
+    const stepHtml = `
       <div class="${className}">
-        <span class="step-number">${step.id}</span>
-        <span class="step-name">${step.name}</span>
+        <div class="step-item-content">
+          <div class="step-header">
+            ${isCompleted ? `
+              <svg class="step-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            ` : ''}
+            <span class="step-name">${step.name}</span>
+          </div>
+          ${completedValue ? `<span class="step-value">${completedValue}</span>` : ''}
+        </div>
       </div>
     `;
+    
+    // Add separator except for last item
+    if (i < STEPS.length - 1) {
+      return stepHtml + `
+        <div class="step-separator">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 6l6 6-6 6"/>
+          </svg>
+        </div>
+      `;
+    }
+    return stepHtml;
   }).join('');
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
 }
 
 // ==================== STEP 1: CONTACT ====================
