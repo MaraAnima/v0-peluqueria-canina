@@ -4,31 +4,41 @@ const CATEGORIES = [
   { id: 'pelo-largo', name: 'Pelo largo', image: 'images/pelo-largo.jpg' }
 ];
 
-const SERVICES = [
-  // Pelo corto
-  { id: 'bano-s', name: 'Baño (S)', description: 'Hasta 10 kg', duration: '1 h', price: 850, categoryId: 'pelo-corto', size: 'S' },
-  { id: 'bano-m', name: 'Baño (M)', description: '10 kg a 20 kg', duration: '1 h', price: 950, categoryId: 'pelo-corto', size: 'M' },
-  { id: 'bano-l', name: 'Baño (L)', description: '20 kg a 40 kg', duration: '1 h 30 min', price: 1000, categoryId: 'pelo-corto', size: 'L' },
-  { id: 'bano-xl', name: 'Baño (XL)', description: '40 kg o más', duration: '2 h', price: 1250, categoryId: 'pelo-corto', size: 'XL' },
-  // Pelo largo
-  { id: 'bano-s-largo', name: 'Baño (S)', description: 'Hasta 10 kg', duration: '1 h 30 min', price: 1000, categoryId: 'pelo-largo', size: 'S' },
-  { id: 'bano-m-largo', name: 'Baño (M)', description: '10 kg a 20 kg', duration: '1 h 30 min', price: 1100, categoryId: 'pelo-largo', size: 'M' },
-  { id: 'bano-l-largo', name: 'Baño (L)', description: '20 kg a 40 kg', duration: '2 h', price: 1200, categoryId: 'pelo-largo', size: 'L' },
-  { id: 'bano-xl-largo', name: 'Baño (XL)', description: '40 kg o más', duration: '2 h 30 min', price: 1450, categoryId: 'pelo-largo', size: 'XL' }
+// Tipos de servicio
+const SERVICE_TYPES = [
+  { id: 'bano', name: 'Baño', description: 'Baño completo con secado', extraPrice: 0 },
+  { id: 'bano-corte', name: 'Baño y corte', description: 'Baño completo + corte de pelo', extraPrice: 300 }
 ];
 
-const EXTRAS = [
-  { id: 'corte-unas', name: 'Corte de uñas', description: 'Corte seguro y profesional', price: 150, duration: '15 min' },
-  { id: 'limpieza-oidos', name: 'Limpieza de oídos', description: 'Limpieza suave y cuidadosa', price: 100, duration: '10 min' },
-  { id: 'perfume', name: 'Perfume premium', description: 'Fragancia duradera', price: 80, duration: '5 min' },
-  { id: 'desenredado', name: 'Desenredado especial', description: 'Para pelo muy enredado', price: 200, duration: '20 min' }
+// Tamaños con precios base (pelo corto)
+const SIZES = [
+  // Pelo corto - Baño
+  { id: 'bano-s', size: 'S', description: 'Hasta 10 kg', duration: '1 h', price: 850, categoryId: 'pelo-corto', serviceTypeId: 'bano' },
+  { id: 'bano-m', size: 'M', description: '10 kg a 20 kg', duration: '1 h', price: 950, categoryId: 'pelo-corto', serviceTypeId: 'bano' },
+  { id: 'bano-l', size: 'L', description: '20 kg a 40 kg', duration: '1 h 30 min', price: 1000, categoryId: 'pelo-corto', serviceTypeId: 'bano' },
+  { id: 'bano-xl', size: 'XL', description: '40 kg o más', duration: '2 h', price: 1250, categoryId: 'pelo-corto', serviceTypeId: 'bano' },
+  // Pelo corto - Baño y corte
+  { id: 'bano-corte-s', size: 'S', description: 'Hasta 10 kg', duration: '1 h 30 min', price: 1150, categoryId: 'pelo-corto', serviceTypeId: 'bano-corte' },
+  { id: 'bano-corte-m', size: 'M', description: '10 kg a 20 kg', duration: '1 h 30 min', price: 1250, categoryId: 'pelo-corto', serviceTypeId: 'bano-corte' },
+  { id: 'bano-corte-l', size: 'L', description: '20 kg a 40 kg', duration: '2 h', price: 1300, categoryId: 'pelo-corto', serviceTypeId: 'bano-corte' },
+  { id: 'bano-corte-xl', size: 'XL', description: '40 kg o más', duration: '2 h 30 min', price: 1550, categoryId: 'pelo-corto', serviceTypeId: 'bano-corte' },
+  // Pelo largo - Baño
+  { id: 'bano-s-largo', size: 'S', description: 'Hasta 10 kg', duration: '1 h 30 min', price: 1000, categoryId: 'pelo-largo', serviceTypeId: 'bano' },
+  { id: 'bano-m-largo', size: 'M', description: '10 kg a 20 kg', duration: '1 h 30 min', price: 1100, categoryId: 'pelo-largo', serviceTypeId: 'bano' },
+  { id: 'bano-l-largo', size: 'L', description: '20 kg a 40 kg', duration: '2 h', price: 1200, categoryId: 'pelo-largo', serviceTypeId: 'bano' },
+  { id: 'bano-xl-largo', size: 'XL', description: '40 kg o más', duration: '2 h 30 min', price: 1450, categoryId: 'pelo-largo', serviceTypeId: 'bano' },
+  // Pelo largo - Baño y corte
+  { id: 'bano-corte-s-largo', size: 'S', description: 'Hasta 10 kg', duration: '2 h', price: 1300, categoryId: 'pelo-largo', serviceTypeId: 'bano-corte' },
+  { id: 'bano-corte-m-largo', size: 'M', description: '10 kg a 20 kg', duration: '2 h', price: 1400, categoryId: 'pelo-largo', serviceTypeId: 'bano-corte' },
+  { id: 'bano-corte-l-largo', size: 'L', description: '20 kg a 40 kg', duration: '2 h 30 min', price: 1500, categoryId: 'pelo-largo', serviceTypeId: 'bano-corte' },
+  { id: 'bano-corte-xl-largo', size: 'XL', description: '40 kg o más', duration: '3 h', price: 1750, categoryId: 'pelo-largo', serviceTypeId: 'bano-corte' }
 ];
 
 const STEPS = [
   { id: 1, name: 'Contacto' },
-  { id: 2, name: 'Categoria' },
+  { id: 2, name: 'Categoría' },
   { id: 3, name: 'Servicio' },
-  { id: 4, name: 'Extras' },
+  { id: 4, name: 'Tamaño' },
   { id: 5, name: 'Hora' },
   { id: 6, name: 'Mascota' },
   { id: 7, name: 'Confirmar' }
@@ -48,8 +58,8 @@ let bookingData = {
   clientName: '',
   clientPhone: '',
   category: null,
-  service: null,
-  extras: [],
+  serviceType: null,
+  size: null,
   date: null,
   time: null,
   petName: '',
@@ -92,8 +102,8 @@ function resetBooking() {
     clientName: '',
     clientPhone: '',
     category: null,
-    service: null,
-    extras: [],
+    serviceType: null,
+    size: null,
     date: null,
     time: null,
     petName: '',
@@ -111,8 +121,8 @@ function renderStep() {
   switch (currentStep) {
     case 1: renderContactStep(content); break;
     case 2: renderCategoryStep(content); break;
-    case 3: renderServiceStep(content); break;
-    case 4: renderExtrasStep(content); break;
+    case 3: renderServiceTypeStep(content); break;
+    case 4: renderSizeStep(content); break;
     case 5: renderDateTimeStep(content); break;
     case 6: renderPetStep(content); break;
     case 7: renderSummaryStep(content); break;
@@ -130,8 +140,8 @@ function renderProgressSteps() {
   const completedValues = {
     1: bookingData.clientName || null,
     2: bookingData.category?.name || null,
-    3: bookingData.service?.name?.replace('Baño ', '') || null,
-    4: bookingData.extras.length > 0 ? bookingData.extras.map(e => e.name.split(' ')[0]).join(', ') : null,
+    3: bookingData.serviceType?.name || null,
+    4: bookingData.size?.size || null,
     5: bookingData.date && bookingData.time ? `${formatDate(bookingData.date)} ${bookingData.time}` : null,
     6: bookingData.petName || null
   };
@@ -265,118 +275,108 @@ function renderCategoryStep(container) {
 
 function selectCategory(categoryId) {
   bookingData.category = CATEGORIES.find(c => c.id === categoryId);
-  bookingData.service = null; // Reset service when category changes
+  bookingData.serviceType = null; // Reset service type when category changes
+  bookingData.size = null; // Reset size when category changes
   setTimeout(nextStep, 200);
 }
 
-// ==================== STEP 3: SERVICE ====================
-function renderServiceStep(container) {
-  const services = SERVICES.filter(s => s.categoryId === bookingData.category?.id);
+// ==================== STEP 3: SERVICE TYPE ====================
+function renderServiceTypeStep(container) {
+  container.innerHTML = `
+    <h2 class="step-title">Tipo de servicio</h2>
+    <p class="step-subtitle">Elige el servicio que necesitas</p>
+    
+    <div class="service-type-list">
+      ${SERVICE_TYPES.map(serviceType => `
+        <div class="service-type-card ${bookingData.serviceType?.id === serviceType.id ? 'selected' : ''}" onclick="selectServiceType('${serviceType.id}')">
+          <div class="service-type-icon">
+            ${serviceType.id === 'bano' ? `
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 12h16M4 12a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2M4 12V8a4 4 0 0 1 4-4h.5"/>
+                <circle cx="12" cy="8" r="2"/>
+                <path d="M14 8h4"/>
+              </svg>
+            ` : `
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="6" cy="6" r="3"/>
+                <path d="M8.12 8.12L12 12"/>
+                <path d="M20 4L8.12 15.88"/>
+                <path d="M14.47 14.48L20 20"/>
+                <path d="M8.12 8.12L6 14l6-2-3.88 3.88"/>
+              </svg>
+            `}
+          </div>
+          <div class="service-type-info">
+            <h3>${serviceType.name}</h3>
+            <p>${serviceType.description}</p>
+          </div>
+          ${serviceType.extraPrice > 0 ? `<div class="service-type-badge">+$${serviceType.extraPrice}</div>` : ''}
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function selectServiceType(serviceTypeId) {
+  bookingData.serviceType = SERVICE_TYPES.find(s => s.id === serviceTypeId);
+  bookingData.size = null; // Reset size when service type changes
+  setTimeout(nextStep, 200);
+}
+
+// ==================== STEP 4: SIZE ====================
+function renderSizeStep(container) {
+  const sizes = SIZES.filter(s => 
+    s.categoryId === bookingData.category?.id && 
+    s.serviceTypeId === bookingData.serviceType?.id
+  );
 
   container.innerHTML = `
-    <h2 class="step-title">Tamano de tu mascota</h2>
-    <p class="step-subtitle">Selecciona segun el peso</p>
+    <h2 class="step-title">Tamaño de tu mascota</h2>
+    <p class="step-subtitle">Selecciona según el peso</p>
     
     <div class="service-list">
-      ${services.map(service => `
-        <div class="service-card ${bookingData.service?.id === service.id ? 'selected' : ''}" onclick="selectService('${service.id}')">
+      ${sizes.map(size => `
+        <div class="service-card ${bookingData.size?.id === size.id ? 'selected' : ''}" onclick="selectSize('${size.id}')">
           <div class="service-icon">
-            <span style="font-size: 1.5rem; font-weight: bold; color: var(--primary-blue);">${service.size}</span>
+            <span style="font-size: 1.5rem; font-weight: bold; color: var(--primary-blue);">${size.size}</span>
           </div>
           <div class="service-info">
-            <h3>${service.name}</h3>
-            <p>${service.description}</p>
+            <h3>${size.size === 'S' ? 'Pequeño' : size.size === 'M' ? 'Mediano' : size.size === 'L' ? 'Grande' : 'Extra Grande'}</h3>
+            <p>${size.description}</p>
             <div class="service-meta">
               <span>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <circle cx="12" cy="12" r="10"/>
                   <path d="M12 6v6l4 2"/>
                 </svg>
-                ${service.duration}
+                ${size.duration}
               </span>
             </div>
           </div>
-          <div class="service-price">$${service.price}</div>
+          <div class="service-price">$${size.price}</div>
         </div>
       `).join('')}
     </div>
   `;
 }
 
-function selectService(serviceId) {
-  bookingData.service = SERVICES.find(s => s.id === serviceId);
+function selectSize(sizeId) {
+  bookingData.size = SIZES.find(s => s.id === sizeId);
   setTimeout(nextStep, 200);
 }
 
-// ==================== STEP 4: EXTRAS ====================
-function renderExtrasStep(container) {
-  const subtotal = calculateSubtotal();
-  const duration = calculateDuration();
-
-  container.innerHTML = `
-    <h2 class="step-title">Servicios adicionales</h2>
-    <p class="step-subtitle">Mejora la experiencia de tu mascota</p>
-    
-    <div class="extras-list">
-      ${EXTRAS.map(extra => `
-        <div class="extra-card ${bookingData.extras.find(e => e.id === extra.id) ? 'selected' : ''}" onclick="toggleExtra('${extra.id}')">
-          <div class="extra-checkbox">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-              <path d="M20 6L9 17l-5-5"/>
-            </svg>
-          </div>
-          <div class="extra-info">
-            <h3>${extra.name}</h3>
-            <p>${extra.description} - ${extra.duration}</p>
-          </div>
-          <div class="extra-price">+$${extra.price}</div>
-        </div>
-      `).join('')}
-    </div>
-    
-    <div class="subtotal-bar">
-      <div class="subtotal-info">
-        <span class="duration">${duration}</span>
-        <span class="price">$${subtotal}</span>
-      </div>
-      <button class="continue-btn" style="width: auto; margin: 0; padding: 12px 24px;" onclick="nextStep()">
-        Continuar
-      </button>
-    </div>
-  `;
-}
-
-function toggleExtra(extraId) {
-  const extra = EXTRAS.find(e => e.id === extraId);
-  const index = bookingData.extras.findIndex(e => e.id === extraId);
-
-  if (index > -1) {
-    bookingData.extras.splice(index, 1);
-  } else {
-    bookingData.extras.push(extra);
-  }
-
-  renderExtrasStep(document.getElementById('step-content'));
-}
-
 function calculateSubtotal() {
-  let total = bookingData.service?.price || 0;
-  bookingData.extras.forEach(e => total += e.price);
-  return total;
+  return bookingData.size?.price || 0;
 }
 
 function calculateDuration() {
   let minutes = 0;
-  if (bookingData.service) {
-    const match = bookingData.service.duration.match(/(\d+)\s*h/);
+  if (bookingData.size) {
+    const match = bookingData.size.duration.match(/(\d+)\s*h/);
     if (match) minutes += parseInt(match[1]) * 60;
-    const minMatch = bookingData.service.duration.match(/(\d+)\s*min/);
+    const minMatch = bookingData.size.duration.match(/(\d+)\s*min/);
     if (minMatch) minutes += parseInt(minMatch[1]);
   }
-  bookingData.extras.forEach(e => {
-    const match = e.duration.match(/(\d+)/);
-    if (match) minutes += parseInt(match[1]);
-  });
 
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
@@ -670,7 +670,11 @@ function renderSummaryStep(container) {
       </h3>
       <div class="summary-row">
         <span class="summary-label">Servicio</span>
-        <span class="summary-value">${bookingData.service?.name} - ${bookingData.category?.name}</span>
+        <span class="summary-value">${bookingData.serviceType?.name}</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Tamaño</span>
+        <span class="summary-value">${bookingData.size?.size} (${bookingData.size?.description})</span>
       </div>
       <div class="summary-row">
         <span class="summary-label">Fecha</span>
@@ -681,15 +685,9 @@ function renderSummaryStep(container) {
         <span class="summary-value">${bookingData.time}</span>
       </div>
       <div class="summary-row">
-        <span class="summary-label">Duracion</span>
+        <span class="summary-label">Duración</span>
         <span class="summary-value">${duration}</span>
       </div>
-      ${bookingData.extras.length > 0 ? `
-        <div class="summary-row">
-          <span class="summary-label">Extras</span>
-          <span class="summary-value">${bookingData.extras.map(e => e.name).join(', ')}</span>
-        </div>
-      ` : ''}
       
       <div class="summary-total">
         <span class="summary-label">Precio estimado</span>
@@ -776,12 +774,11 @@ async function confirmBooking() {
       telefono: bookingData.clientPhone,
       fecha: fecha,
       hora: bookingData.time,
-      servicio: bookingData.service?.name || '',
-      tamano: bookingData.service?.size || '',
+      servicio: bookingData.serviceType?.name || '',
+      tamano: bookingData.size?.size || '',
       pelaje: bookingData.category?.name || '',
       nombreMascota: bookingData.petName,
       notasMascota: bookingData.petNotes,
-      extras: bookingData.extras.map(e => e.name),
       duracion: calculateDuration(),
       precio: calculateSubtotal()
     };
@@ -825,12 +822,11 @@ async function confirmBooking() {
         telefono: bookingData.clientPhone,
         fecha: fecha,
         hora: bookingData.time,
-        servicio: bookingData.service?.name || '',
-        tamano: bookingData.service?.size || '',
+        servicio: bookingData.serviceType?.name || '',
+        tamano: bookingData.size?.size || '',
         pelaje: bookingData.category?.name || '',
         nombreMascota: bookingData.petName,
         notasMascota: bookingData.petNotes,
-        extras: bookingData.extras.map(e => e.name),
         duracion: calculateDuration(),
         precio: calculateSubtotal()
       };

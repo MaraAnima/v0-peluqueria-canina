@@ -1722,3 +1722,79 @@ body {
 .terms-text a:hover {
   color: var(--primary-blue);
 }
+
+/* Service Type Cards */
+.service-type-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.service-type-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: var(--white);
+  border: 2px solid var(--bubble-medium);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.service-type-card:hover {
+  border-color: var(--accent-cyan);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(67, 199, 205, 0.15);
+}
+
+.service-type-card.selected {
+  border-color: var(--accent-cyan);
+  background: linear-gradient(135deg, rgba(67, 199, 205, 0.08), rgba(67, 199, 205, 0.02));
+}
+
+.service-type-icon {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, var(--bubble-light), var(--bubble-medium));
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.service-type-icon svg {
+  stroke: var(--accent-cyan);
+}
+
+.service-type-info {
+  flex: 1;
+}
+
+.service-type-info h3 {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 4px;
+}
+
+.service-type-info p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.service-type-badge {
+  position: absolute;
+  top: -8px;
+  right: 12px;
+  background: var(--accent-yellow);
+  color: var(--text-dark);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
