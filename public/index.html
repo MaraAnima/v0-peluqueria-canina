@@ -313,6 +313,27 @@
     </div>
   </section>
 
+  <!-- Custom Modal Popup -->
+  <div id="custom-modal" class="modal-overlay">
+    <div class="modal-container">
+      <button class="modal-close" onclick="closeModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+      </button>
+      <div class="modal-icon" id="modal-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+      <h3 class="modal-title" id="modal-title">Aviso</h3>
+      <div class="modal-content" id="modal-content"></div>
+      <button class="modal-btn" onclick="closeModal()">Entendido</button>
+    </div>
+  </div>
+
   <script src="app.js"></script>
 </body>
 </html>

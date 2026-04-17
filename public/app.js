@@ -68,6 +68,90 @@ let bookingData = {
 
 let currentMonth = new Date();
 
+// ==================== MODAL FUNCTIONS ====================
+function showModal(message, type = 'info', title = 'Aviso') {
+  const modal = document.getElementById('custom-modal');
+  const modalTitle = document.getElementById('modal-title');
+  const modalContent = document.getElementById('modal-content');
+  const modalIcon = document.getElementById('modal-icon');
+  
+  modalTitle.textContent = title;
+  modalContent.textContent = message;
+  modalContent.classList.remove('terms-content');
+  
+  // Reset icon classes
+  modalIcon.className = 'modal-icon';
+  
+  // Set icon based on type
+  if (type === 'error') {
+    modalIcon.classList.add('error');
+    modalIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="15" y1="9" x2="9" y2="15"/>
+      <line x1="9" y1="9" x2="15" y2="15"/>
+    </svg>`;
+  } else if (type === 'warning') {
+    modalIcon.classList.add('warning');
+    modalIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/>
+      <line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>`;
+  } else {
+    modalIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="12" y1="8" x2="12" y2="12"/>
+      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>`;
+  }
+  
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function showTermsModal(content) {
+  const modal = document.getElementById('custom-modal');
+  const modalTitle = document.getElementById('modal-title');
+  const modalContent = document.getElementById('modal-content');
+  const modalIcon = document.getElementById('modal-icon');
+  
+  modalTitle.textContent = 'Terminos y Condiciones';
+  modalContent.innerHTML = content;
+  modalContent.classList.add('terms-content');
+  
+  modalIcon.className = 'modal-icon info';
+  modalIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <polyline points="14 2 14 8 20 8"/>
+    <line x1="16" y1="13" x2="8" y2="13"/>
+    <line x1="16" y1="17" x2="8" y2="17"/>
+  </svg>`;
+  
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  const modal = document.getElementById('custom-modal');
+  modal.classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+// Close modal on overlay click
+document.addEventListener('click', function(e) {
+  const modal = document.getElementById('custom-modal');
+  if (e.target === modal) {
+    closeModal();
+  }
+});
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeModal();
+  }
+});
+
 // ==================== NAVIGATION ====================
 function showScreen(screenId) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -228,26 +312,26 @@ function saveContactAndNext() {
 
   // Validacion del nombre
   if (!name) {
-    alert('El nombre es obligatorio');
+    showModal('El nombre es obligatorio', 'error', 'Campo requerido');
     return;
   }
   if (name.length <= 3) {
-    alert('El nombre debe tener mas de 3 letras');
+    showModal('El nombre debe tener mas de 3 letras', 'error', 'Nombre invalido');
     return;
   }
   if (/\d/.test(name)) {
-    alert('El nombre no puede contener numeros');
+    showModal('El nombre no puede contener numeros', 'error', 'Nombre invalido');
     return;
   }
 
   // Validacion del telefono
   if (!phone) {
-    alert('El telefono es obligatorio');
+    showModal('El telefono es obligatorio', 'error', 'Campo requerido');
     return;
   }
   const digitsOnly = phone.replace(/\D/g, '');
   if (digitsOnly.length < 6) {
-    alert('El telefono debe tener al menos 6 digitos');
+    showModal('El telefono debe tener al menos 6 digitos', 'error', 'Telefono invalido');
     return;
   }
 
@@ -593,7 +677,7 @@ function savePetAndNext() {
   const notes = document.getElementById('pet-notes').value.trim();
 
   if (!name) {
-    alert('El nombre de la mascota es obligatorio');
+    showModal('El nombre de la mascota es obligatorio', 'error', 'Campo requerido');
     return;
   }
 
@@ -713,29 +797,32 @@ function renderSummaryStep(container) {
 
 function showTerms(event) {
   event.preventDefault();
-  alert(`TÉRMINOS Y CONDICIONES DE TRGROOMING
-
-1. RESERVAS
-- Las reservas deben realizarse con al menos 24 horas de anticipación.
-- La confirmación de la reserva está sujeta a disponibilidad.
-
-2. CANCELACIONES
-- Las cancelaciones deben realizarse con al menos 12 horas de anticipación.
-- Cancelaciones tardías pueden generar cargos.
-
-3. MASCOTAS
-- Las mascotas deben estar al día con sus vacunas.
-- Por seguridad, no atendemos mascotas agresivas sin aviso previo.
-
-4. PAGOS
-- El pago se realiza al finalizar el servicio.
-- Aceptamos efectivo y transferencias.
-
-5. RESPONSABILIDAD
-- TRGrooming no se hace responsable por condiciones preexistentes no informadas.
-- Cualquier lesión o problema de salud detectado será comunicado inmediatamente.
-
-Al confirmar tu reserva, aceptas estos términos y condiciones.`);
+  const termsContent = `
+    <strong>TERMINOS Y CONDICIONES DE TRGROOMING</strong><br><br>
+    
+    <strong>1. RESERVAS</strong><br>
+    - Las reservas deben realizarse con al menos 24 horas de anticipacion.<br>
+    - La confirmacion de la reserva esta sujeta a disponibilidad.<br><br>
+    
+    <strong>2. CANCELACIONES</strong><br>
+    - Las cancelaciones deben realizarse con al menos 12 horas de anticipacion.<br>
+    - Cancelaciones tardias pueden generar cargos.<br><br>
+    
+    <strong>3. MASCOTAS</strong><br>
+    - Las mascotas deben estar al dia con sus vacunas.<br>
+    - Por seguridad, no atendemos mascotas agresivas sin aviso previo.<br><br>
+    
+    <strong>4. PAGOS</strong><br>
+    - El pago se realiza al finalizar el servicio.<br>
+    - Aceptamos efectivo y transferencias.<br><br>
+    
+    <strong>5. RESPONSABILIDAD</strong><br>
+    - TRGrooming no se hace responsable por condiciones preexistentes no informadas.<br>
+    - Cualquier lesion o problema de salud detectado sera comunicado inmediatamente.<br><br>
+    
+    <em>Al confirmar tu reserva, aceptas estos terminos y condiciones.</em>
+  `;
+  showTermsModal(termsContent);
 }
 
 async function confirmBooking() {
@@ -756,7 +843,7 @@ async function confirmBooking() {
 
     if (checkData.horarios && !checkData.horarios.includes(bookingData.time)) {
       // El horario ya no esta disponible
-      alert('Lo sentimos, el horario ' + bookingData.time + ' ya fue reservado por otra persona. Por favor elige otro horario.');
+      showModal('Lo sentimos, el horario ' + bookingData.time + ' ya fue reservado por otra persona. Por favor elige otro horario.', 'warning', 'Horario no disponible');
       btn.textContent = originalText;
       btn.disabled = false;
       // Volver al paso de fecha/hora para elegir otro
@@ -795,7 +882,7 @@ async function confirmBooking() {
 
     if (result.error) {
       // El servidor retorno un error (ej: horario ya tomado)
-      alert(result.error);
+      showModal(result.error, 'error', 'Error en la reserva');
       btn.textContent = originalText;
       btn.disabled = false;
 
@@ -841,7 +928,7 @@ async function confirmBooking() {
 
       showScreen('confirmation-screen');
     } catch (fallbackError) {
-      alert('Hubo un error al procesar tu reserva. Por favor intenta de nuevo.');
+      showModal('Hubo un error al procesar tu reserva. Por favor intenta de nuevo.', 'error', 'Error');
       btn.textContent = originalText;
       btn.disabled = false;
     }
