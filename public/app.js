@@ -6,8 +6,8 @@ const CATEGORIES = [
 
 // Tipos de servicio
 const SERVICE_TYPES = [
-  { id: 'bano', name: 'Baño', description: 'Baño completo con secado', extraPrice: 0 },
-  { id: 'bano-corte', name: 'Baño y corte', description: 'Baño completo + corte de pelo', extraPrice: 300 }
+  { id: 'bano', name: 'Baño', description: 'Baño completo con secado' },
+  { id: 'bano-corte', name: 'Baño y corte', description: 'Baño completo + corte de pelo' }
 ];
 
 // Tamaños con precios base (pelo corto)
@@ -310,7 +310,6 @@ function renderServiceTypeStep(container) {
             <h3>${serviceType.name}</h3>
             <p>${serviceType.description}</p>
           </div>
-          ${serviceType.extraPrice > 0 ? `<div class="service-type-badge">+$${serviceType.extraPrice}</div>` : ''}
         </div>
       `).join('')}
     </div>
