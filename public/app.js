@@ -50,7 +50,7 @@ const TIME_SLOTS = ['12:00', '14:00', '16:00', '18:00'];
 const SLOT_DURATION_HOURS = 2; // Duracion de cada cita en horas
 
 // URL del AppScript - REEMPLAZAR CON TU URL
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby9I_ZF8pqkYX6WW4NOB-kpx-Tz5AS74Wfv9ZtrzrnuocyogefPkX7RM1fWv-gJqubhNA/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxKSYFPsgLYFTUX6pXkRkL2p881eSJqM9lmXEoPGODXT9uht5Bbcw_0XvygLH9du26cSg/exec';
 
 // ==================== STATE ====================
 let currentStep = 1;
@@ -74,14 +74,14 @@ function showModal(message, type = 'info', title = 'Aviso') {
   const modalTitle = document.getElementById('modal-title');
   const modalContent = document.getElementById('modal-content');
   const modalIcon = document.getElementById('modal-icon');
-  
+
   modalTitle.textContent = title;
   modalContent.textContent = message;
   modalContent.classList.remove('terms-content');
-  
+
   // Reset icon classes
   modalIcon.className = 'modal-icon';
-  
+
   // Set icon based on type
   if (type === 'error') {
     modalIcon.classList.add('error');
@@ -104,7 +104,7 @@ function showModal(message, type = 'info', title = 'Aviso') {
       <line x1="12" y1="16" x2="12.01" y2="16"/>
     </svg>`;
   }
-  
+
   modal.classList.add('active');
   document.body.style.overflow = 'hidden';
 }
@@ -114,11 +114,11 @@ function showTermsModal(content) {
   const modalTitle = document.getElementById('modal-title');
   const modalContent = document.getElementById('modal-content');
   const modalIcon = document.getElementById('modal-icon');
-  
+
   modalTitle.textContent = 'Terminos y Condiciones';
   modalContent.innerHTML = content;
   modalContent.classList.add('terms-content');
-  
+
   modalIcon.className = 'modal-icon info';
   modalIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -126,7 +126,7 @@ function showTermsModal(content) {
     <line x1="16" y1="13" x2="8" y2="13"/>
     <line x1="16" y1="17" x2="8" y2="17"/>
   </svg>`;
-  
+
   modal.classList.add('active');
   document.body.style.overflow = 'hidden';
 }
@@ -138,7 +138,7 @@ function closeModal() {
 }
 
 // Close modal on overlay click
-document.addEventListener('click', function(e) {
+document.addEventListener('click', function (e) {
   const modal = document.getElementById('custom-modal');
   if (e.target === modal) {
     closeModal();
@@ -146,7 +146,7 @@ document.addEventListener('click', function(e) {
 });
 
 // Close modal on Escape key
-document.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', function (e) {
   if (e.key === 'Escape') {
     closeModal();
   }
@@ -408,8 +408,8 @@ function selectServiceType(serviceTypeId) {
 
 // ==================== STEP 4: SIZE ====================
 function renderSizeStep(container) {
-  const sizes = SIZES.filter(s => 
-    s.categoryId === bookingData.category?.id && 
+  const sizes = SIZES.filter(s =>
+    s.categoryId === bookingData.category?.id &&
     s.serviceTypeId === bookingData.serviceType?.id
   );
 
@@ -788,9 +788,9 @@ function renderSummaryStep(container) {
     
     <button class="continue-btn" id="confirm-btn" onclick="confirmBooking()" disabled>Confirmar Reserva</button>
   `;
-  
+
   // Agregar evento al checkbox
-  document.getElementById('terms-checkbox').addEventListener('change', function() {
+  document.getElementById('terms-checkbox').addEventListener('change', function () {
     document.getElementById('confirm-btn').disabled = !this.checked;
   });
 }
