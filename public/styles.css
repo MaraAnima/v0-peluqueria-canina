@@ -231,9 +231,10 @@ body {
 }
 
 .logo-img {
-  width: 420px;
+  width: 500px;
   height: auto;
-  max-width: 100%;
+  max-width: 110%;
+  margin-left: -5%;
   object-fit: contain;
 }
 
@@ -1496,9 +1497,9 @@ body {
 }
 
 .success-logo-img {
-  width: 380px;
+  width: 460px;
   height: auto;
-  max-width: 100%;
+  max-width: 110%;
   object-fit: contain;
 }
 
