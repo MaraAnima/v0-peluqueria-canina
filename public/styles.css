@@ -230,10 +230,11 @@ body {
   justify-content: flex-start;
 }
 
-.logo-svg {
+.logo-img {
   width: 320px;
   height: auto;
   max-width: 100%;
+  object-fit: contain;
 }
 
 .tagline {
@@ -1494,10 +1495,11 @@ body {
   justify-content: center;
 }
 
-.success-logo-svg {
+.success-logo-img {
   width: 280px;
   height: auto;
   max-width: 100%;
+  object-fit: contain;
 }
 
 .success-tagline {
