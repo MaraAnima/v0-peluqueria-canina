@@ -1654,3 +1654,71 @@ body {
 .form-textarea::placeholder {
   color: #a0aec0;
 }
+
+/* Terms and Conditions Checkbox */
+.terms-checkbox-container {
+  margin: 20px 0;
+  padding: 16px;
+  background: var(--bubble-light);
+  border-radius: 12px;
+}
+
+.terms-checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text-dark);
+  line-height: 1.4;
+}
+
+.terms-checkbox {
+  display: none;
+}
+
+.terms-checkbox-custom {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--accent-cyan);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  background: var(--white);
+}
+
+.terms-checkbox-custom::after {
+  content: '';
+  width: 12px;
+  height: 12px;
+  background: var(--accent-cyan);
+  border-radius: 3px;
+  transform: scale(0);
+  transition: transform 0.2s ease;
+}
+
+.terms-checkbox:checked + .terms-checkbox-custom::after {
+  transform: scale(1);
+}
+
+.terms-checkbox:checked + .terms-checkbox-custom {
+  border-color: var(--accent-cyan);
+  background: rgba(67, 199, 205, 0.1);
+}
+
+.terms-text {
+  flex: 1;
+}
+
+.terms-text a {
+  color: var(--accent-cyan);
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+.terms-text a:hover {
+  color: var(--primary-blue);
+}

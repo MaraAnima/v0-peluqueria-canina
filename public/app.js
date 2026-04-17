@@ -6,20 +6,20 @@ const CATEGORIES = [
 
 const SERVICES = [
   // Pelo corto
-  { id: 'bano-s', name: 'Bano (S)', description: 'Hasta 10 kg', duration: '1 h', price: 850, categoryId: 'pelo-corto', size: 'S' },
-  { id: 'bano-m', name: 'Bano (M)', description: '10 kg a 20 kg', duration: '1 h', price: 950, categoryId: 'pelo-corto', size: 'M' },
-  { id: 'bano-l', name: 'Bano (L)', description: '20 kg a 40 kg', duration: '1 h 30 min', price: 1000, categoryId: 'pelo-corto', size: 'L' },
-  { id: 'bano-xl', name: 'Bano (XL)', description: '40 kg o mas', duration: '2 h', price: 1250, categoryId: 'pelo-corto', size: 'XL' },
+  { id: 'bano-s', name: 'Baño (S)', description: 'Hasta 10 kg', duration: '1 h', price: 850, categoryId: 'pelo-corto', size: 'S' },
+  { id: 'bano-m', name: 'Baño (M)', description: '10 kg a 20 kg', duration: '1 h', price: 950, categoryId: 'pelo-corto', size: 'M' },
+  { id: 'bano-l', name: 'Baño (L)', description: '20 kg a 40 kg', duration: '1 h 30 min', price: 1000, categoryId: 'pelo-corto', size: 'L' },
+  { id: 'bano-xl', name: 'Baño (XL)', description: '40 kg o más', duration: '2 h', price: 1250, categoryId: 'pelo-corto', size: 'XL' },
   // Pelo largo
-  { id: 'bano-s-largo', name: 'Bano (S)', description: 'Hasta 10 kg', duration: '1 h 30 min', price: 1000, categoryId: 'pelo-largo', size: 'S' },
-  { id: 'bano-m-largo', name: 'Bano (M)', description: '10 kg a 20 kg', duration: '1 h 30 min', price: 1100, categoryId: 'pelo-largo', size: 'M' },
-  { id: 'bano-l-largo', name: 'Bano (L)', description: '20 kg a 40 kg', duration: '2 h', price: 1200, categoryId: 'pelo-largo', size: 'L' },
-  { id: 'bano-xl-largo', name: 'Bano (XL)', description: '40 kg o mas', duration: '2 h 30 min', price: 1450, categoryId: 'pelo-largo', size: 'XL' }
+  { id: 'bano-s-largo', name: 'Baño (S)', description: 'Hasta 10 kg', duration: '1 h 30 min', price: 1000, categoryId: 'pelo-largo', size: 'S' },
+  { id: 'bano-m-largo', name: 'Baño (M)', description: '10 kg a 20 kg', duration: '1 h 30 min', price: 1100, categoryId: 'pelo-largo', size: 'M' },
+  { id: 'bano-l-largo', name: 'Baño (L)', description: '20 kg a 40 kg', duration: '2 h', price: 1200, categoryId: 'pelo-largo', size: 'L' },
+  { id: 'bano-xl-largo', name: 'Baño (XL)', description: '40 kg o más', duration: '2 h 30 min', price: 1450, categoryId: 'pelo-largo', size: 'XL' }
 ];
 
 const EXTRAS = [
-  { id: 'corte-unas', name: 'Corte de unas', description: 'Corte seguro y profesional', price: 150, duration: '15 min' },
-  { id: 'limpieza-oidos', name: 'Limpieza de oidos', description: 'Limpieza suave y cuidadosa', price: 100, duration: '10 min' },
+  { id: 'corte-unas', name: 'Corte de uñas', description: 'Corte seguro y profesional', price: 150, duration: '15 min' },
+  { id: 'limpieza-oidos', name: 'Limpieza de oídos', description: 'Limpieza suave y cuidadosa', price: 100, duration: '10 min' },
   { id: 'perfume', name: 'Perfume premium', description: 'Fragancia duradera', price: 80, duration: '5 min' },
   { id: 'desenredado', name: 'Desenredado especial', description: 'Para pelo muy enredado', price: 200, duration: '20 min' }
 ];
@@ -130,7 +130,7 @@ function renderProgressSteps() {
   const completedValues = {
     1: bookingData.clientName || null,
     2: bookingData.category?.name || null,
-    3: bookingData.service?.name?.replace('Bano ', '') || null,
+    3: bookingData.service?.name?.replace('Baño ', '') || null,
     4: bookingData.extras.length > 0 ? bookingData.extras.map(e => e.name.split(' ')[0]).join(', ') : null,
     5: bookingData.date && bookingData.time ? `${formatDate(bookingData.date)} ${bookingData.time}` : null,
     6: bookingData.petName || null
@@ -697,8 +697,48 @@ function renderSummaryStep(container) {
       </div>
     </div>
     
-    <button class="continue-btn" onclick="confirmBooking()">Confirmar Reserva</button>
+    <div class="terms-checkbox-container">
+      <label class="terms-checkbox-label">
+        <input type="checkbox" id="terms-checkbox" class="terms-checkbox">
+        <span class="terms-checkbox-custom"></span>
+        <span class="terms-text">He leído y acepto los <a href="#" onclick="showTerms(event)">términos y condiciones</a></span>
+      </label>
+    </div>
+    
+    <button class="continue-btn" id="confirm-btn" onclick="confirmBooking()" disabled>Confirmar Reserva</button>
   `;
+  
+  // Agregar evento al checkbox
+  document.getElementById('terms-checkbox').addEventListener('change', function() {
+    document.getElementById('confirm-btn').disabled = !this.checked;
+  });
+}
+
+function showTerms(event) {
+  event.preventDefault();
+  alert(`TÉRMINOS Y CONDICIONES DE TRGROOMING
+
+1. RESERVAS
+- Las reservas deben realizarse con al menos 24 horas de anticipación.
+- La confirmación de la reserva está sujeta a disponibilidad.
+
+2. CANCELACIONES
+- Las cancelaciones deben realizarse con al menos 12 horas de anticipación.
+- Cancelaciones tardías pueden generar cargos.
+
+3. MASCOTAS
+- Las mascotas deben estar al día con sus vacunas.
+- Por seguridad, no atendemos mascotas agresivas sin aviso previo.
+
+4. PAGOS
+- El pago se realiza al finalizar el servicio.
+- Aceptamos efectivo y transferencias.
+
+5. RESPONSABILIDAD
+- TRGrooming no se hace responsable por condiciones preexistentes no informadas.
+- Cualquier lesión o problema de salud detectado será comunicado inmediatamente.
+
+Al confirmar tu reserva, aceptas estos términos y condiciones.`);
 }
 
 async function confirmBooking() {
