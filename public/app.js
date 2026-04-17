@@ -692,7 +692,7 @@ function renderSummaryStep(container) {
       ` : ''}
       
       <div class="summary-total">
-        <span class="summary-label">Total</span>
+        <span class="summary-label">Precio estimado</span>
         <span class="summary-value">$${subtotal}</span>
       </div>
     </div>
