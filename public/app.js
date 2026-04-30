@@ -900,38 +900,9 @@ async function confirmBooking() {
 
   } catch (error) {
     console.error('Error al enviar reserva:', error);
-    // Si falla la verificacion/envio, intentar con no-cors como fallback
-    try {
-      const fecha = bookingData.date.toISOString().split('T')[0];
-      const datosReserva = {
-        nombre: bookingData.clientName,
-        telefono: bookingData.clientPhone,
-        fecha: fecha,
-        hora: bookingData.time,
-        servicio: bookingData.serviceType?.name || '',
-        tamano: bookingData.size?.size || '',
-        pelaje: bookingData.category?.name || '',
-        nombreMascota: bookingData.petName,
-        notasMascota: bookingData.petNotes,
-        duracion: calculateDuration(),
-        precio: calculateSubtotal()
-      };
-
-      await fetch(SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(datosReserva)
-      });
-
-      showScreen('confirmation-screen');
-    } catch (fallbackError) {
-      showModal('Hubo un error al procesar tu reserva. Por favor intenta de nuevo.', 'error', 'Error');
-      btn.textContent = originalText;
-      btn.disabled = false;
-    }
+    showModal('Hubo un error de conexion al procesar tu reserva. Por favor intenta de nuevo.', 'error', 'Error de conexion');
+    btn.textContent = originalText;
+    btn.disabled = false;
   }
 }
 
