@@ -50,7 +50,7 @@ const TIME_SLOTS = ['12:00', '14:00', '16:00', '18:00'];
 const SLOT_DURATION_HOURS = 2; // Duracion de cada cita en horas
 
 // URL del AppScript - REEMPLAZAR CON TU URL
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxKSYFPsgLYFTUX6pXkRkL2p881eSJqM9lmXEoPGODXT9uht5Bbcw_0XvygLH9du26cSg/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzbSA4_suzAkYS7UfYlyRBoKUt26p3h8lPi-raQSZxSUHeImIGlkxvRFlCEYrLVqRohZg/exec';
 
 // ==================== STATE ====================
 let currentStep = 1;
