@@ -114,7 +114,7 @@ function showTermsModal(content, isLargeModal = false) {
   const modalTitle = document.getElementById('modal-title');
   const modalContent = document.getElementById('modal-content');
   const modalIcon = document.getElementById('modal-icon');
-  const modalBox = modal.querySelector('.modal-box');
+  const modalBox = modal.querySelector('.modal-container');
 
   modalTitle.textContent = 'Terminos y Condiciones';
   modalContent.innerHTML = content;
