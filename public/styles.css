@@ -2137,7 +2137,8 @@ body {
 .grid-btn.primary:hover {
   background: transparent;
   color: #ffffff;
-  }
+  border-color: #ffffff;
+}
 
 .grid-btn.secondary {
   background: transparent;
