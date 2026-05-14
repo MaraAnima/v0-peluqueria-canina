@@ -109,15 +109,27 @@ function showModal(message, type = 'info', title = 'Aviso') {
   document.body.style.overflow = 'hidden';
 }
 
-function showTermsModal(content) {
+function showTermsModal(content, isLargeModal = false) {
   const modal = document.getElementById('custom-modal');
   const modalTitle = document.getElementById('modal-title');
   const modalContent = document.getElementById('modal-content');
   const modalIcon = document.getElementById('modal-icon');
+  const modalBox = modal.querySelector('.modal-box');
 
   modalTitle.textContent = 'Terminos y Condiciones';
   modalContent.innerHTML = content;
   modalContent.classList.add('terms-content');
+
+  // Aplicar estilo grande para PDF embebido
+  if (isLargeModal) {
+    modalBox.style.maxWidth = '900px';
+    modalBox.style.width = '95%';
+    modalBox.style.maxHeight = '90vh';
+  } else {
+    modalBox.style.maxWidth = '';
+    modalBox.style.width = '';
+    modalBox.style.maxHeight = '';
+  }
 
   modalIcon.className = 'modal-icon info';
   modalIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -803,42 +815,18 @@ function showTerms(event) {
 function showTermsContent(event) {
   if (event) event.preventDefault();
   const termsContent = `
-    <div style="text-align: left; max-height: 400px; overflow-y: auto; padding-right: 10px;">
-      <h4 style="margin-bottom: 12px; color: #1a365d;">1. Reservas y Cancelaciones</h4>
-      <p style="margin-bottom: 16px; color: #4a5568; font-size: 14px;">
-        Las reservas deben realizarse con al menos 24 horas de anticipacion. 
-        Las cancelaciones deben notificarse con al menos 12 horas de anticipacion 
-        para evitar cargos.
-      </p>
-      
-      <h4 style="margin-bottom: 12px; color: #1a365d;">2. Requisitos de la Mascota</h4>
-      <p style="margin-bottom: 16px; color: #4a5568; font-size: 14px;">
-        Las mascotas deben estar al dia con sus vacunas. Se requiere que el 
-        dueno informe sobre cualquier condicion medica o comportamental especial.
-      </p>
-      
-      <h4 style="margin-bottom: 12px; color: #1a365d;">3. Precios y Pagos</h4>
-      <p style="margin-bottom: 16px; color: #4a5568; font-size: 14px;">
-        Los precios mostrados son referenciales y pueden variar segun el estado 
-        del pelaje y necesidades especiales de la mascota. El pago se realiza 
-        al momento de recoger a la mascota.
-      </p>
-      
-      <h4 style="margin-bottom: 12px; color: #1a365d;">4. Responsabilidad</h4>
-      <p style="margin-bottom: 16px; color: #4a5568; font-size: 14px;">
-        TR Corte se compromete a brindar un servicio profesional y cuidadoso. 
-        No nos hacemos responsables por reacciones alergicas a productos estandar 
-        de grooming.
-      </p>
-      
-      <h4 style="margin-bottom: 12px; color: #1a365d;">5. Horarios</h4>
-      <p style="color: #4a5568; font-size: 14px;">
-        El servicio se brinda en los horarios establecidos. Se ruega puntualidad 
-        tanto para dejar como para recoger a la mascota.
+    <div style="width: 100%; height: 70vh; min-height: 400px;">
+      <iframe 
+        src="/terminos-condiciones.pdf#toolbar=0&navpanes=0&scrollbar=1" 
+        style="width: 100%; height: 100%; border: none; border-radius: 8px;"
+        title="Terminos y Condiciones"
+      ></iframe>
+      <p style="text-align: center; margin-top: 12px; color: #718096; font-size: 12px;">
+        Si no puedes ver el documento, <a href="/terminos-condiciones.pdf" target="_blank" style="color: #3182ce; text-decoration: underline;">haz clic aqui para descargarlo</a>
       </p>
     </div>
   `;
-  showTermsModal(termsContent);
+  showTermsModal(termsContent, true);
 }
 
 async function confirmBooking() {
