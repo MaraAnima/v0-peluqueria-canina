@@ -797,32 +797,7 @@ function renderSummaryStep(container) {
 
 function showTerms(event) {
   event.preventDefault();
-  const termsContent = `
-    <strong>TERMINOS Y CONDICIONES DE TRGROOMING</strong><br><br>
-    
-    <strong>1. RESERVAS</strong><br>
-    - Las reservas deben realizarse con al menos 24 horas de anticipacion.<br>
-    - La confirmacion de la reserva esta sujeta a disponibilidad.<br><br>
-    
-    <strong>2. CANCELACIONES</strong><br>
-    - Las cancelaciones deben realizarse con al menos 12 horas de anticipacion.<br>
-    - Cancelaciones tardias pueden generar cargos.<br><br>
-    
-    <strong>3. MASCOTAS</strong><br>
-    - Las mascotas deben estar al dia con sus vacunas.<br>
-    - Por seguridad, no atendemos mascotas agresivas sin aviso previo.<br><br>
-    
-    <strong>4. PAGOS</strong><br>
-    - El pago se realiza al finalizar el servicio.<br>
-    - Aceptamos efectivo y transferencias.<br><br>
-    
-    <strong>5. RESPONSABILIDAD</strong><br>
-    - TRGrooming no se hace responsable por condiciones preexistentes no informadas.<br>
-    - Cualquier lesion o problema de salud detectado sera comunicado inmediatamente.<br><br>
-    
-    <em>Al confirmar tu reserva, aceptas estos terminos y condiciones.</em>
-  `;
-  showTermsModal(termsContent);
+  window.open('terminos-condiciones.pdf', '_blank');
 }
 
 async function confirmBooking() {
