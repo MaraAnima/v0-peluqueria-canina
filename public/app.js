@@ -797,7 +797,48 @@ function renderSummaryStep(container) {
 
 function showTerms(event) {
   event.preventDefault();
-  window.open('/terminos-condiciones.pdf', '_blank');
+  showTermsContent(event);
+}
+
+function showTermsContent(event) {
+  event.preventDefault();
+  const termsContent = `
+    <div style="text-align: left; max-height: 400px; overflow-y: auto; padding-right: 10px;">
+      <h4 style="margin-bottom: 12px; color: #1a365d;">1. Reservas y Cancelaciones</h4>
+      <p style="margin-bottom: 16px; color: #4a5568; font-size: 14px;">
+        Las reservas deben realizarse con al menos 24 horas de anticipacion. 
+        Las cancelaciones deben notificarse con al menos 12 horas de anticipacion 
+        para evitar cargos.
+      </p>
+      
+      <h4 style="margin-bottom: 12px; color: #1a365d;">2. Requisitos de la Mascota</h4>
+      <p style="margin-bottom: 16px; color: #4a5568; font-size: 14px;">
+        Las mascotas deben estar al dia con sus vacunas. Se requiere que el 
+        dueno informe sobre cualquier condicion medica o comportamental especial.
+      </p>
+      
+      <h4 style="margin-bottom: 12px; color: #1a365d;">3. Precios y Pagos</h4>
+      <p style="margin-bottom: 16px; color: #4a5568; font-size: 14px;">
+        Los precios mostrados son referenciales y pueden variar segun el estado 
+        del pelaje y necesidades especiales de la mascota. El pago se realiza 
+        al momento de recoger a la mascota.
+      </p>
+      
+      <h4 style="margin-bottom: 12px; color: #1a365d;">4. Responsabilidad</h4>
+      <p style="margin-bottom: 16px; color: #4a5568; font-size: 14px;">
+        TR Corte se compromete a brindar un servicio profesional y cuidadoso. 
+        No nos hacemos responsables por reacciones alergicas a productos estandar 
+        de grooming.
+      </p>
+      
+      <h4 style="margin-bottom: 12px; color: #1a365d;">5. Horarios</h4>
+      <p style="color: #4a5568; font-size: 14px;">
+        El servicio se brinda en los horarios establecidos. Se ruega puntualidad 
+        tanto para dejar como para recoger a la mascota.
+      </p>
+    </div>
+  `;
+  showTermsModal(termsContent);
 }
 
 async function confirmBooking() {
