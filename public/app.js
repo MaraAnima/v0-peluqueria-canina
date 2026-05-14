@@ -796,12 +796,12 @@ function renderSummaryStep(container) {
 }
 
 function showTerms(event) {
-  event.preventDefault();
-  showTermsContent(event);
+  if (event) event.preventDefault();
+  showTermsContent();
 }
 
 function showTermsContent(event) {
-  event.preventDefault();
+  if (event) event.preventDefault();
   const termsContent = `
     <div style="text-align: left; max-height: 400px; overflow-y: auto; padding-right: 10px;">
       <h4 style="margin-bottom: 12px; color: #1a365d;">1. Reservas y Cancelaciones</h4>
