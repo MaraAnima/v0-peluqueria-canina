@@ -2136,8 +2136,8 @@ body {
 
 .grid-btn.primary:hover {
   background: transparent;
-  color: var(--accent-yellow);
-}
+  color: #ffffff;
+  }
 
 .grid-btn.secondary {
   background: transparent;
@@ -2146,8 +2146,9 @@ body {
 }
 
 .grid-btn.secondary:hover {
-  background: var(--accent-yellow);
-  color: var(--text-dark);
+  background: transparent;
+  color: #ffffff;
+  border-color: #ffffff;
 }
 
 @media (max-width: 768px) {
