@@ -685,7 +685,7 @@ body {
 
 .progress-bar {
   background: var(--accent-cyan);
-  padding: 16px 20px;
+  padding: 24px 20px;
   display: flex;
   align-items: center;
   justify-content: center;
