@@ -2000,7 +2000,7 @@ body {
 }
 
 .grid-about {
-  background: var(--text-dark);
+  background: var(--accent-cyan);
   padding: 36px 32px;
   display: flex;
   flex-direction: column;
