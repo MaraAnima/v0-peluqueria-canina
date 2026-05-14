@@ -1963,48 +1963,70 @@ body {
   border-radius: 20px;
 }
 
-/* ==================== SERVICES SECTION ==================== */
-.services-section {
-  background: var(--accent-yellow);
-  padding: 60px 30px;
+/* ==================== SERVICES SECTION - SPLIT LAYOUT ==================== */
+.services-split {
+  display: flex;
   margin-top: 40px;
-  position: relative;
+  min-height: 500px;
+}
+
+.services-image {
+  flex: 1;
+  min-width: 0;
+}
+
+.services-image img {
+  width: 100%;
+  height: 100%;
+  min-height: 500px;
+  object-fit: cover;
+}
+
+.services-content {
+  flex: 1;
+  background: var(--accent-yellow);
+  padding: 50px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .services-header {
-  text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 30px;
 }
 
 .services-subtitle {
   font-family: 'Poppins', sans-serif;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   letter-spacing: 3px;
   color: var(--text-dark);
-  opacity: 0.7;
+  opacity: 0.6;
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .services-title {
   font-family: 'Fredoka', sans-serif;
-  font-size: 2.5rem;
+  font-size: 2.2rem;
   font-weight: 700;
   color: var(--text-dark);
   margin: 0;
 }
 
+.services-title span {
+  color: var(--white);
+}
+
 .services-list {
-  max-width: 500px;
-  margin: 0 auto 40px;
+  margin-bottom: 30px;
 }
 
 .service-item {
   display: flex;
   align-items: flex-start;
-  gap: 20px;
-  padding: 20px 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .service-item:last-child {
@@ -2013,11 +2035,11 @@ body {
 
 .service-number {
   font-family: 'Fredoka', sans-serif;
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--text-dark);
-  opacity: 0.3;
-  min-width: 50px;
+  opacity: 0.25;
+  min-width: 40px;
 }
 
 .service-info {
@@ -2026,33 +2048,33 @@ body {
 
 .service-name {
   font-family: 'Fredoka', sans-serif;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: 600;
   color: var(--text-dark);
-  margin: 0 0 4px 0;
+  margin: 0 0 2px 0;
 }
 
 .service-desc {
   font-family: 'Poppins', sans-serif;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--text-dark);
-  opacity: 0.7;
+  opacity: 0.6;
   margin: 0;
 }
 
 .services-cta {
-  display: block;
-  margin: 0 auto;
+  display: inline-block;
   background: var(--text-dark);
   color: var(--white);
   border: none;
-  padding: 14px 40px;
+  padding: 14px 32px;
   border-radius: 30px;
   font-family: 'Fredoka', sans-serif;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  align-self: flex-start;
 }
 
 .services-cta:hover {
@@ -2063,9 +2085,8 @@ body {
 /* ==================== ABOUT SECTION ==================== */
 .about-section {
   display: flex;
-  flex-wrap: wrap;
   background: var(--text-dark);
-  padding: 60px 30px;
+  padding: 60px 40px;
   gap: 40px;
   align-items: center;
 }
@@ -2077,88 +2098,112 @@ body {
 
 .about-subtitle {
   font-family: 'Poppins', sans-serif;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   letter-spacing: 3px;
   color: var(--accent-yellow);
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .about-title {
   font-family: 'Fredoka', sans-serif;
-  font-size: 2.5rem;
+  font-size: 2.2rem;
   font-weight: 700;
   color: var(--white);
-  margin: 0 0 24px 0;
+  margin: 0 0 20px 0;
 }
 
 .about-text {
   font-family: 'Poppins', sans-serif;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   color: var(--white);
-  opacity: 0.85;
+  opacity: 0.8;
   line-height: 1.7;
-  margin: 0 0 16px 0;
+  margin: 0 0 14px 0;
 }
 
-.about-contact {
+.about-buttons {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  flex-direction: column;
+  gap: 10px;
   margin-top: 24px;
 }
 
-.contact-btn {
+.about-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  background: transparent;
-  border: 2px solid var(--accent-yellow);
-  color: var(--accent-yellow);
-  padding: 12px 20px;
+  padding: 12px 24px;
   border-radius: 30px;
   font-family: 'Poppins', sans-serif;
   font-size: 0.9rem;
   font-weight: 500;
   text-decoration: none;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: all 0.2s ease;
+  width: fit-content;
 }
 
-.contact-btn:hover {
+.about-btn.primary {
+  background: var(--accent-yellow);
+  color: var(--text-dark);
+  border: 2px solid var(--accent-yellow);
+}
+
+.about-btn.primary:hover {
+  background: transparent;
+  color: var(--accent-yellow);
+}
+
+.about-btn.secondary {
+  background: transparent;
+  color: var(--accent-yellow);
+  border: 2px solid var(--accent-yellow);
+}
+
+.about-btn.secondary:hover {
   background: var(--accent-yellow);
   color: var(--text-dark);
 }
 
-.contact-btn svg {
+.about-btn svg {
   width: 18px;
   height: 18px;
 }
 
 .about-image {
   flex: 1;
-  min-width: 280px;
   max-width: 400px;
 }
 
 .about-image img {
   width: 100%;
-  height: 300px;
+  height: 350px;
   object-fit: cover;
-  border-radius: 20px;
+  border-radius: 16px;
 }
 
 @media (max-width: 768px) {
-  .services-section {
-    padding: 40px 20px;
+  .services-split {
+    flex-direction: column;
+  }
+  
+  .services-image img {
+    min-height: 300px;
+    max-height: 350px;
+  }
+  
+  .services-content {
+    padding: 40px 24px;
   }
   
   .services-title,
   .about-title {
-    font-size: 2rem;
+    font-size: 1.8rem;
   }
   
   .about-section {
-    padding: 40px 20px;
+    padding: 40px 24px;
     flex-direction: column;
   }
   
@@ -2168,6 +2213,6 @@ body {
   }
   
   .about-image img {
-    height: 250px;
+    height: 280px;
   }
 }

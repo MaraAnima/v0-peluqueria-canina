@@ -797,7 +797,7 @@ function renderSummaryStep(container) {
 
 function showTerms(event) {
   event.preventDefault();
-  window.open('terminos-condiciones.pdf', '_blank');
+  window.open('/terminos-condiciones.pdf', '_blank');
 }
 
 async function confirmBooking() {
