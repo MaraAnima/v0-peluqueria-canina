@@ -508,14 +508,16 @@ function renderDateTimeStep(container) {
   for (let day = 1; day <= lastDay.getDate(); day++) {
     const date = new Date(year, month, day);
     const isPast = date < today;
+    const isSunday = date.getDay() === 0;
+    const isDisabled = isPast || isSunday;
     const isSelected = bookingData.date &&
       bookingData.date.getDate() === day &&
       bookingData.date.getMonth() === month &&
       bookingData.date.getFullYear() === year;
 
     daysHtml += `
-      <button class="calendar-day ${isSelected ? 'selected' : ''}" 
-              ${isPast ? 'disabled' : ''} 
+      <button class="calendar-day ${isSelected ? 'selected' : ''} ${isSunday ? 'sunday-disabled' : ''}" 
+              ${isDisabled ? 'disabled' : ''} 
               onclick="selectDate(${year}, ${month}, ${day})">
         ${day}
       </button>

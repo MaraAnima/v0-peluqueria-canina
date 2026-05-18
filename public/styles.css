@@ -1155,6 +1155,12 @@ body {
   cursor: not-allowed;
 }
 
+.calendar-day.sunday-disabled {
+  color: #cbd5e1;
+  background: #f8fafc;
+  text-decoration: line-through;
+}
+
 .calendar-day.other-month {
   color: #cbd5e1;
 }
