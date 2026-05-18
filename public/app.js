@@ -12,26 +12,26 @@ const SERVICE_TYPES = [
 
 // Tamaños con precios base (pelo corto)
 const SIZES = [
-  // Pelo corto - Baño
-  { id: 'bano-s', size: 'S', description: 'Hasta 10 kg', duration: '1 h', price: 850, categoryId: 'pelo-corto', serviceTypeId: 'bano' },
-  { id: 'bano-m', size: 'M', description: '10 kg a 20 kg', duration: '1 h', price: 950, categoryId: 'pelo-corto', serviceTypeId: 'bano' },
-  { id: 'bano-l', size: 'L', description: '20 kg a 40 kg', duration: '1 h 30 min', price: 1000, categoryId: 'pelo-corto', serviceTypeId: 'bano' },
-  { id: 'bano-xl', size: 'XL', description: '40 kg o más', duration: '2 h', price: 1250, categoryId: 'pelo-corto', serviceTypeId: 'bano' },
-  // Pelo corto - Baño y corte
-  { id: 'bano-corte-s', size: 'S', description: 'Hasta 10 kg', duration: '1 h 30 min', price: 1150, categoryId: 'pelo-corto', serviceTypeId: 'bano-corte' },
-  { id: 'bano-corte-m', size: 'M', description: '10 kg a 20 kg', duration: '1 h 30 min', price: 1250, categoryId: 'pelo-corto', serviceTypeId: 'bano-corte' },
-  { id: 'bano-corte-l', size: 'L', description: '20 kg a 40 kg', duration: '2 h', price: 1300, categoryId: 'pelo-corto', serviceTypeId: 'bano-corte' },
-  { id: 'bano-corte-xl', size: 'XL', description: '40 kg o más', duration: '2 h 30 min', price: 1550, categoryId: 'pelo-corto', serviceTypeId: 'bano-corte' },
-  // Pelo largo - Baño
-  { id: 'bano-s-largo', size: 'S', description: 'Hasta 10 kg', duration: '1 h 30 min', price: 1000, categoryId: 'pelo-largo', serviceTypeId: 'bano' },
-  { id: 'bano-m-largo', size: 'M', description: '10 kg a 20 kg', duration: '1 h 30 min', price: 1100, categoryId: 'pelo-largo', serviceTypeId: 'bano' },
-  { id: 'bano-l-largo', size: 'L', description: '20 kg a 40 kg', duration: '2 h', price: 1200, categoryId: 'pelo-largo', serviceTypeId: 'bano' },
-  { id: 'bano-xl-largo', size: 'XL', description: '40 kg o más', duration: '2 h 30 min', price: 1450, categoryId: 'pelo-largo', serviceTypeId: 'bano' },
-  // Pelo largo - Baño y corte
-  { id: 'bano-corte-s-largo', size: 'S', description: 'Hasta 10 kg', duration: '2 h', price: 1300, categoryId: 'pelo-largo', serviceTypeId: 'bano-corte' },
-  { id: 'bano-corte-m-largo', size: 'M', description: '10 kg a 20 kg', duration: '2 h', price: 1400, categoryId: 'pelo-largo', serviceTypeId: 'bano-corte' },
-  { id: 'bano-corte-l-largo', size: 'L', description: '20 kg a 40 kg', duration: '2 h 30 min', price: 1500, categoryId: 'pelo-largo', serviceTypeId: 'bano-corte' },
-  { id: 'bano-corte-xl-largo', size: 'XL', description: '40 kg o más', duration: '3 h', price: 1750, categoryId: 'pelo-largo', serviceTypeId: 'bano-corte' }
+  // Pelo corto - Baño (RP=$670+$150=820, RM=760+250=1010, RG=980+400=1380)
+  { id: 'bano-s', size: 'S', description: 'Hasta 10 kg', duration: '1 h', price: 820, categoryId: 'pelo-corto', serviceTypeId: 'bano' },
+  { id: 'bano-m', size: 'M', description: '10 kg a 20 kg', duration: '1 h', price: 1010, categoryId: 'pelo-corto', serviceTypeId: 'bano' },
+  { id: 'bano-l', size: 'L', description: '20 kg a 40 kg', duration: '1 h 15 min', price: 1380, categoryId: 'pelo-corto', serviceTypeId: 'bano' },
+  { id: 'bano-xl', size: 'XL', description: '40 kg o más', duration: '1 h 30 min', price: 1600, categoryId: 'pelo-corto', serviceTypeId: 'bano' },
+  // Pelo corto - Baño y corte (RP=830+145=975, RM=950+200=1150, RG=1225+390=1615)
+  { id: 'bano-corte-s', size: 'S', description: 'Hasta 10 kg', duration: '1 h 30 min', price: 975, categoryId: 'pelo-corto', serviceTypeId: 'bano-corte' },
+  { id: 'bano-corte-m', size: 'M', description: '10 kg a 20 kg', duration: '1 h 30 min', price: 1150, categoryId: 'pelo-corto', serviceTypeId: 'bano-corte' },
+  { id: 'bano-corte-l', size: 'L', description: '20 kg a 40 kg', duration: '2 h', price: 1615, categoryId: 'pelo-corto', serviceTypeId: 'bano-corte' },
+  { id: 'bano-corte-xl', size: 'XL', description: '40 kg o más', duration: '2 h 30 min', price: 1900, categoryId: 'pelo-corto', serviceTypeId: 'bano-corte' },
+  // Pelo largo - Baño (RP=$745+$150=895, RM=800+260=1060, RG=1020+400=1420)
+  { id: 'bano-s-largo', size: 'S', description: 'Hasta 10 kg', duration: '1 h', price: 895, categoryId: 'pelo-largo', serviceTypeId: 'bano' },
+  { id: 'bano-m-largo', size: 'M', description: '10 kg a 20 kg', duration: '1 h', price: 1060, categoryId: 'pelo-largo', serviceTypeId: 'bano' },
+  { id: 'bano-l-largo', size: 'L', description: '20 kg a 40 kg', duration: '1 h 15 min', price: 1420, categoryId: 'pelo-largo', serviceTypeId: 'bano' },
+  { id: 'bano-xl-largo', size: 'XL', description: '40 kg o más', duration: '1 h 30 min', price: 1650, categoryId: 'pelo-largo', serviceTypeId: 'bano' },
+  // Pelo largo - Baño y corte (RP=930+145=1075, RM=1030+280=1310, RG=1275+390=1665)
+  { id: 'bano-corte-s-largo', size: 'S', description: 'Hasta 10 kg', duration: '1 h 30 min', price: 1075, categoryId: 'pelo-largo', serviceTypeId: 'bano-corte' },
+  { id: 'bano-corte-m-largo', size: 'M', description: '10 kg a 20 kg', duration: '1 h 30 min', price: 1310, categoryId: 'pelo-largo', serviceTypeId: 'bano-corte' },
+  { id: 'bano-corte-l-largo', size: 'L', description: '20 kg a 40 kg', duration: '2 h', price: 1665, categoryId: 'pelo-largo', serviceTypeId: 'bano-corte' },
+  { id: 'bano-corte-xl-largo', size: 'XL', description: '40 kg o más', duration: '2 h 30 min', price: 1950, categoryId: 'pelo-largo', serviceTypeId: 'bano-corte' }
 ];
 
 const STEPS = [
