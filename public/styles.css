@@ -2182,3 +2182,143 @@ body {
     font-size: 1.6rem;
   }
 }
+
+/* ==================== CONTACT & LOCATION SECTION ==================== */
+.contact-location-section {
+  width: 100%;
+  background: var(--accent-cyan);
+  position: relative;
+  z-index: 10;
+}
+
+.contact-location-container {
+  display: flex;
+  width: 100%;
+  min-height: 350px;
+}
+
+.contact-map {
+  flex: 1;
+  min-height: 350px;
+  background: #e8f4f8;
+}
+
+.contact-map iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 350px;
+}
+
+.contact-info-side {
+  flex: 1;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 30px;
+}
+
+.contact-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 30px 50px;
+  width: 100%;
+  max-width: 600px;
+}
+
+.contact-info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.contact-icon {
+  width: 40px;
+  height: 40px;
+  background: var(--white);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.contact-icon svg {
+  width: 20px;
+  height: 20px;
+  stroke: var(--accent-cyan);
+}
+
+.contact-details h4 {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+
+.contact-details p {
+  font-size: 0.85rem;
+  color: var(--white);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.contact-details a {
+  color: var(--white);
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.contact-details a:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.contact-logo {
+  margin-top: 10px;
+}
+
+.contact-logo-img {
+  width: 200px;
+  height: auto;
+  filter: brightness(0) invert(1);
+}
+
+/* Contact Section Responsive */
+@media (max-width: 900px) {
+  .contact-location-container {
+    flex-direction: column;
+  }
+  
+  .contact-map {
+    min-height: 300px;
+  }
+  
+  .contact-info-side {
+    padding: 30px 20px;
+  }
+  
+  .contact-info-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 25px 30px;
+  }
+}
+
+@media (max-width: 600px) {
+  .contact-info-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .contact-info-item {
+    justify-content: flex-start;
+  }
+  
+  .contact-logo-img {
+    width: 160px;
+  }
+}
