@@ -44,10 +44,19 @@ export function DateTimeStep({ selectedDate, selectedTime, onSelectDate, onSelec
     setCurrentMonth(new Date(year, month + 1, 1))
   }
   
+  // Fechas bloqueadas (mes es 0-indexed: enero=0, julio=6, agosto=7, diciembre=11)
+  const blockedDates = [
+    { month: 0, day: 1 },   // 1 de enero
+    { month: 6, day: 18 },  // 18 de julio
+    { month: 7, day: 25 },  // 25 de agosto
+    { month: 11, day: 25 }  // 25 de diciembre
+  ]
+
   const isDateSelectable = (day: number) => {
     const date = new Date(year, month, day)
     const dayOfWeek = date.getDay()
-    return date >= today && dayOfWeek !== 0
+    const isBlockedDate = blockedDates.some(bd => bd.month === month && bd.day === day)
+    return date >= today && dayOfWeek !== 0 && !isBlockedDate
   }
   
   const isSelectedDate = (day: number) => {
