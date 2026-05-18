@@ -86,7 +86,7 @@ export const SERVICES: Service[] = [
     name: "Baño (RP - Pelo corto)",
     description: "Tamaño de la mascota: hasta 10 kg",
     duration: "1 h",
-    price: 850,
+    price: 820,
     image: "/images/dog-s.png",
     categoryId: "pelo-corto"
   },
@@ -95,7 +95,7 @@ export const SERVICES: Service[] = [
     name: "Baño (RM - Pelo corto)",
     description: "Tamaño de la mascota: desde 10 kg a 20 kg",
     duration: "1 h",
-    price: 950,
+    price: 1010,
     image: "/images/dog-m.png",
     categoryId: "pelo-corto"
   },
@@ -103,8 +103,8 @@ export const SERVICES: Service[] = [
     id: "bano-rg",
     name: "Baño (RG - Pelo corto)",
     description: "Tamaño de la mascota: 20 kg o más",
-    duration: "1 h 30 mins.",
-    price: 1000,
+    duration: "1 h 15 min",
+    price: 1380,
     image: "/images/dog-l.png",
     categoryId: "pelo-corto"
   },
@@ -113,8 +113,8 @@ export const SERVICES: Service[] = [
     id: "bano-rp-largo",
     name: "Baño (RP - Pelo largo)",
     description: "Tamaño de la mascota: hasta 10 kg",
-    duration: "1 h 30 mins.",
-    price: 1000,
+    duration: "1 h",
+    price: 895,
     image: "/images/dog-s.png",
     categoryId: "pelo-largo"
   },
@@ -122,8 +122,8 @@ export const SERVICES: Service[] = [
     id: "bano-rm-largo",
     name: "Baño (RM - Pelo largo)",
     description: "Tamaño de la mascota: desde 10 kg a 20 kg",
-    duration: "1 h 30 mins.",
-    price: 1100,
+    duration: "1 h",
+    price: 1060,
     image: "/images/dog-m.png",
     categoryId: "pelo-largo"
   },
@@ -131,8 +131,8 @@ export const SERVICES: Service[] = [
     id: "bano-rg-largo",
     name: "Baño (RG - Pelo largo)",
     description: "Tamaño de la mascota: 20 kg o más",
-    duration: "2 h",
-    price: 1200,
+    duration: "1 h 15 min",
+    price: 1420,
     image: "/images/dog-l.png",
     categoryId: "pelo-largo"
   }
