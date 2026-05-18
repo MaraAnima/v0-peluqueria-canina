@@ -2081,7 +2081,7 @@ body {
 
 .grid-cta {
   display: inline-block;
-  background: var(--text-dark);
+  background: var(--accent-cyan);
   color: var(--white);
   border: none;
   padding: 12px 28px;
