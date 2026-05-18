@@ -41,29 +41,12 @@ const STEPS = [
 ];
 
 // Horarios disponibles (deben coincidir con AppScript)
-// Lunes a Viernes: 11:00, 13:00, 15:00, 17:00
-// Sabados: 10:00, 14:00
-// Domingos: Sin horarios
-const TIME_SLOTS_WEEKDAY = ['11:00', '13:00', '15:00', '17:00'];
-const TIME_SLOTS_SATURDAY = ['10:00', '14:00'];
+// Cada cita dura 2 horas, asi que los slots son cada 2 horas
+const TIME_SLOTS = ['12:00', '14:00', '16:00', '18:00'];
 const SLOT_DURATION_HOURS = 2; // Duracion de cada cita en horas
 
-// Funcion para obtener los horarios segun el dia de la semana
-function getTimeSlotsByDate(date) {
-  const dayOfWeek = date.getDay();
-  // 0 = Domingo, 1-5 = Lunes a Viernes, 6 = Sabado
-  if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-    return TIME_SLOTS_WEEKDAY;
-  }
-  if (dayOfWeek === 6) {
-    return TIME_SLOTS_SATURDAY;
-  }
-  // Domingo sin horarios
-  return [];
-}
-
 // URL del AppScript - REEMPLAZAR CON TU URL
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzOvWP5fpEHvghZLzr4Gq9ECCmLYQr_kvN629tUlXw4HClshAGEuM6pIbr0sJ2_mI_x0Q/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzbSA4_suzAkYS7UfYlyRBoKUt26p3h8lPi-raQSZxSUHeImIGlkxvRFlCEYrLVqRohZg/exec';
 
 // ==================== STATE ====================
 let currentStep = 1;
@@ -501,8 +484,6 @@ function renderDateTimeStep(container) {
 
     return;
   }
-  
-  console.log('[v0] Renderizando horarios:', availableTimeSlots, 'isLoading:', isLoadingSlots);
   const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
   const dayNames = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'];
@@ -607,7 +588,7 @@ function changeMonth(delta) {
 }
 
 // Variable para guardar horarios disponibles
-let availableTimeSlots = [];
+let availableTimeSlots = [...TIME_SLOTS];
 
 async function selectDate(year, month, day) {
   // Verificar que seguimos en el paso correcto
@@ -619,7 +600,6 @@ async function selectDate(year, month, day) {
   bookingData.date = new Date(year, month, day);
   bookingData.time = null;
   isLoadingSlots = true;
-  availableTimeSlots = []; // Limpiar horarios anteriores
 
   // Re-renderizar para mostrar loading
   const container = document.getElementById('step-content');
@@ -629,7 +609,6 @@ async function selectDate(year, month, day) {
   await loadAvailableSlots();
 
   isLoadingSlots = false;
-  console.log('[v0] Despues de cargar, availableTimeSlots:', availableTimeSlots);
 
   // Verificar que seguimos en el paso correcto despues de la carga async
   if (currentStep !== 5) {
@@ -662,13 +641,13 @@ async function loadAvailableSlots() {
       availableTimeSlots = data.horarios;
       console.log('[v0] Horarios disponibles:', availableTimeSlots);
     } else {
-      console.log('[v0] No se encontraron horarios, usando horarios del dia');
-      availableTimeSlots = getTimeSlotsByDate(bookingData.date);
+      console.log('[v0] No se encontraron horarios, usando todos');
+      availableTimeSlots = [...TIME_SLOTS];
     }
   } catch (error) {
     console.error('[v0] Error al cargar horarios:', error);
-    // En caso de error, mostrar horarios segun el dia
-    availableTimeSlots = getTimeSlotsByDate(bookingData.date);
+    // En caso de error, mostrar todos los horarios
+    availableTimeSlots = [...TIME_SLOTS];
   }
 }
 
