@@ -2135,8 +2135,8 @@ body {
 }
 
 .grid-btn.primary:hover {
-  background: transparent;
-  color: #ffffff;
+  background: #ffffff;
+  color: var(--text-dark);
   border-color: #ffffff;
 }
 
