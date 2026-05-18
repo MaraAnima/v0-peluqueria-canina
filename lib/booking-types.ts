@@ -82,8 +82,8 @@ export const CATEGORIES: Category[] = [
 export const SERVICES: Service[] = [
   // Pelo corto
   {
-    id: "bano-s",
-    name: "Baño (S - Pelo corto)",
+    id: "bano-rp",
+    name: "Baño (RP - Pelo corto)",
     description: "Tamaño de la mascota: hasta 10 kg",
     duration: "1 h",
     price: 850,
@@ -91,8 +91,8 @@ export const SERVICES: Service[] = [
     categoryId: "pelo-corto"
   },
   {
-    id: "bano-m",
-    name: "Baño (M - Pelo corto)",
+    id: "bano-rm",
+    name: "Baño (RM - Pelo corto)",
     description: "Tamaño de la mascota: desde 10 kg a 20 kg",
     duration: "1 h",
     price: 950,
@@ -100,27 +100,18 @@ export const SERVICES: Service[] = [
     categoryId: "pelo-corto"
   },
   {
-    id: "bano-l",
-    name: "Baño (L - Pelo corto)",
-    description: "Tamaño de la mascota: desde 20 kg a 40 kg",
+    id: "bano-rg",
+    name: "Baño (RG - Pelo corto)",
+    description: "Tamaño de la mascota: 20 kg o más",
     duration: "1 h 30 mins.",
     price: 1000,
     image: "/images/dog-l.png",
     categoryId: "pelo-corto"
   },
-  {
-    id: "bano-xl",
-    name: "Baño (XL - Pelo corto)",
-    description: "Tamaño de la mascota: 40 kg o más",
-    duration: "2 h",
-    price: 1250,
-    image: "/images/dog-xl.png",
-    categoryId: "pelo-corto"
-  },
   // Pelo largo
   {
-    id: "bano-s-largo",
-    name: "Baño (S - Pelo largo)",
+    id: "bano-rp-largo",
+    name: "Baño (RP - Pelo largo)",
     description: "Tamaño de la mascota: hasta 10 kg",
     duration: "1 h 30 mins.",
     price: 1000,
@@ -128,8 +119,8 @@ export const SERVICES: Service[] = [
     categoryId: "pelo-largo"
   },
   {
-    id: "bano-m-largo",
-    name: "Baño (M - Pelo largo)",
+    id: "bano-rm-largo",
+    name: "Baño (RM - Pelo largo)",
     description: "Tamaño de la mascota: desde 10 kg a 20 kg",
     duration: "1 h 30 mins.",
     price: 1100,
@@ -137,21 +128,12 @@ export const SERVICES: Service[] = [
     categoryId: "pelo-largo"
   },
   {
-    id: "bano-l-largo",
-    name: "Baño (L - Pelo largo)",
-    description: "Tamaño de la mascota: desde 20 kg a 40 kg",
+    id: "bano-rg-largo",
+    name: "Baño (RG - Pelo largo)",
+    description: "Tamaño de la mascota: 20 kg o más",
     duration: "2 h",
     price: 1200,
     image: "/images/dog-l.png",
-    categoryId: "pelo-largo"
-  },
-  {
-    id: "bano-xl-largo",
-    name: "Baño (XL - Pelo largo)",
-    description: "Tamaño de la mascota: 40 kg o más",
-    duration: "2 h 30 mins.",
-    price: 1450,
-    image: "/images/dog-xl.png",
     categoryId: "pelo-largo"
   }
 ]
