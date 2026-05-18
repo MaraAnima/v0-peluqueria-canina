@@ -41,9 +41,26 @@ const STEPS = [
 ];
 
 // Horarios disponibles (deben coincidir con AppScript)
-// Cada cita dura 2 horas, asi que los slots son cada 2 horas
-const TIME_SLOTS = ['12:00', '14:00', '16:00', '18:00'];
+// Lunes a Viernes: 11:00, 13:00, 15:00, 17:00
+// Sabados: 10:00, 14:00
+// Domingos: Sin horarios
+const TIME_SLOTS_WEEKDAY = ['11:00', '13:00', '15:00', '17:00'];
+const TIME_SLOTS_SATURDAY = ['10:00', '14:00'];
 const SLOT_DURATION_HOURS = 2; // Duracion de cada cita en horas
+
+// Funcion para obtener los horarios segun el dia de la semana
+function getTimeSlotsByDate(date) {
+  const dayOfWeek = date.getDay();
+  // 0 = Domingo, 1-5 = Lunes a Viernes, 6 = Sabado
+  if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+    return TIME_SLOTS_WEEKDAY;
+  }
+  if (dayOfWeek === 6) {
+    return TIME_SLOTS_SATURDAY;
+  }
+  // Domingo sin horarios
+  return [];
+}
 
 // URL del AppScript - REEMPLAZAR CON TU URL
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzOvWP5fpEHvghZLzr4Gq9ECCmLYQr_kvN629tUlXw4HClshAGEuM6pIbr0sJ2_mI_x0Q/exec';
@@ -588,7 +605,7 @@ function changeMonth(delta) {
 }
 
 // Variable para guardar horarios disponibles
-let availableTimeSlots = [...TIME_SLOTS];
+let availableTimeSlots = [];
 
 async function selectDate(year, month, day) {
   // Verificar que seguimos en el paso correcto
@@ -641,13 +658,13 @@ async function loadAvailableSlots() {
       availableTimeSlots = data.horarios;
       console.log('[v0] Horarios disponibles:', availableTimeSlots);
     } else {
-      console.log('[v0] No se encontraron horarios, usando todos');
-      availableTimeSlots = [...TIME_SLOTS];
+      console.log('[v0] No se encontraron horarios, usando horarios del dia');
+      availableTimeSlots = getTimeSlotsByDate(bookingData.date);
     }
   } catch (error) {
     console.error('[v0] Error al cargar horarios:', error);
-    // En caso de error, mostrar todos los horarios
-    availableTimeSlots = [...TIME_SLOTS];
+    // En caso de error, mostrar horarios segun el dia
+    availableTimeSlots = getTimeSlotsByDate(bookingData.date);
   }
 }
 
