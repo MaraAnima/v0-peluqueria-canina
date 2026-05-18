@@ -1,11 +1,14 @@
 /**
- * TRGROOMING - AppScript Actualizado v2
+ * TRGROOMING - AppScript Actualizado v3
  * Compatible con el nuevo sistema de reservas
  * 
  * CAMBIOS EN ESTA VERSION:
+ * - Horarios diferenciados por dia de la semana
+ * - Lunes a Viernes: 11:00, 13:00, 15:00, 17:00
+ * - Sabados: 10:00, 14:00
+ * - Domingos: Sin horarios
  * - Bloqueo usando LockService para evitar race conditions
  * - Verificación doble antes de guardar
- * - Duracion de 2 horas por cita
  * 
  * INSTRUCCIONES DE INSTALACION:
  * 1. Ve a Google Sheets > Extensiones > Apps Script
@@ -17,27 +20,28 @@
  * 7. Acceso: Cualquier persona
  * 8. Copia la URL y reemplazala en app.js (SCRIPT_URL)
  * 
- * ESTRUCTURA DE COLUMNAS EN "Hoja 1":
- * A: Nombre del dueño
- * B: Telefono
+ * ESTRUCTURA DE COLUMNAS EN "Reservas":
+ * A: ID Reserva
+ * B: Timestamp
  * C: Fecha
  * D: Hora
- * E: Servicio
- * F: Tamaño
- * G: Pelaje
- * H: Nombre Mascota
- * I: Notas
- * J: Extras
- * K: Duracion
- * L: Precio
- * M: Timestamp
+ * E: Nombre Cliente
+ * F: Telefono
+ * G: Servicio
+ * H: Tamaño
+ * I: Pelaje
+ * J: Nombre Mascota
+ * K: Notas Mascota
+ * L: Duracion
+ * M: Precio
  */
 
 // Nombre de la hoja
-const NOMBRE_HOJA = "Hoja 1";
+const NOMBRE_HOJA = "Reservas";
 
-// Horarios disponibles (cada 2 horas)
-const HORARIOS_DISPONIBLES = ["12:00", "14:00", "16:00", "18:00"];
+// Horarios disponibles segun el dia
+const HORARIOS_SEMANA = ["11:00", "13:00", "15:00", "17:00"]; // Lunes a Viernes
+const HORARIOS_SABADO = ["10:00", "14:00"]; // Sabados
 
 // Duracion de cada cita en horas
 const DURACION_CITA_HORAS = 2;
@@ -47,6 +51,29 @@ const COLUMNA_FECHA = 2;
 
 // Columna donde esta la hora (D = indice 3, 0-based)
 const COLUMNA_HORA = 3;
+
+/**
+ * Obtiene los horarios segun el dia de la semana
+ */
+function getHorariosPorFecha(fecha) {
+  const dateParts = fecha.split('-');
+  const year = Number(dateParts[0]);
+  const month = Number(dateParts[1]) - 1;
+  const day = Number(dateParts[2]);
+  
+  const dateObj = new Date(year, month, day);
+  const dayOfWeek = dateObj.getDay();
+  
+  // 0 = Domingo, 1-5 = Lunes a Viernes, 6 = Sabado
+  if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+    return HORARIOS_SEMANA;
+  }
+  if (dayOfWeek === 6) {
+    return HORARIOS_SABADO;
+  }
+  // Domingo sin horarios
+  return [];
+}
 
 /**
  * Maneja las solicitudes GET (obtener horarios disponibles)
@@ -59,8 +86,20 @@ function doGet(e) {
       return jsonResponse({ error: "Fecha no proporcionada" });
     }
     
+    const horariosDelDia = getHorariosPorFecha(fecha);
+    
+    // Si es domingo o una fecha sin horarios, devuelve array vacío
+    if (horariosDelDia.length === 0) {
+      return jsonResponse({ 
+        success: true,
+        horarios: [],
+        fecha: fecha,
+        duracionCita: DURACION_CITA_HORAS
+      });
+    }
+    
     const horariosOcupados = obtenerHorariosOcupados(fecha);
-    const horariosDisponibles = HORARIOS_DISPONIBLES.filter(
+    const horariosDisponibles = horariosDelDia.filter(
       h => !horariosOcupados.includes(h)
     );
     
@@ -134,7 +173,6 @@ function doPost(e) {
     }
     
     // VERIFICACION DOBLE: Verificar que el horario siga disponible
-    // Esto es crítico para evitar doble reserva
     const horariosOcupados = obtenerHorariosOcupados(datos.fecha);
     if (horariosOcupados.includes(datos.hora)) {
       return jsonResponse({ 
@@ -200,36 +238,37 @@ function obtenerHorariosOcupados(fechaBuscada) {
 function guardarReserva(datos) {
   const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(NOMBRE_HOJA);
   
-  // Procesar extras (puede venir como array o string)
-  let extrasStr = "";
-  if (datos.extras) {
-    if (Array.isArray(datos.extras)) {
-      extrasStr = datos.extras.join(", ");
-    } else {
-      extrasStr = datos.extras;
-    }
-  }
+  const reservaId = generarIdReserva();
+  const timestamp = new Date().toLocaleString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" });
   
-  // Crear la fila con todos los datos
-  // Columnas: A:Nombre, B:Telefono, C:Fecha, D:Hora, E:Servicio, F:Tamaño, G:Pelaje, 
-  //           H:NombreMascota, I:Notas, J:Extras, K:Duracion, L:Precio, M:Timestamp
+  // Columnas: ID Reserva, Timestamp, Fecha, Hora, Nombre, Telefono, 
+  //           Servicio, Tamaño, Pelaje, NombreMascota, Notas, Duracion, Precio
   const nuevaFila = [
-    datos.nombre || "",
-    datos.telefono || "",
+    reservaId,
+    timestamp,
     datos.fecha || "",
     datos.hora || "",
+    datos.nombre || "",
+    datos.telefono || "",
     datos.servicio || "",
     datos.tamano || datos.tamaño || "",
     datos.pelaje || "",
     datos.nombreMascota || datos.nombre_mascota || "",
     datos.notasMascota || datos.notas_mascota || datos.notas || "",
-    extrasStr,
-    DURACION_CITA_HORAS + " horas",
-    datos.precio || "",
-    new Date().toLocaleString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })
+    datos.duracion || "",
+    datos.precio || ""
   ];
   
   hoja.appendRow(nuevaFila);
+}
+
+/**
+ * Genera un ID unico para la reserva
+ */
+function generarIdReserva() {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).substr(2, 5);
+  return `TR-${timestamp}-${random}`.toUpperCase();
 }
 
 /**
@@ -315,7 +354,6 @@ function jsonResponse(data) {
 
 /**
  * Funcion de prueba para verificar la configuracion
- * Ejecuta esta funcion manualmente para verificar que todo funciona
  */
 function testConfig() {
   const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(NOMBRE_HOJA);
@@ -326,15 +364,18 @@ function testConfig() {
   }
   
   Logger.log("OK: Hoja encontrada");
-  Logger.log("Horarios disponibles: " + HORARIOS_DISPONIBLES.join(", "));
+  Logger.log("Horarios Lunes-Viernes: " + HORARIOS_SEMANA.join(", "));
+  Logger.log("Horarios Sabados: " + HORARIOS_SABADO.join(", "));
   Logger.log("Duracion de cada cita: " + DURACION_CITA_HORAS + " horas");
   
   // Probar obtener horarios para hoy
   const hoy = new Date();
   const fechaHoy = normalizarFecha(hoy);
+  const horariosDelDia = getHorariosPorFecha(fechaHoy);
   const ocupados = obtenerHorariosOcupados(fechaHoy);
   
   Logger.log("Fecha de hoy: " + fechaHoy);
+  Logger.log("Horarios del dia: " + (horariosDelDia.length > 0 ? horariosDelDia.join(", ") : "ninguno (domingo)"));
   Logger.log("Horarios ocupados hoy: " + (ocupados.length > 0 ? ocupados.join(", ") : "ninguno"));
-  Logger.log("Horarios disponibles hoy: " + HORARIOS_DISPONIBLES.filter(h => !ocupados.includes(h)).join(", "));
+  Logger.log("Horarios disponibles hoy: " + horariosDelDia.filter(h => !ocupados.includes(h)).join(", "));
 }
