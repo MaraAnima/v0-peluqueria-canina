@@ -501,6 +501,8 @@ function renderDateTimeStep(container) {
 
     return;
   }
+  
+  console.log('[v0] Renderizando horarios:', availableTimeSlots, 'isLoading:', isLoadingSlots);
   const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
   const dayNames = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'];
@@ -617,6 +619,7 @@ async function selectDate(year, month, day) {
   bookingData.date = new Date(year, month, day);
   bookingData.time = null;
   isLoadingSlots = true;
+  availableTimeSlots = []; // Limpiar horarios anteriores
 
   // Re-renderizar para mostrar loading
   const container = document.getElementById('step-content');
