@@ -629,6 +629,7 @@ async function selectDate(year, month, day) {
   await loadAvailableSlots();
 
   isLoadingSlots = false;
+  console.log('[v0] Despues de cargar, availableTimeSlots:', availableTimeSlots);
 
   // Verificar que seguimos en el paso correcto despues de la carga async
   if (currentStep !== 5) {
