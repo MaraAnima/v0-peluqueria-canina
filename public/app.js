@@ -939,7 +939,32 @@ async function confirmBooking() {
   }
 }
 
+// ==================== PRICING SIZE CARDS ====================
+function initPricingCards() {
+  const sizeCards = document.querySelectorAll('.size-card');
+  const pricingPanels = document.querySelectorAll('.pricing-panel');
+  
+  sizeCards.forEach(card => {
+    card.addEventListener('click', () => {
+      const size = card.dataset.size;
+      
+      // Update active card
+      sizeCards.forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+      
+      // Show corresponding panel
+      pricingPanels.forEach(panel => {
+        panel.classList.remove('active');
+        if (panel.dataset.panel === size) {
+          panel.classList.add('active');
+        }
+      });
+    });
+  });
+}
+
 // ==================== INIT ====================
 document.addEventListener('DOMContentLoaded', () => {
   showScreen('home-screen');
+  initPricingCards();
 });
