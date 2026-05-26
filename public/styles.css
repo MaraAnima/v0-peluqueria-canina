@@ -24,6 +24,20 @@
   padding: 20px;
 }
 
+.size-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  line-height: 1.1;
+}
+
+.size-badge small {
+  font-size: 0.7rem;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
 .modal-overlay.active {
   opacity: 1;
   visibility: visible;
@@ -401,14 +415,61 @@ body {
   animation: rise 12s ease-in-out infinite;
 }
 
-.fb-1 { width: 20px; height: 20px; left: 10%; animation-delay: 0s; }
-.fb-2 { width: 35px; height: 35px; left: 25%; animation-delay: 2s; }
-.fb-3 { width: 15px; height: 15px; left: 40%; animation-delay: 4s; }
-.fb-4 { width: 25px; height: 25px; left: 55%; animation-delay: 1s; }
-.fb-5 { width: 30px; height: 30px; left: 70%; animation-delay: 3s; }
-.fb-6 { width: 18px; height: 18px; left: 85%; animation-delay: 5s; }
-.fb-7 { width: 22px; height: 22px; left: 15%; animation-delay: 6s; }
-.fb-8 { width: 28px; height: 28px; left: 90%; animation-delay: 7s; }
+.fb-1 {
+  width: 20px;
+  height: 20px;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.fb-2 {
+  width: 35px;
+  height: 35px;
+  left: 25%;
+  animation-delay: 2s;
+}
+
+.fb-3 {
+  width: 15px;
+  height: 15px;
+  left: 40%;
+  animation-delay: 4s;
+}
+
+.fb-4 {
+  width: 25px;
+  height: 25px;
+  left: 55%;
+  animation-delay: 1s;
+}
+
+.fb-5 {
+  width: 30px;
+  height: 30px;
+  left: 70%;
+  animation-delay: 3s;
+}
+
+.fb-6 {
+  width: 18px;
+  height: 18px;
+  left: 85%;
+  animation-delay: 5s;
+}
+
+.fb-7 {
+  width: 22px;
+  height: 22px;
+  left: 15%;
+  animation-delay: 6s;
+}
+
+.fb-8 {
+  width: 28px;
+  height: 28px;
+  left: 90%;
+  animation-delay: 7s;
+}
 
 @keyframes rise {
   0% {
@@ -416,15 +477,19 @@ body {
     opacity: 0;
     transform: translateX(0) scale(0.5);
   }
+
   10% {
     opacity: 0.6;
   }
+
   50% {
     opacity: 0.4;
   }
+
   90% {
     opacity: 0.2;
   }
+
   100% {
     bottom: 110%;
     opacity: 0;
@@ -433,9 +498,12 @@ body {
 }
 
 @keyframes float {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0) rotate(0deg);
   }
+
   50% {
     transform: translateY(-20px) rotate(5deg);
   }
@@ -482,20 +550,29 @@ body {
 }
 
 @keyframes pawFade {
-  0%, 100% { opacity: 0.2; transform: scale(1) rotate(-30deg); }
-  50% { opacity: 0.5; transform: scale(1.1) rotate(-25deg); }
+
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: scale(1) rotate(-30deg);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: scale(1.1) rotate(-25deg);
+  }
 }
 
 /* Soap Bubbles with shine effect */
 .soap-bubble {
   position: absolute;
   border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, 
-    rgba(255, 255, 255, 0.9) 0%, 
-    rgba(212, 238, 247, 0.6) 30%, 
-    rgba(168, 216, 234, 0.4) 60%, 
-    rgba(168, 216, 234, 0.2) 100%);
-  box-shadow: 
+  background: radial-gradient(circle at 30% 30%,
+      rgba(255, 255, 255, 0.9) 0%,
+      rgba(212, 238, 247, 0.6) 30%,
+      rgba(168, 216, 234, 0.4) 60%,
+      rgba(168, 216, 234, 0.2) 100%);
+  box-shadow:
     inset -5px -5px 15px rgba(255, 255, 255, 0.5),
     inset 5px 5px 15px rgba(168, 216, 234, 0.3),
     0 0 20px rgba(168, 216, 234, 0.3);
@@ -509,29 +586,68 @@ body {
   left: 20%;
   width: 30%;
   height: 30%;
-  background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, transparent 70%);
   border-radius: 50%;
 }
 
-.sb-1 { width: 50px; height: 50px; top: 10%; left: 5%; animation-delay: 0s; }
-.sb-2 { width: 30px; height: 30px; top: 25%; right: 10%; animation-delay: 1.5s; }
-.sb-3 { width: 40px; height: 40px; bottom: 30%; left: 3%; animation-delay: 3s; }
-.sb-4 { width: 25px; height: 25px; top: 60%; right: 5%; animation-delay: 2s; }
-.sb-5 { width: 35px; height: 35px; bottom: 15%; right: 15%; animation-delay: 4s; }
+.sb-1 {
+  width: 50px;
+  height: 50px;
+  top: 10%;
+  left: 5%;
+  animation-delay: 0s;
+}
+
+.sb-2 {
+  width: 30px;
+  height: 30px;
+  top: 25%;
+  right: 10%;
+  animation-delay: 1.5s;
+}
+
+.sb-3 {
+  width: 40px;
+  height: 40px;
+  bottom: 30%;
+  left: 3%;
+  animation-delay: 3s;
+}
+
+.sb-4 {
+  width: 25px;
+  height: 25px;
+  top: 60%;
+  right: 5%;
+  animation-delay: 2s;
+}
+
+.sb-5 {
+  width: 35px;
+  height: 35px;
+  bottom: 15%;
+  right: 15%;
+  animation-delay: 4s;
+}
 
 @keyframes soapFloat {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0) translateX(0) scale(1);
     opacity: 0.7;
   }
+
   25% {
     transform: translateY(-30px) translateX(10px) scale(1.05);
     opacity: 0.9;
   }
+
   50% {
     transform: translateY(-15px) translateX(-10px) scale(0.95);
     opacity: 0.6;
   }
+
   75% {
     transform: translateY(-25px) translateX(5px) scale(1.02);
     opacity: 0.8;
@@ -589,12 +705,30 @@ body {
   background: var(--primary-blue);
 }
 
-.bone-1 { top: 20%; left: 2%; transform: rotate(-20deg); animation-delay: 0s; }
-.bone-2 { bottom: 25%; right: 5%; transform: rotate(15deg); animation-delay: 3s; }
+.bone-1 {
+  top: 20%;
+  left: 2%;
+  transform: rotate(-20deg);
+  animation-delay: 0s;
+}
+
+.bone-2 {
+  bottom: 25%;
+  right: 5%;
+  transform: rotate(15deg);
+  animation-delay: 3s;
+}
 
 @keyframes boneFloat {
-  0%, 100% { transform: translateY(0) rotate(-20deg); }
-  50% { transform: translateY(-15px) rotate(-15deg); }
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(-20deg);
+  }
+
+  50% {
+    transform: translateY(-15px) rotate(-15deg);
+  }
 }
 
 /* ==================== BOOKING SCREEN ==================== */
@@ -782,6 +916,7 @@ body {
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1376,11 +1511,11 @@ body {
 .booking-bubble {
   position: absolute;
   border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, 
-    rgba(255, 255, 255, 0.9) 0%, 
-    rgba(212, 238, 247, 0.5) 40%, 
-    rgba(168, 216, 234, 0.3) 100%);
-  box-shadow: 
+  background: radial-gradient(circle at 30% 30%,
+      rgba(255, 255, 255, 0.9) 0%,
+      rgba(212, 238, 247, 0.5) 40%,
+      rgba(168, 216, 234, 0.3) 100%);
+  box-shadow:
     inset -3px -3px 10px rgba(255, 255, 255, 0.4),
     inset 3px 3px 10px rgba(168, 216, 234, 0.2),
     0 0 15px rgba(168, 216, 234, 0.2);
@@ -1394,16 +1529,51 @@ body {
   left: 20%;
   width: 25%;
   height: 25%;
-  background: radial-gradient(circle, rgba(255,255,255,0.7) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.7) 0%, transparent 70%);
   border-radius: 50%;
 }
 
-.bb-1 { width: 40px; height: 40px; left: 5%; animation-delay: 0s; }
-.bb-2 { width: 25px; height: 25px; right: 8%; animation-delay: 3s; }
-.bb-3 { width: 35px; height: 35px; left: 15%; animation-delay: 6s; }
-.bb-4 { width: 20px; height: 20px; right: 20%; animation-delay: 2s; }
-.bb-5 { width: 30px; height: 30px; left: 3%; animation-delay: 8s; }
-.bb-6 { width: 22px; height: 22px; right: 5%; animation-delay: 4s; }
+.bb-1 {
+  width: 40px;
+  height: 40px;
+  left: 5%;
+  animation-delay: 0s;
+}
+
+.bb-2 {
+  width: 25px;
+  height: 25px;
+  right: 8%;
+  animation-delay: 3s;
+}
+
+.bb-3 {
+  width: 35px;
+  height: 35px;
+  left: 15%;
+  animation-delay: 6s;
+}
+
+.bb-4 {
+  width: 20px;
+  height: 20px;
+  right: 20%;
+  animation-delay: 2s;
+}
+
+.bb-5 {
+  width: 30px;
+  height: 30px;
+  left: 3%;
+  animation-delay: 8s;
+}
+
+.bb-6 {
+  width: 22px;
+  height: 22px;
+  right: 5%;
+  animation-delay: 4s;
+}
 
 @keyframes bookingBubbleFloat {
   0% {
@@ -1411,16 +1581,20 @@ body {
     opacity: 0;
     transform: translateX(0) scale(0.8);
   }
+
   10% {
     opacity: 0.7;
   }
+
   50% {
     opacity: 0.5;
     transform: translateX(30px) scale(1);
   }
+
   90% {
     opacity: 0.3;
   }
+
   100% {
     bottom: 110%;
     opacity: 0;
@@ -1487,9 +1661,11 @@ body {
   0% {
     transform: scale(0);
   }
+
   50% {
     transform: scale(1.1);
   }
+
   100% {
     transform: scale(1);
   }
@@ -1560,11 +1736,11 @@ body {
 .celeb-bubble {
   position: absolute;
   border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, 
-    rgba(255, 255, 255, 0.95) 0%, 
-    rgba(212, 238, 247, 0.6) 40%, 
-    rgba(168, 216, 234, 0.4) 100%);
-  box-shadow: 
+  background: radial-gradient(circle at 30% 30%,
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(212, 238, 247, 0.6) 40%,
+      rgba(168, 216, 234, 0.4) 100%);
+  box-shadow:
     inset -4px -4px 12px rgba(255, 255, 255, 0.5),
     inset 4px 4px 12px rgba(168, 216, 234, 0.3),
     0 0 20px rgba(168, 216, 234, 0.3);
@@ -1578,22 +1754,93 @@ body {
   left: 18%;
   width: 30%;
   height: 30%;
-  background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, transparent 70%);
   border-radius: 50%;
 }
 
-.cb-1 { width: 50px; height: 50px; left: 5%; animation-delay: 0s; }
-.cb-2 { width: 35px; height: 35px; left: 15%; animation-delay: 0.5s; }
-.cb-3 { width: 45px; height: 45px; left: 25%; animation-delay: 1s; }
-.cb-4 { width: 30px; height: 30px; left: 35%; animation-delay: 0.3s; }
-.cb-5 { width: 55px; height: 55px; left: 50%; animation-delay: 0.8s; }
-.cb-6 { width: 40px; height: 40px; left: 60%; animation-delay: 1.2s; }
-.cb-7 { width: 25px; height: 25px; left: 70%; animation-delay: 0.2s; }
-.cb-8 { width: 48px; height: 48px; left: 80%; animation-delay: 0.7s; }
-.cb-9 { width: 32px; height: 32px; left: 90%; animation-delay: 1.5s; }
-.cb-10 { width: 38px; height: 38px; left: 10%; animation-delay: 2s; }
-.cb-11 { width: 28px; height: 28px; left: 45%; animation-delay: 2.5s; }
-.cb-12 { width: 42px; height: 42px; left: 75%; animation-delay: 3s; }
+.cb-1 {
+  width: 50px;
+  height: 50px;
+  left: 5%;
+  animation-delay: 0s;
+}
+
+.cb-2 {
+  width: 35px;
+  height: 35px;
+  left: 15%;
+  animation-delay: 0.5s;
+}
+
+.cb-3 {
+  width: 45px;
+  height: 45px;
+  left: 25%;
+  animation-delay: 1s;
+}
+
+.cb-4 {
+  width: 30px;
+  height: 30px;
+  left: 35%;
+  animation-delay: 0.3s;
+}
+
+.cb-5 {
+  width: 55px;
+  height: 55px;
+  left: 50%;
+  animation-delay: 0.8s;
+}
+
+.cb-6 {
+  width: 40px;
+  height: 40px;
+  left: 60%;
+  animation-delay: 1.2s;
+}
+
+.cb-7 {
+  width: 25px;
+  height: 25px;
+  left: 70%;
+  animation-delay: 0.2s;
+}
+
+.cb-8 {
+  width: 48px;
+  height: 48px;
+  left: 80%;
+  animation-delay: 0.7s;
+}
+
+.cb-9 {
+  width: 32px;
+  height: 32px;
+  left: 90%;
+  animation-delay: 1.5s;
+}
+
+.cb-10 {
+  width: 38px;
+  height: 38px;
+  left: 10%;
+  animation-delay: 2s;
+}
+
+.cb-11 {
+  width: 28px;
+  height: 28px;
+  left: 45%;
+  animation-delay: 2.5s;
+}
+
+.cb-12 {
+  width: 42px;
+  height: 42px;
+  left: 75%;
+  animation-delay: 3s;
+}
 
 @keyframes celebBubbleRise {
   0% {
@@ -1601,18 +1848,22 @@ body {
     opacity: 0;
     transform: translateX(0) scale(0.5) rotate(0deg);
   }
+
   15% {
     opacity: 0.9;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.7;
     transform: translateX(40px) scale(1.1) rotate(10deg);
   }
+
   75% {
     opacity: 0.5;
     transform: translateX(-30px) scale(0.95) rotate(-5deg);
   }
+
   100% {
     bottom: 120%;
     opacity: 0;
@@ -1632,9 +1883,12 @@ body {
 }
 
 @keyframes dogBounce {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-10px);
   }
@@ -1645,15 +1899,26 @@ body {
   animation: sparkleShine 1.5s ease-in-out infinite;
 }
 
-.sparkle-1 { animation-delay: 0s; }
-.sparkle-2 { animation-delay: 0.5s; }
-.sparkle-3 { animation-delay: 1s; }
+.sparkle-1 {
+  animation-delay: 0s;
+}
+
+.sparkle-2 {
+  animation-delay: 0.5s;
+}
+
+.sparkle-3 {
+  animation-delay: 1s;
+}
 
 @keyframes sparkleShine {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.3;
     transform: scale(0.8);
   }
+
   50% {
     opacity: 1;
     transform: scale(1.2);
@@ -1665,17 +1930,34 @@ body {
   animation: dogBubbleFloat 3s ease-in-out infinite;
 }
 
-.db-1 { animation-delay: 0s; }
-.db-2 { animation-delay: 0.4s; }
-.db-3 { animation-delay: 0.8s; }
-.db-4 { animation-delay: 1.2s; }
-.db-5 { animation-delay: 1.6s; }
+.db-1 {
+  animation-delay: 0s;
+}
+
+.db-2 {
+  animation-delay: 0.4s;
+}
+
+.db-3 {
+  animation-delay: 0.8s;
+}
+
+.db-4 {
+  animation-delay: 1.2s;
+}
+
+.db-5 {
+  animation-delay: 1.6s;
+}
 
 @keyframes dogBubbleFloat {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0) scale(1);
     opacity: 0.6;
   }
+
   50% {
     transform: translateY(-8px) scale(1.1);
     opacity: 0.9;
@@ -1689,10 +1971,16 @@ body {
 }
 
 @keyframes blinkEyes {
-  0%, 45%, 55%, 100% {
+
+  0%,
+  45%,
+  55%,
+  100% {
     opacity: 0;
   }
-  48%, 52% {
+
+  48%,
+  52% {
     opacity: 1;
   }
 }
@@ -1870,11 +2158,11 @@ body {
   transition: transform 0.2s ease;
 }
 
-.terms-checkbox:checked + .terms-checkbox-custom::after {
+.terms-checkbox:checked+.terms-checkbox-custom::after {
   transform: scale(1);
 }
 
-.terms-checkbox:checked + .terms-checkbox-custom {
+.terms-checkbox:checked+.terms-checkbox-custom {
   border-color: var(--accent-cyan);
   background: rgba(67, 199, 205, 0.1);
 }
@@ -2135,9 +2423,9 @@ body {
   max-height: 0;
   overflow: hidden;
   opacity: 0;
-  transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
-              opacity 0.4s ease,
-              margin 0.4s ease;
+  transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.4s ease,
+    margin 0.4s ease;
   margin-top: 0;
 }
 
@@ -2324,20 +2612,20 @@ body {
   .pricing-section-v2 {
     padding: 60px 16px;
   }
-  
+
   .pricing-title-v2 {
     font-size: 1.7rem;
   }
-  
+
   .pricing-subtitle-v2 {
     font-size: 0.95rem;
   }
-  
+
   .size-cards-container {
     grid-template-columns: 1fr;
     gap: 16px;
   }
-  
+
   .size-card {
     padding: 24px 20px;
     display: flex;
@@ -2345,59 +2633,59 @@ body {
     gap: 16px;
     text-align: left;
   }
-  
+
   .size-card-icon {
     width: 60px;
     height: 60px;
     margin: 0;
     flex-shrink: 0;
   }
-  
+
   .size-card-icon svg {
     width: 36px;
     height: 36px;
   }
-  
+
   .size-card-content {
     flex: 1;
   }
-  
+
   .size-card-title {
     font-size: 1.1rem;
   }
-  
+
   .size-card-desc {
     margin: 0;
     font-size: 0.85rem;
   }
-  
+
   .size-card-indicator {
     margin: 0;
     flex-shrink: 0;
   }
-  
+
   .pricing-panel-content {
     padding: 20px 16px;
   }
-  
+
   .fur-type-header {
     padding: 14px 16px;
     font-size: 1rem;
   }
-  
+
   .service-block {
     padding: 14px;
   }
-  
+
   .service-name {
     font-size: 0.9rem;
   }
-  
+
   .service-price-tag {
     font-size: 1.15rem;
     padding: 6px 12px;
   }
-  
+
   .pricing-bubble-v2 {
     display: none;
   }
@@ -2407,13 +2695,13 @@ body {
   .pricing-title-v2 {
     font-size: 1.5rem;
   }
-  
+
   .service-block-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;
   }
-  
+
   .service-price-tag {
     font-size: 1.1rem;
   }
@@ -2561,8 +2849,8 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 50px;
+  height: 50px;
   background: linear-gradient(135deg, var(--accent-cyan) 0%, #3ba8ad 100%);
   color: var(--white);
   font-family: 'Fredoka', sans-serif;
@@ -2621,45 +2909,45 @@ body {
   .pricing-section {
     padding: 40px 16px;
   }
-  
+
   .pricing-title {
     font-size: 1.6rem;
   }
-  
+
   .pricing-tables {
     grid-template-columns: 1fr;
     gap: 20px;
   }
-  
+
   .pricing-row {
     grid-template-columns: 0.6fr 1fr 1fr 1fr;
     gap: 4px;
     padding: 10px 4px;
   }
-  
+
   .pricing-cell {
     font-size: 0.75rem;
   }
-  
+
   .pricing-row-header .pricing-cell {
     font-size: 0.6rem;
   }
-  
+
   .cell-time {
     font-size: 0.7rem;
   }
-  
+
   .size-badge {
     width: 30px;
     height: 30px;
     font-size: 0.75rem;
     border-radius: 8px;
   }
-  
+
   .pricing-card-header h3 {
     font-size: 1.1rem;
   }
-  
+
   .pricing-bubble {
     display: none;
   }
@@ -2669,11 +2957,11 @@ body {
   .pricing-row {
     grid-template-columns: 0.5fr 1fr 1fr 0.9fr;
   }
-  
+
   .pricing-cell {
     font-size: 0.7rem;
   }
-  
+
   .cell-time {
     font-size: 0.65rem;
   }
@@ -2873,27 +3161,27 @@ body {
     grid-template-columns: 1fr;
     max-width: 450px;
   }
-  
+
   .grid-cell {
     min-height: 280px;
   }
-  
+
   .grid-image:first-child {
     order: 1;
   }
-  
+
   .grid-services {
     order: 2;
   }
-  
+
   .grid-about {
     order: 3;
   }
-  
+
   .grid-image:last-child {
     order: 4;
   }
-  
+
   .grid-title {
     font-size: 1.6rem;
   }
@@ -3008,15 +3296,15 @@ body {
   .contact-location-container {
     flex-direction: column;
   }
-  
+
   .contact-map {
     min-height: 300px;
   }
-  
+
   .contact-info-side {
     padding: 30px 20px;
   }
-  
+
   .contact-info-grid {
     grid-template-columns: 1fr 1fr;
     gap: 25px 30px;
@@ -3028,11 +3316,11 @@ body {
     grid-template-columns: 1fr;
     gap: 20px;
   }
-  
+
   .contact-info-item {
     justify-content: flex-start;
   }
-  
+
   .contact-logo-img {
     width: 160px;
   }
