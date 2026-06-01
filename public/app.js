@@ -42,7 +42,7 @@ const STEPS = [
 
 // Horarios disponibles (deben coincidir con AppScript)
 // Cada cita dura 2 horas, asi que los slots son cada 2 horas
-const TIME_SLOTS = ['12:00', '14:00', '16:00', '18:00'];
+const TIME_SLOTS = ['11:00', '13:00', '15:00', '17:00'];
 const SLOT_DURATION_HOURS = 2; // Duracion de cada cita en horas
 
 // URL del AppScript - REEMPLAZAR CON TU URL
