@@ -76,6 +76,7 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxmR8fZa2CP3Abst7j-t
 // ==================== STATE ====================
 let currentStep = 1;
 let bookingData = {
+  extraIds: [],
   clientName: '',
   clientPhone: '',
   category: null,
