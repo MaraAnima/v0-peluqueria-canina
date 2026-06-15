@@ -30,14 +30,20 @@ const SIZES = [
   { id: 'bano-corte-rg-largo', size: 'RG', description: '20 kg o más', duration: '2 h', price: 1665, categoryId: 'pelo-largo', serviceTypeId: 'bano-corte' }
 ];
 
+// Servicio extra de deslanado
+const DESLANADO_PRICE = 1200; // Precio base (2 horas)
+const DESLANADO_HOURS = 2;    // Duracion base en horas
+const DESLANADO_EXTRA_HALF_HOUR_PRICE = 300; // Costo por cada media hora extra
+
 const STEPS = [
   { id: 1, name: 'Contacto' },
   { id: 2, name: 'Categoría' },
   { id: 3, name: 'Servicio' },
   { id: 4, name: 'Tamaño' },
-  { id: 5, name: 'Hora' },
-  { id: 6, name: 'Mascota' },
-  { id: 7, name: 'Confirmar' }
+  { id: 5, name: 'Extra' },
+  { id: 6, name: 'Hora' },
+  { id: 7, name: 'Mascota' },
+  { id: 8, name: 'Confirmar' }
 ];
 
 // Horarios disponibles (deben coincidir con AppScript)
@@ -46,7 +52,7 @@ const TIME_SLOTS = ['11:00', '13:00', '15:00', '17:00'];
 const SLOT_DURATION_HOURS = 2; // Duracion de cada cita en horas
 
 // URL del AppScript - REEMPLAZAR CON TU URL
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzbSA4_suzAkYS7UfYlyRBoKUt26p3h8lPi-raQSZxSUHeImIGlkxvRFlCEYrLVqRohZg/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxmR8fZa2CP3Abst7j-t9GaYpAaE8fIJbvAHzmEWkGJ0jFuj-N5b0OADqIbDxT-RuLHjg/exec';
 
 // ==================== STATE ====================
 let currentStep = 1;
@@ -56,6 +62,7 @@ let bookingData = {
   category: null,
   serviceType: null,
   size: null,
+  deslanado: false,
   date: null,
   time: null,
   petName: '',
@@ -196,6 +203,7 @@ function resetBooking() {
     category: null,
     serviceType: null,
     size: null,
+    deslanado: false,
     date: null,
     time: null,
     petName: '',
@@ -215,9 +223,10 @@ function renderStep() {
     case 2: renderCategoryStep(content); break;
     case 3: renderServiceTypeStep(content); break;
     case 4: renderSizeStep(content); break;
-    case 5: renderDateTimeStep(content); break;
-    case 6: renderPetStep(content); break;
-    case 7: renderSummaryStep(content); break;
+    case 5: renderExtraStep(content); break;
+    case 6: renderDateTimeStep(content); break;
+    case 7: renderPetStep(content); break;
+    case 8: renderSummaryStep(content); break;
   }
 
   // Animate
@@ -234,8 +243,9 @@ function renderProgressSteps() {
     2: bookingData.category?.name || null,
     3: bookingData.serviceType?.name || null,
     4: bookingData.size?.size || null,
-    5: bookingData.date && bookingData.time ? `${formatDate(bookingData.date)} ${bookingData.time}` : null,
-    6: bookingData.petName || null
+    5: currentStep > 5 ? (bookingData.deslanado ? 'Con deslanado' : 'Sin deslanado') : null,
+    6: bookingData.date && bookingData.time ? `${formatDate(bookingData.date)} ${bookingData.time}` : null,
+    7: bookingData.petName || null
   };
 
   container.innerHTML = STEPS.map((step, i) => {
@@ -457,7 +467,9 @@ function selectSize(sizeId) {
 }
 
 function calculateSubtotal() {
-  return bookingData.size?.price || 0;
+  let total = bookingData.size?.price || 0;
+  if (bookingData.deslanado) total += DESLANADO_PRICE;
+  return total;
 }
 
 function calculateDuration() {
@@ -469,9 +481,45 @@ function calculateDuration() {
     if (minMatch) minutes += parseInt(minMatch[1]);
   }
 
+  if (bookingData.deslanado) minutes += DESLANADO_HOURS * 60;
+
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
   return hours > 0 ? `${hours} h ${mins > 0 ? mins + ' min' : ''}` : `${mins} min`;
+}
+
+// ==================== STEP 5: EXTRA (DESLANADO) ====================
+function renderExtraStep(container) {
+  container.innerHTML = `
+    <h2 class="step-title">Servicio extra</h2>
+    <p class="step-subtitle">¿Querés sumar algún servicio adicional?</p>
+
+    <div class="terms-checkbox-container">
+      <label class="terms-checkbox-label">
+        <input type="checkbox" id="deslanado-checkbox" class="terms-checkbox" ${bookingData.deslanado ? 'checked' : ''}>
+        <span class="terms-checkbox-custom"></span>
+        <span class="terms-text">
+          <strong>¿Quieres sumar servicio de deslanado?</strong>
+          <span style="display:block; margin-top:6px; color: var(--text-muted); font-size: 0.85rem;">
+            El deslanado es un servicio que dura 2 horas y tiene un costo de $${DESLANADO_PRICE}. Por cada media hora extra se cobran $${DESLANADO_EXTRA_HALF_HOUR_PRICE}. Al sumarlo, se reserva el turno siguiente, por lo que no estará disponible el horario de las 17:00.
+          </span>
+        </span>
+      </label>
+    </div>
+
+    <button class="continue-btn" onclick="saveExtraAndNext()">Continuar</button>
+  `;
+
+  document.getElementById('deslanado-checkbox').addEventListener('change', function () {
+    bookingData.deslanado = this.checked;
+  });
+}
+
+function saveExtraAndNext() {
+  bookingData.deslanado = document.getElementById('deslanado-checkbox').checked;
+  // Si cambia la eleccion, reseteamos la hora porque la disponibilidad cambia
+  bookingData.time = null;
+  nextStep();
 }
 
 // ==================== STEP 5: DATE & TIME ====================
@@ -480,7 +528,7 @@ let isLoadingSlots = false;
 
 function renderDateTimeStep(container) {
   // Asegurarse de que estamos en el paso correcto
-  if (currentStep !== 5) {
+  if (currentStep !== 6) {
 
     return;
   }
@@ -558,22 +606,28 @@ function renderDateTimeStep(container) {
       </div>
     </div>
     
-    ${bookingData.date ? `
+    ${bookingData.date ? (() => {
+      const selectableSlots = getSelectableSlots();
+      return `
       <h3 style="margin: 20px 0 12px; font-family: 'Fredoka', sans-serif; font-size: 1.1rem;">Horarios disponibles</h3>
+      ${bookingData.deslanado ? `
+        <p style="margin: 0 0 12px; color: var(--text-muted); font-size: 0.85rem;">Con el servicio de deslanado se reserva también el turno siguiente, por lo que el horario de las 17:00 no está disponible.</p>
+      ` : ''}
       <div class="time-slots">
         ${isLoadingSlots
-        ? '<p style="text-align: center; color: var(--text-muted); grid-column: 1/-1;">Cargando horarios...</p>'
-        : (availableTimeSlots.length > 0
-          ? availableTimeSlots.map(time => `
+          ? '<p style="text-align: center; color: var(--text-muted); grid-column: 1/-1;">Cargando horarios...</p>'
+          : (selectableSlots.length > 0
+            ? selectableSlots.map(time => `
                   <button class="time-slot ${bookingData.time === time ? 'selected' : ''}" onclick="selectTime('${time}')">
                     ${time}
                   </button>
                 `).join('')
-          : '<p style="text-align: center; color: var(--text-muted); grid-column: 1/-1;">No hay horarios disponibles para esta fecha</p>'
-        )
-      }
+            : '<p style="text-align: center; color: var(--text-muted); grid-column: 1/-1;">No hay horarios disponibles para esta fecha</p>'
+          )
+        }
       </div>
-    ` : ''}
+    `;
+    })() : ''}
     
     <button class="continue-btn" onclick="nextStep()" ${!bookingData.date || !bookingData.time ? 'disabled' : ''}>
       Continuar
@@ -582,9 +636,31 @@ function renderDateTimeStep(container) {
 }
 
 function changeMonth(delta) {
-  if (currentStep !== 5) return;
+  if (currentStep !== 6) return;
   currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + delta, 1);
   renderDateTimeStep(document.getElementById('step-content'));
+}
+
+// Devuelve los horarios que el cliente realmente puede elegir.
+// Si pidio deslanado, el turno ocupa 2 horas extra (el turno siguiente),
+// por lo que solo se permiten horarios cuyo turno siguiente tambien este libre,
+// y nunca el ultimo turno (17:00).
+function getSelectableSlots() {
+  if (!bookingData.deslanado) return availableTimeSlots;
+
+  return availableTimeSlots.filter(slot => {
+    const idx = TIME_SLOTS.indexOf(slot);
+    const nextSlot = TIME_SLOTS[idx + 1];
+    // Debe existir un turno siguiente y estar disponible
+    return nextSlot && availableTimeSlots.includes(nextSlot);
+  });
+}
+
+// Devuelve el turno siguiente que se bloquea al sumar deslanado
+function getBlockedSlot() {
+  if (!bookingData.deslanado || !bookingData.time) return null;
+  const idx = TIME_SLOTS.indexOf(bookingData.time);
+  return TIME_SLOTS[idx + 1] || null;
 }
 
 // Variable para guardar horarios disponibles
@@ -592,7 +668,7 @@ let availableTimeSlots = [...TIME_SLOTS];
 
 async function selectDate(year, month, day) {
   // Verificar que seguimos en el paso correcto
-  if (currentStep !== 5) {
+  if (currentStep !== 6) {
 
     return;
   }
@@ -611,7 +687,7 @@ async function selectDate(year, month, day) {
   isLoadingSlots = false;
 
   // Verificar que seguimos en el paso correcto despues de la carga async
-  if (currentStep !== 5) {
+  if (currentStep !== 6) {
 
     return;
   }
@@ -652,7 +728,7 @@ async function loadAvailableSlots() {
 }
 
 function selectTime(time) {
-  if (currentStep !== 5) return;
+  if (currentStep !== 6) return;
   bookingData.time = time;
   renderDateTimeStep(document.getElementById('step-content'));
 }
@@ -770,6 +846,10 @@ function renderSummaryStep(container) {
         <span class="summary-value">${bookingData.size?.size} (${bookingData.size?.description})</span>
       </div>
       <div class="summary-row">
+        <span class="summary-label">Deslanado</span>
+        <span class="summary-value">${bookingData.deslanado ? `Sí (+$${DESLANADO_PRICE})` : 'No'}</span>
+      </div>
+      <div class="summary-row">
         <span class="summary-label">Fecha</span>
         <span class="summary-value">${dateStr}</span>
       </div>
@@ -880,7 +960,7 @@ async function confirmBooking() {
       btn.textContent = originalText;
       btn.disabled = false;
       // Volver al paso de fecha/hora para elegir otro
-      currentStep = 5;
+      currentStep = 6;
       await loadAvailableSlots();
       renderStep();
       return;
@@ -888,6 +968,7 @@ async function confirmBooking() {
 
     // PASO 2: Preparar datos para enviar
     btn.textContent = 'Enviando reserva...';
+    const horaBloqueada = getBlockedSlot();
     const datosReserva = {
       nombre: bookingData.clientName,
       telefono: bookingData.clientPhone,
@@ -898,6 +979,10 @@ async function confirmBooking() {
       pelaje: bookingData.category?.name || '',
       nombreMascota: bookingData.petName,
       notasMascota: bookingData.petNotes,
+      extras: bookingData.deslanado ? 'Deslanado' : '',
+      deslanado: bookingData.deslanado,
+      // Turno siguiente que se debe cancelar/bloquear al sumar deslanado
+      horaBloqueada: horaBloqueada,
       duracion: calculateDuration(),
       precio: calculateSubtotal()
     };
@@ -921,7 +1006,7 @@ async function confirmBooking() {
 
       // Si es error de horario, volver a seleccion de fecha/hora
       if (result.error.includes('horario')) {
-        currentStep = 5;
+        currentStep = 6;
         await loadAvailableSlots();
         renderStep();
       }
