@@ -541,20 +541,44 @@ function toggleDeslanado() {
 }
 function renderExtraStep(container) {
   container.innerHTML = `
-    <h2 class="step-title">Servicio extra</h2>
-    <p class="step-subtitle">¿Querés sumar algún servicio adicional?</p>
+    <h2 class="step-title">Extras para el servicio</h2>
+    <p class="step-subtitle">Podés sumar estos cuidados al turno de tu mascota.</p>
 
-    <div class="summary-row">
-  <span class="summary-label">Extras</span>
-  <span class="summary-value">${getSelectedExtrasText() || 'Sin extras'}</span>
-</div>
+    <div class="extras-grid">
+      ${FREE_EXTRAS.map(extra => {
+    const selected = bookingData.extraIds.includes(extra.id);
+
+    return `
+          <button type="button" class="extra-card ${selected ? 'selected' : ''}" onclick="toggleFreeExtra('${extra.id}')">
+            <span class="extra-check">${selected ? '✓' : '+'}</span>
+            <span class="extra-content">
+              <strong>${extra.name}</strong>
+              <small>${extra.description}</small>
+            </span>
+            <span class="extra-price free">${extra.priceLabel}</span>
+          </button>
+        `;
+  }).join('')}
+
+      <button type="button" class="extra-card premium ${bookingData.deslanado ? 'selected' : ''}" onclick="toggleDeslanado()">
+        <span class="extra-check">${bookingData.deslanado ? '✓' : '+'}</span>
+        <span class="extra-content">
+          <strong>Deslanado</strong>
+          <small>Dura 2 horas extra y reserva también el turno siguiente.</small>
+        </span>
+        <span class="extra-price">+$${DESLANADO_PRICE}</span>
+      </button>
+    </div>
+
+    <p class="extra-note">Perfume, corta uñas y limpieza de oídos son gratuitos. El deslanado tiene costo adicional y modifica la disponibilidad horaria.</p>
 
     <button class="continue-btn" onclick="saveExtraAndNext()">Continuar</button>
   `;
+}
 
-  document.getElementById('deslanado-checkbox').addEventListener('change', function () {
-    bookingData.deslanado = this.checked;
-  });
+function saveExtraAndNext() {
+  bookingData.time = null;
+  nextStep();
 }
 
 function saveExtraAndNext() {
@@ -888,8 +912,8 @@ function renderSummaryStep(container) {
         <span class="summary-value">${bookingData.size?.size} (${bookingData.size?.description})</span>
       </div>
       <div class="summary-row">
-        <span class="summary-label">Deslanado</span>
-        <span class="summary-value">${bookingData.deslanado ? `Sí (+$${DESLANADO_PRICE})` : 'No'}</span>
+        <span class="summary-label">Extras</span>
+<span class="summary-value">${getSelectedExtrasText() || 'Sin extras'}</span>
       </div>
       <div class="summary-row">
         <span class="summary-label">Fecha</span>
