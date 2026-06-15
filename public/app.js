@@ -52,7 +52,7 @@ const TIME_SLOTS = ['11:00', '13:00', '15:00', '17:00'];
 const SLOT_DURATION_HOURS = 2; // Duracion de cada cita en horas
 
 // URL del AppScript - REEMPLAZAR CON TU URL
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzbSA4_suzAkYS7UfYlyRBoKUt26p3h8lPi-raQSZxSUHeImIGlkxvRFlCEYrLVqRohZg/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxmR8fZa2CP3Abst7j-t9GaYpAaE8fIJbvAHzmEWkGJ0jFuj-N5b0OADqIbDxT-RuLHjg/exec';
 
 // ==================== STATE ====================
 let currentStep = 1;
@@ -607,27 +607,27 @@ function renderDateTimeStep(container) {
     </div>
     
     ${bookingData.date ? (() => {
-        const selectableSlots = getSelectableSlots();
-        return `
+      const selectableSlots = getSelectableSlots();
+      return `
       <h3 style="margin: 20px 0 12px; font-family: 'Fredoka', sans-serif; font-size: 1.1rem;">Horarios disponibles</h3>
       ${bookingData.deslanado ? `
         <p style="margin: 0 0 12px; color: var(--text-muted); font-size: 0.85rem;">Con el servicio de deslanado se reserva también el turno siguiente, por lo que el horario de las 17:00 no está disponible.</p>
       ` : ''}
       <div class="time-slots">
         ${isLoadingSlots
-        ? '<p style="text-align: center; color: var(--text-muted); grid-column: 1/-1;">Cargando horarios...</p>'
-        : (selectableSlots.length > 0
-          ? selectableSlots.map(time => `
+          ? '<p style="text-align: center; color: var(--text-muted); grid-column: 1/-1;">Cargando horarios...</p>'
+          : (selectableSlots.length > 0
+            ? selectableSlots.map(time => `
                   <button class="time-slot ${bookingData.time === time ? 'selected' : ''}" onclick="selectTime('${time}')">
                     ${time}
                   </button>
                 `).join('')
-          : '<p style="text-align: center; color: var(--text-muted); grid-column: 1/-1;">No hay horarios disponibles para esta fecha</p>'
-        )
-      }
+            : '<p style="text-align: center; color: var(--text-muted); grid-column: 1/-1;">No hay horarios disponibles para esta fecha</p>'
+          )
+        }
       </div>
     `;
-      })() : ''}
+    })() : ''}
     
     <button class="continue-btn" onclick="nextStep()" ${!bookingData.date || !bookingData.time ? 'disabled' : ''}>
       Continuar
