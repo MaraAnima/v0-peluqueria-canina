@@ -561,7 +561,15 @@ function renderExtraStep(container) {
   }).join('')}
 
       <button type="button" class="extra-card premium ${bookingData.deslanado ? 'selected' : ''}" onclick="toggleDeslanado()">
-        <span class="extra-check">${bookingData.deslanado ? '✓' : '+'}</span>
+        <span class="extra-icon">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <path d="M4 18c3-6 5-9 8-9s5 3 8 9"/>
+    <path d="M8 15c1-2 2-3 4-3s3 1 4 3"/>
+    <path d="M7 5c1 2 2.5 3 5 3s4-1 5-3"/>
+    <path d="M12 8v4"/>
+  </svg>
+</span>
+<span class="extra-check">${bookingData.deslanado ? '✓' : '+'}</span>
         <span class="extra-content">
           <strong>Deslanado</strong>
           <small>Dura 2 horas extra y reserva también el turno siguiente.</small>
