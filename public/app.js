@@ -263,7 +263,7 @@ function renderProgressSteps() {
     2: bookingData.category?.name || null,
     3: bookingData.serviceType?.name || null,
     4: bookingData.size?.size || null,
-    5: currentStep > 5 ? (bookingData.deslanado ? 'Con deslanado' : 'Sin deslanado') : null,
+    5: currentStep > 5 ? (getSelectedExtrasText() || 'Sin extras') : null,
     6: bookingData.date && bookingData.time ? `${formatDate(bookingData.date)} ${bookingData.time}` : null,
     7: bookingData.petName || null
   };
