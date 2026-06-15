@@ -999,7 +999,7 @@ async function confirmBooking() {
       pelaje: bookingData.category?.name || '',
       nombreMascota: bookingData.petName,
       notasMascota: bookingData.petNotes,
-      extras: bookingData.deslanado ? 'Deslanado' : '',
+      extras: getSelectedExtrasText(),
       deslanado: bookingData.deslanado,
       // Turno siguiente que se debe cancelar/bloquear al sumar deslanado
       horaBloqueada: horaBloqueada,
