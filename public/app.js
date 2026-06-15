@@ -550,7 +550,8 @@ function renderExtraStep(container) {
 
     return `
           <button type="button" class="extra-card ${selected ? 'selected' : ''}" onclick="toggleFreeExtra('${extra.id}')">
-            <span class="extra-check">${selected ? '✓' : '+'}</span>
+            <span class="extra-icon">${extra.icon}</span>
+<span class="extra-check">${selected ? '✓' : '+'}</span>
             <span class="extra-content">
               <strong>${extra.name}</strong>
               <small>${extra.description}</small>
