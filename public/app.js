@@ -217,6 +217,7 @@ function nextStep() {
 function resetBooking() {
   currentStep = 1;
   bookingData = {
+    extraIds: [],
     clientName: '',
     clientPhone: '',
     category: null,
