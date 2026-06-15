@@ -34,7 +34,26 @@ const SIZES = [
 const DESLANADO_PRICE = 1200; // Precio base (2 horas)
 const DESLANADO_HOURS = 2;    // Duracion base en horas
 const DESLANADO_EXTRA_HALF_HOUR_PRICE = 300; // Costo por cada media hora extra
-
+const FREE_EXTRAS = [
+  {
+    id: 'perfume',
+    name: 'Perfume',
+    description: 'Toque final para que vuelva con olorcito rico.',
+    priceLabel: 'Gratis'
+  },
+  {
+    id: 'corta-unas',
+    name: 'Corta uñas',
+    description: 'Corte básico de uñas durante el servicio.',
+    priceLabel: 'Gratis'
+  },
+  {
+    id: 'limpieza-oidos',
+    name: 'Limpieza de oídos',
+    description: 'Higiene suave de oídos incluida en el turno.',
+    priceLabel: 'Gratis'
+  }
+];
 const STEPS = [
   { id: 1, name: 'Contacto' },
   { id: 2, name: 'Categoría' },
