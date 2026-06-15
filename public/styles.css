@@ -3325,3 +3325,53 @@ body {
     width: 160px;
   }
 }
+.extra-card {
+  grid-template-columns: 42px 1fr auto 34px;
+}
+
+.extra-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: var(--bubble-light);
+  color: var(--primary-blue);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.extra-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.extra-card.selected .extra-icon {
+  background: var(--accent-cyan);
+  color: var(--white);
+}
+
+.extra-card.premium .extra-icon {
+  background: #fff1bf;
+  color: var(--primary-blue);
+}
+
+.extra-card.premium.selected .extra-icon {
+  background: var(--accent-yellow);
+  color: var(--text-dark);
+}
+
+.extra-check {
+  width: 30px;
+  height: 30px;
+  font-size: 1rem;
+}
+
+@media (max-width: 480px) {
+  .extra-card {
+    grid-template-columns: 42px 1fr 30px;
+  }
+
+  .extra-price {
+    grid-column: 2;
+  }
+}

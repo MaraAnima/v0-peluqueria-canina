@@ -34,7 +34,51 @@ const SIZES = [
 const DESLANADO_PRICE = 1200; // Precio base (2 horas)
 const DESLANADO_HOURS = 2;    // Duracion base en horas
 const DESLANADO_EXTRA_HALF_HOUR_PRICE = 300; // Costo por cada media hora extra
-
+const FREE_EXTRAS = [
+  {
+    id: 'perfume',
+    name: 'Perfume',
+    description: 'Toque final para que vuelva con olorcito rico.',
+    priceLabel: 'Gratis',
+    icon: `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M10 3h4v4h-4z"/>
+        <path d="M9 7h6l1 3v9a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-9z"/>
+        <path d="M16 11h3"/>
+        <path d="M19 9v4"/>
+        <path d="M11 14h2"/>
+      </svg>
+    `
+  },
+  {
+    id: 'corta-unas',
+    name: 'Corta uñas',
+    description: 'Corte básico de uñas durante el servicio.',
+    priceLabel: 'Gratis',
+    icon: `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="6" cy="6" r="3"/>
+        <circle cx="6" cy="18" r="3"/>
+        <path d="M8.2 8.2 19 19"/>
+        <path d="M8.2 15.8 19 5"/>
+      </svg>
+    `
+  },
+  {
+    id: 'limpieza-oidos',
+    name: 'Limpieza de oídos',
+    description: 'Higiene suave de oídos incluida en el turno.',
+    priceLabel: 'Gratis',
+    icon: `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 3a6 6 0 0 0-6 6"/>
+        <path d="M18 9a6 6 0 0 0-6-6"/>
+        <path d="M8 10c0-2.2 1.8-4 4-4s4 1.8 4 4c0 4-4 4-4 8"/>
+        <path d="M10 20h4"/>
+      </svg>
+    `
+  }
+];
 const STEPS = [
   { id: 1, name: 'Contacto' },
   { id: 2, name: 'Categoría' },
@@ -57,6 +101,7 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxmR8fZa2CP3Abst7j-t
 // ==================== STATE ====================
 let currentStep = 1;
 let bookingData = {
+  extraIds: [],
   clientName: '',
   clientPhone: '',
   category: null,
@@ -198,6 +243,7 @@ function nextStep() {
 function resetBooking() {
   currentStep = 1;
   bookingData = {
+    extraIds: [],
     clientName: '',
     clientPhone: '',
     category: null,
@@ -243,7 +289,7 @@ function renderProgressSteps() {
     2: bookingData.category?.name || null,
     3: bookingData.serviceType?.name || null,
     4: bookingData.size?.size || null,
-    5: currentStep > 5 ? (bookingData.deslanado ? 'Con deslanado' : 'Sin deslanado') : null,
+    5: currentStep > 5 ? (getSelectedExtrasText() || 'Sin extras') : null,
     6: bookingData.date && bookingData.time ? `${formatDate(bookingData.date)} ${bookingData.time}` : null,
     7: bookingData.petName || null
   };
@@ -489,30 +535,84 @@ function calculateDuration() {
 }
 
 // ==================== STEP 5: EXTRA (DESLANADO) ====================
+function getSelectedFreeExtras() {
+  return FREE_EXTRAS.filter(extra => bookingData.extraIds.includes(extra.id));
+}
+
+function getSelectedExtrasText() {
+  const extras = getSelectedFreeExtras().map(extra => extra.name);
+
+  if (bookingData.deslanado) {
+    extras.push('Deslanado');
+  }
+
+  return extras.join(', ');
+}
+
+function toggleFreeExtra(extraId) {
+  if (bookingData.extraIds.includes(extraId)) {
+    bookingData.extraIds = bookingData.extraIds.filter(id => id !== extraId);
+  } else {
+    bookingData.extraIds.push(extraId);
+  }
+
+  renderExtraStep(document.getElementById('step-content'));
+}
+
+function toggleDeslanado() {
+  bookingData.deslanado = !bookingData.deslanado;
+  bookingData.time = null;
+  renderExtraStep(document.getElementById('step-content'));
+}
 function renderExtraStep(container) {
   container.innerHTML = `
-    <h2 class="step-title">Servicio extra</h2>
-    <p class="step-subtitle">¿Querés sumar algún servicio adicional?</p>
+    <h2 class="step-title">Extras para el servicio</h2>
+    <p class="step-subtitle">Podés sumar estos cuidados al turno de tu mascota.</p>
 
-    <div class="terms-checkbox-container">
-      <label class="terms-checkbox-label">
-        <input type="checkbox" id="deslanado-checkbox" class="terms-checkbox" ${bookingData.deslanado ? 'checked' : ''}>
-        <span class="terms-checkbox-custom"></span>
-        <span class="terms-text">
-          <strong>¿Quieres sumar servicio de deslanado?</strong>
-          <span style="display:block; margin-top:6px; color: var(--text-muted); font-size: 0.85rem;">
-            El deslanado es un servicio que dura 2 horas y tiene un costo de $${DESLANADO_PRICE}. Por cada media hora extra se cobran $${DESLANADO_EXTRA_HALF_HOUR_PRICE}. Al sumarlo, se reserva el turno siguiente, por lo que no estará disponible el horario de las 17:00.
-          </span>
+    <div class="extras-grid">
+      ${FREE_EXTRAS.map(extra => {
+    const selected = bookingData.extraIds.includes(extra.id);
+
+    return `
+          <button type="button" class="extra-card ${selected ? 'selected' : ''}" onclick="toggleFreeExtra('${extra.id}')">
+            <span class="extra-icon">${extra.icon}</span>
+<span class="extra-check">${selected ? '✓' : '+'}</span>
+            <span class="extra-content">
+              <strong>${extra.name}</strong>
+              <small>${extra.description}</small>
+            </span>
+            <span class="extra-price free">${extra.priceLabel}</span>
+          </button>
+        `;
+  }).join('')}
+
+      <button type="button" class="extra-card premium ${bookingData.deslanado ? 'selected' : ''}" onclick="toggleDeslanado()">
+        <span class="extra-icon">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <path d="M4 18c3-6 5-9 8-9s5 3 8 9"/>
+    <path d="M8 15c1-2 2-3 4-3s3 1 4 3"/>
+    <path d="M7 5c1 2 2.5 3 5 3s4-1 5-3"/>
+    <path d="M12 8v4"/>
+  </svg>
+</span>
+<span class="extra-check">${bookingData.deslanado ? '✓' : '+'}</span>
+        <span class="extra-content">
+          <strong>Deslanado</strong>
+          <small>Dura 2 horas extra y reserva también el turno siguiente.</small>
         </span>
-      </label>
+        <span class="extra-price">+$${DESLANADO_PRICE}</span>
+      </button>
     </div>
+
+    <p class="extra-note">Perfume, corta uñas y limpieza de oídos son gratuitos. El deslanado tiene costo adicional y modifica la disponibilidad horaria.</p>
 
     <button class="continue-btn" onclick="saveExtraAndNext()">Continuar</button>
   `;
+}
 
-  document.getElementById('deslanado-checkbox').addEventListener('change', function () {
-    bookingData.deslanado = this.checked;
-  });
+function saveExtraAndNext() {
+  bookingData.time = null;
+  nextStep();
 }
 
 function saveExtraAndNext() {
@@ -846,8 +946,8 @@ function renderSummaryStep(container) {
         <span class="summary-value">${bookingData.size?.size} (${bookingData.size?.description})</span>
       </div>
       <div class="summary-row">
-        <span class="summary-label">Deslanado</span>
-        <span class="summary-value">${bookingData.deslanado ? `Sí (+$${DESLANADO_PRICE})` : 'No'}</span>
+        <span class="summary-label">Extras</span>
+<span class="summary-value">${getSelectedExtrasText() || 'Sin extras'}</span>
       </div>
       <div class="summary-row">
         <span class="summary-label">Fecha</span>
@@ -979,7 +1079,7 @@ async function confirmBooking() {
       pelaje: bookingData.category?.name || '',
       nombreMascota: bookingData.petName,
       notasMascota: bookingData.petNotes,
-      extras: bookingData.deslanado ? 'Deslanado' : '',
+      extras: getSelectedExtrasText(),
       deslanado: bookingData.deslanado,
       // Turno siguiente que se debe cancelar/bloquear al sumar deslanado
       horaBloqueada: horaBloqueada,
