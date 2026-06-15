@@ -510,6 +510,35 @@ function calculateDuration() {
 }
 
 // ==================== STEP 5: EXTRA (DESLANADO) ====================
+function getSelectedFreeExtras() {
+  return FREE_EXTRAS.filter(extra => bookingData.extraIds.includes(extra.id));
+}
+
+function getSelectedExtrasText() {
+  const extras = getSelectedFreeExtras().map(extra => extra.name);
+
+  if (bookingData.deslanado) {
+    extras.push('Deslanado');
+  }
+
+  return extras.join(', ');
+}
+
+function toggleFreeExtra(extraId) {
+  if (bookingData.extraIds.includes(extraId)) {
+    bookingData.extraIds = bookingData.extraIds.filter(id => id !== extraId);
+  } else {
+    bookingData.extraIds.push(extraId);
+  }
+
+  renderExtraStep(document.getElementById('step-content'));
+}
+
+function toggleDeslanado() {
+  bookingData.deslanado = !bookingData.deslanado;
+  bookingData.time = null;
+  renderExtraStep(document.getElementById('step-content'));
+}
 function renderExtraStep(container) {
   container.innerHTML = `
     <h2 class="step-title">Servicio extra</h2>
