@@ -616,7 +616,6 @@ function saveExtraAndNext() {
 }
 
 function saveExtraAndNext() {
-  bookingData.deslanado = document.getElementById('deslanado-checkbox').checked;
   // Si cambia la eleccion, reseteamos la hora porque la disponibilidad cambia
   bookingData.time = null;
   nextStep();
