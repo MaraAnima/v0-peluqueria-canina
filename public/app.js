@@ -544,18 +544,10 @@ function renderExtraStep(container) {
     <h2 class="step-title">Servicio extra</h2>
     <p class="step-subtitle">¿Querés sumar algún servicio adicional?</p>
 
-    <div class="terms-checkbox-container">
-      <label class="terms-checkbox-label">
-        <input type="checkbox" id="deslanado-checkbox" class="terms-checkbox" ${bookingData.deslanado ? 'checked' : ''}>
-        <span class="terms-checkbox-custom"></span>
-        <span class="terms-text">
-          <strong>¿Quieres sumar servicio de deslanado?</strong>
-          <span style="display:block; margin-top:6px; color: var(--text-muted); font-size: 0.85rem;">
-            El deslanado es un servicio que dura 2 horas y tiene un costo de $${DESLANADO_PRICE}. Por cada media hora extra se cobran $${DESLANADO_EXTRA_HALF_HOUR_PRICE}. Al sumarlo, se reserva el turno siguiente, por lo que no estará disponible el horario de las 17:00.
-          </span>
-        </span>
-      </label>
-    </div>
+    <div class="summary-row">
+  <span class="summary-label">Extras</span>
+  <span class="summary-value">${getSelectedExtrasText() || 'Sin extras'}</span>
+</div>
 
     <button class="continue-btn" onclick="saveExtraAndNext()">Continuar</button>
   `;
