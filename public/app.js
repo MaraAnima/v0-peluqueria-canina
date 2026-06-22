@@ -7,33 +7,58 @@ const CATEGORIES = [
 // Tipos de servicio
 const SERVICE_TYPES = [
   { id: 'bano', name: 'Baño', description: 'Baño completo con secado' },
-  { id: 'bano-corte', name: 'Baño y corte', description: 'Baño completo + corte de pelo' }
+  { id: 'bano-corte', name: 'Baño y corte', description: 'Baño completo + corte de pelo' },
+  { id: 'bano-esquila', name: 'Baño y esquila', description: 'Baño completo + esquila' },
+  { id: 'bano-deslanado', name: 'Baño y Deslanado', description: 'Baño completo + deslanado (2 h extra)' }
 ];
 
-// Tamaños con precios base (pelo corto)
+// Tamaños con precios base
+// Nota: los precios de "Baño y Deslanado" ya incluyen el costo del deslanado (+$1200 sobre el baño).
 const SIZES = [
   // Pelo corto - Baño
-  { id: 'bano-rp', size: 'RP', description: 'Hasta 10 kg', duration: '1 h', price: 820, categoryId: 'pelo-corto', serviceTypeId: 'bano' },
-  { id: 'bano-rm', size: 'RM', description: '10 kg a 20 kg', duration: '1 h', price: 1010, categoryId: 'pelo-corto', serviceTypeId: 'bano' },
-  { id: 'bano-rg', size: 'RG', description: '20 kg o más', duration: '1 h 15 min', price: 1380, categoryId: 'pelo-corto', serviceTypeId: 'bano' },
+  { id: 'bano-rp', size: 'RP', description: 'Hasta 10 kg', duration: '1 h', price: 720, categoryId: 'pelo-corto', serviceTypeId: 'bano' },
+  { id: 'bano-rm', size: 'RM', description: '10 kg a 20 kg', duration: '1 h', price: 910, categoryId: 'pelo-corto', serviceTypeId: 'bano' },
+  { id: 'bano-rg', size: 'RG', description: '20 kg o más', duration: '1 h 15 min', price: 1280, categoryId: 'pelo-corto', serviceTypeId: 'bano' },
   // Pelo corto - Baño y corte
-  { id: 'bano-corte-rp', size: 'RP', description: 'Hasta 10 kg', duration: '1 h 30 min', price: 975, categoryId: 'pelo-corto', serviceTypeId: 'bano-corte' },
-  { id: 'bano-corte-rm', size: 'RM', description: '10 kg a 20 kg', duration: '1 h 30 min', price: 1150, categoryId: 'pelo-corto', serviceTypeId: 'bano-corte' },
-  { id: 'bano-corte-rg', size: 'RG', description: '20 kg o más', duration: '2 h', price: 1615, categoryId: 'pelo-corto', serviceTypeId: 'bano-corte' },
+  { id: 'bano-corte-rp', size: 'RP', description: 'Hasta 10 kg', duration: '1 h 30 min', price: 875, categoryId: 'pelo-corto', serviceTypeId: 'bano-corte' },
+  { id: 'bano-corte-rm', size: 'RM', description: '10 kg a 20 kg', duration: '1 h 30 min', price: 1050, categoryId: 'pelo-corto', serviceTypeId: 'bano-corte' },
+  { id: 'bano-corte-rg', size: 'RG', description: '20 kg o más', duration: '2 h', price: 1515, categoryId: 'pelo-corto', serviceTypeId: 'bano-corte' },
+  // Pelo corto - Baño y esquila
+  { id: 'bano-esquila-rp', size: 'RP', description: 'Hasta 10 kg', duration: '1 h 30 min', price: 770, categoryId: 'pelo-corto', serviceTypeId: 'bano-esquila' },
+  { id: 'bano-esquila-rm', size: 'RM', description: '10 kg a 20 kg', duration: '1 h 30 min', price: 925, categoryId: 'pelo-corto', serviceTypeId: 'bano-esquila' },
+  { id: 'bano-esquila-rg', size: 'RG', description: '20 kg o más', duration: '2 h', price: 1335, categoryId: 'pelo-corto', serviceTypeId: 'bano-esquila' },
+  // Pelo corto - Baño y Deslanado (precio = baño + $1200). corteRazaPrice lleva al precio "baño y corte + deslanado".
+  { id: 'bano-deslanado-rp', size: 'RP', description: 'Hasta 10 kg', duration: '1 h', price: 1920, corteRazaPrice: 155, categoryId: 'pelo-corto', serviceTypeId: 'bano-deslanado' },
+  { id: 'bano-deslanado-rm', size: 'RM', description: '10 kg a 20 kg', duration: '1 h', price: 2110, corteRazaPrice: 140, categoryId: 'pelo-corto', serviceTypeId: 'bano-deslanado' },
+  { id: 'bano-deslanado-rg', size: 'RG', description: '20 kg o más', duration: '1 h 15 min', price: 2480, corteRazaPrice: 235, categoryId: 'pelo-corto', serviceTypeId: 'bano-deslanado' },
   // Pelo largo - Baño
-  { id: 'bano-rp-largo', size: 'RP', description: 'Hasta 10 kg', duration: '1 h', price: 895, categoryId: 'pelo-largo', serviceTypeId: 'bano' },
-  { id: 'bano-rm-largo', size: 'RM', description: '10 kg a 20 kg', duration: '1 h', price: 1060, categoryId: 'pelo-largo', serviceTypeId: 'bano' },
-  { id: 'bano-rg-largo', size: 'RG', description: '20 kg o más', duration: '1 h 15 min', price: 1420, categoryId: 'pelo-largo', serviceTypeId: 'bano' },
+  { id: 'bano-rp-largo', size: 'RP', description: 'Hasta 10 kg', duration: '1 h', price: 795, categoryId: 'pelo-largo', serviceTypeId: 'bano' },
+  { id: 'bano-rm-largo', size: 'RM', description: '10 kg a 20 kg', duration: '1 h', price: 960, categoryId: 'pelo-largo', serviceTypeId: 'bano' },
+  { id: 'bano-rg-largo', size: 'RG', description: '20 kg o más', duration: '1 h 15 min', price: 1320, categoryId: 'pelo-largo', serviceTypeId: 'bano' },
   // Pelo largo - Baño y corte
-  { id: 'bano-corte-rp-largo', size: 'RP', description: 'Hasta 10 kg', duration: '1 h 30 min', price: 1075, categoryId: 'pelo-largo', serviceTypeId: 'bano-corte' },
-  { id: 'bano-corte-rm-largo', size: 'RM', description: '10 kg a 20 kg', duration: '1 h 30 min', price: 1310, categoryId: 'pelo-largo', serviceTypeId: 'bano-corte' },
-  { id: 'bano-corte-rg-largo', size: 'RG', description: '20 kg o más', duration: '2 h', price: 1665, categoryId: 'pelo-largo', serviceTypeId: 'bano-corte' }
+  { id: 'bano-corte-rp-largo', size: 'RP', description: 'Hasta 10 kg', duration: '1 h 30 min', price: 975, categoryId: 'pelo-largo', serviceTypeId: 'bano-corte' },
+  { id: 'bano-corte-rm-largo', size: 'RM', description: '10 kg a 20 kg', duration: '1 h 30 min', price: 1210, categoryId: 'pelo-largo', serviceTypeId: 'bano-corte' },
+  { id: 'bano-corte-rg-largo', size: 'RG', description: '20 kg o más', duration: '2 h', price: 1665, categoryId: 'pelo-largo', serviceTypeId: 'bano-corte' },
+  // Pelo largo - Baño y esquila
+  { id: 'bano-esquila-rp-largo', size: 'RP', description: 'Hasta 10 kg', duration: '1 h 30 min', price: 860, categoryId: 'pelo-largo', serviceTypeId: 'bano-esquila' },
+  { id: 'bano-esquila-rm-largo', size: 'RM', description: '10 kg a 20 kg', duration: '1 h 30 min', price: 1065, categoryId: 'pelo-largo', serviceTypeId: 'bano-esquila' },
+  { id: 'bano-esquila-rg-largo', size: 'RG', description: '20 kg o más', duration: '2 h', price: 1465, categoryId: 'pelo-largo', serviceTypeId: 'bano-esquila' },
+  // Pelo largo - Baño y Deslanado (precio = baño + $1200)
+  { id: 'bano-deslanado-rp-largo', size: 'RP', description: 'Hasta 10 kg', duration: '1 h', price: 1995, corteRazaPrice: 180, categoryId: 'pelo-largo', serviceTypeId: 'bano-deslanado' },
+  { id: 'bano-deslanado-rm-largo', size: 'RM', description: '10 kg a 20 kg', duration: '1 h', price: 2160, corteRazaPrice: 250, categoryId: 'pelo-largo', serviceTypeId: 'bano-deslanado' },
+  { id: 'bano-deslanado-rg-largo', size: 'RG', description: '20 kg o más', duration: '1 h 15 min', price: 2520, corteRazaPrice: 345, categoryId: 'pelo-largo', serviceTypeId: 'bano-deslanado' }
 ];
 
-// Servicio extra de deslanado
-const DESLANADO_PRICE = 1200; // Precio base (2 horas)
-const DESLANADO_HOURS = 2;    // Duracion base en horas
+// Deslanado: ahora es un tipo de servicio ("Baño y Deslanado").
+// Mantiene el bloqueo de 2 horas extra (reserva el turno siguiente).
+const DESLANADO_PRICE = 1200; // Costo del deslanado (ya incluido en el precio del servicio)
+const DESLANADO_HOURS = 2;    // Duracion extra en horas que ocupa el turno
 const DESLANADO_EXTRA_HALF_HOUR_PRICE = 300; // Costo por cada media hora extra
+
+// Indica si el servicio seleccionado es "Baño y Deslanado"
+function isDeslanado() {
+  return bookingData.serviceType?.id === 'bano-deslanado';
+}
 const FREE_EXTRAS = [
   {
     id: 'perfume',
@@ -107,7 +132,7 @@ let bookingData = {
   category: null,
   serviceType: null,
   size: null,
-  deslanado: false,
+  corteRaza: false,
   date: null,
   time: null,
   petName: '',
@@ -249,7 +274,7 @@ function resetBooking() {
     category: null,
     serviceType: null,
     size: null,
-    deslanado: false,
+    corteRaza: false,
     date: null,
     time: null,
     petName: '',
@@ -444,6 +469,13 @@ function renderServiceTypeStep(container) {
                 <circle cx="12" cy="8" r="2"/>
                 <path d="M14 8h4"/>
               </svg>
+            ` : serviceType.id === 'bano-deslanado' ? `
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 18c3-6 5-9 8-9s5 3 8 9"/>
+                <path d="M8 15c1-2 2-3 4-3s3 1 4 3"/>
+                <path d="M7 5c1 2 2.5 3 5 3s4-1 5-3"/>
+                <path d="M12 8v4"/>
+              </svg>
             ` : `
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="6" cy="6" r="3"/>
@@ -467,6 +499,8 @@ function renderServiceTypeStep(container) {
 function selectServiceType(serviceTypeId) {
   bookingData.serviceType = SERVICE_TYPES.find(s => s.id === serviceTypeId);
   bookingData.size = null; // Reset size when service type changes
+  bookingData.corteRaza = false; // El corte de raza solo aplica a "Baño y Deslanado"
+  bookingData.time = null; // La disponibilidad horaria cambia segun el servicio
   setTimeout(nextStep, 200);
 }
 
@@ -513,8 +547,12 @@ function selectSize(sizeId) {
 }
 
 function calculateSubtotal() {
+  // El precio base de "Baño y Deslanado" ya incluye el deslanado (+$1200).
   let total = bookingData.size?.price || 0;
-  if (bookingData.deslanado) total += DESLANADO_PRICE;
+  // El corte de raza solo aplica a "Baño y Deslanado" y suma segun el tamaño.
+  if (isDeslanado() && bookingData.corteRaza && bookingData.size?.corteRazaPrice) {
+    total += bookingData.size.corteRazaPrice;
+  }
   return total;
 }
 
@@ -527,7 +565,7 @@ function calculateDuration() {
     if (minMatch) minutes += parseInt(minMatch[1]);
   }
 
-  if (bookingData.deslanado) minutes += DESLANADO_HOURS * 60;
+  if (isDeslanado()) minutes += DESLANADO_HOURS * 60;
 
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
@@ -542,8 +580,8 @@ function getSelectedFreeExtras() {
 function getSelectedExtrasText() {
   const extras = getSelectedFreeExtras().map(extra => extra.name);
 
-  if (bookingData.deslanado) {
-    extras.push('Deslanado');
+  if (isDeslanado() && bookingData.corteRaza) {
+    extras.push('Corte de raza');
   }
 
   return extras.join(', ');
@@ -559,9 +597,8 @@ function toggleFreeExtra(extraId) {
   renderExtraStep(document.getElementById('step-content'));
 }
 
-function toggleDeslanado() {
-  bookingData.deslanado = !bookingData.deslanado;
-  bookingData.time = null;
+function toggleCorteRaza() {
+  bookingData.corteRaza = !bookingData.corteRaza;
   renderExtraStep(document.getElementById('step-content'));
 }
 function renderExtraStep(container) {
@@ -586,25 +623,28 @@ function renderExtraStep(container) {
         `;
   }).join('')}
 
-      <button type="button" class="extra-card premium ${bookingData.deslanado ? 'selected' : ''}" onclick="toggleDeslanado()">
+      ${isDeslanado() ? `
+      <button type="button" class="extra-card premium ${bookingData.corteRaza ? 'selected' : ''}" onclick="toggleCorteRaza()">
         <span class="extra-icon">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-    <path d="M4 18c3-6 5-9 8-9s5 3 8 9"/>
-    <path d="M8 15c1-2 2-3 4-3s3 1 4 3"/>
-    <path d="M7 5c1 2 2.5 3 5 3s4-1 5-3"/>
-    <path d="M12 8v4"/>
+    <circle cx="6" cy="6" r="3"/>
+    <path d="M8.12 8.12L12 12"/>
+    <path d="M20 4L8.12 15.88"/>
+    <path d="M14.47 14.48L20 20"/>
+    <path d="M8.12 8.12L6 14l6-2-3.88 3.88"/>
   </svg>
 </span>
-<span class="extra-check">${bookingData.deslanado ? '✓' : '+'}</span>
+<span class="extra-check">${bookingData.corteRaza ? '✓' : '+'}</span>
         <span class="extra-content">
-          <strong>Deslanado</strong>
-          <small>Dura 2 horas extra y reserva también el turno siguiente.</small>
+          <strong>Corte de raza</strong>
+          <small>Corte de raza junto con el deslanado.</small>
         </span>
-        <span class="extra-price">+$${DESLANADO_PRICE}</span>
+        <span class="extra-price">+$${bookingData.size?.corteRazaPrice || ''}</span>
       </button>
+      ` : ''}
     </div>
 
-    <p class="extra-note">Perfume, corta uñas y limpieza de oídos son gratuitos. El deslanado tiene costo adicional y modifica la disponibilidad horaria.</p>
+    <p class="extra-note">Perfume, corta uñas y limpieza de oídos son gratuitos.${isDeslanado() ? ' El corte de raza tiene costo adicional según el tamaño de tu mascota.' : ''}</p>
 
     <button class="continue-btn" onclick="saveExtraAndNext()">Continuar</button>
   `;
@@ -709,8 +749,8 @@ function renderDateTimeStep(container) {
       const selectableSlots = getSelectableSlots();
       return `
       <h3 style="margin: 20px 0 12px; font-family: 'Fredoka', sans-serif; font-size: 1.1rem;">Horarios disponibles</h3>
-      ${bookingData.deslanado ? `
-        <p style="margin: 0 0 12px; color: var(--text-muted); font-size: 0.85rem;">Con el servicio de deslanado se reserva también el turno siguiente, por lo que el horario de las 17:00 no está disponible.</p>
+      ${isDeslanado() ? `
+        <p style="margin: 0 0 12px; color: var(--text-muted); font-size: 0.85rem;">Con el servicio de Baño y Deslanado se reserva también el turno siguiente, por lo que el horario de las 17:00 no está disponible.</p>
       ` : ''}
       <div class="time-slots">
         ${isLoadingSlots
@@ -745,7 +785,7 @@ function changeMonth(delta) {
 // por lo que solo se permiten horarios cuyo turno siguiente tambien este libre,
 // y nunca el ultimo turno (17:00).
 function getSelectableSlots() {
-  if (!bookingData.deslanado) return availableTimeSlots;
+  if (!isDeslanado()) return availableTimeSlots;
 
   return availableTimeSlots.filter(slot => {
     const idx = TIME_SLOTS.indexOf(slot);
@@ -757,7 +797,7 @@ function getSelectableSlots() {
 
 // Devuelve el turno siguiente que se bloquea al sumar deslanado
 function getBlockedSlot() {
-  if (!bookingData.deslanado || !bookingData.time) return null;
+  if (!isDeslanado() || !bookingData.time) return null;
   const idx = TIME_SLOTS.indexOf(bookingData.time);
   return TIME_SLOTS[idx + 1] || null;
 }
@@ -1079,8 +1119,9 @@ async function confirmBooking() {
       nombreMascota: bookingData.petName,
       notasMascota: bookingData.petNotes,
       extras: getSelectedExtrasText(),
-      deslanado: bookingData.deslanado,
-      // Turno siguiente que se debe cancelar/bloquear al sumar deslanado
+      deslanado: isDeslanado(),
+      corteRaza: isDeslanado() && bookingData.corteRaza,
+      // Turno siguiente que se debe cancelar/bloquear con "Baño y Deslanado"
       horaBloqueada: horaBloqueada,
       duracion: calculateDuration(),
       precio: calculateSubtotal()
