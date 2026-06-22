@@ -2743,24 +2743,81 @@ body {
   line-height: 1.6;
 }
 
+.pricing-carousel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.pricing-carousel-viewport {
+  flex: 1;
+  overflow: hidden;
+}
+
 .pricing-tables {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
-  margin-bottom: 24px;
+  display: flex;
+  gap: 0;
+  transition: transform 0.4s ease;
 }
 
 .pricing-card {
+  flex: 0 0 100%;
+  width: 100%;
   background: var(--white);
   border-radius: 20px;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.pricing-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+.pricing-nav {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: var(--white);
+  color: var(--accent-cyan);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.pricing-nav:hover {
+  background: var(--accent-cyan);
+  color: var(--white);
+  transform: scale(1.08);
+}
+
+.pricing-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.pricing-dot {
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(67, 199, 205, 0.3);
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.pricing-dot:hover {
+  background: rgba(67, 199, 205, 0.6);
+}
+
+.pricing-dot.active {
+  background: var(--accent-cyan);
+  transform: scale(1.3);
 }
 
 .pricing-card-header {
@@ -2914,9 +2971,9 @@ body {
     font-size: 1.6rem;
   }
 
-  .pricing-tables {
-    grid-template-columns: 1fr;
-    gap: 20px;
+  .pricing-nav {
+    width: 36px;
+    height: 36px;
   }
 
   .pricing-row {

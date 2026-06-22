@@ -205,9 +205,16 @@
           <p class="pricing-subtitle">Conoce los valores según el tamaño y tipo de pelo de tu mascota.</p>
         </div>
 
-        <div class="pricing-tables">
-          <!-- Banos Table -->
-          <div class="pricing-card">
+        <div class="pricing-carousel">
+          <button class="pricing-nav pricing-nav-prev" type="button" aria-label="Anterior" onclick="movePricingCarousel(-1)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+          <div class="pricing-carousel-viewport" id="pricingViewport">
+            <div class="pricing-tables">
+              <!-- Banos Table -->
+              <div class="pricing-card">
             <div class="pricing-card-header banos-header">
               <h3>Baños</h3>
             </div>
@@ -355,6 +362,19 @@
               </div>
             </div>
           </div>
+            </div>
+          </div>
+          <button class="pricing-nav pricing-nav-next" type="button" aria-label="Siguiente" onclick="movePricingCarousel(1)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
+
+        <div class="pricing-dots" id="pricingDots">
+          <button class="pricing-dot active" type="button" aria-label="Ir a Baños" onclick="goToPricingSlide(0)"></button>
+          <button class="pricing-dot" type="button" aria-label="Ir a Baños y Corte" onclick="goToPricingSlide(1)"></button>
+          <button class="pricing-dot" type="button" aria-label="Ir a Baños y Esquila" onclick="goToPricingSlide(2)"></button>
         </div>
 
         <p class="pricing-disclaimer">El servicio de Baño y Deslanado suma $1200 al valor del baño. Los tiempos pueden variar según el estado del manto y el comportamiento de la
@@ -618,6 +638,41 @@
   </div>
 
   <script src="app.js"></script>
+  <script>
+    // ==================== PRICING CAROUSEL ====================
+    let pricingSlide = 0;
+    const pricingSlideCount = 3;
+
+    function updatePricingCarousel() {
+      const track = document.querySelector('#pricingViewport .pricing-tables');
+      if (track) track.style.transform = `translateX(-${pricingSlide * 100}%)`;
+      document.querySelectorAll('#pricingDots .pricing-dot').forEach((dot, i) => {
+        dot.classList.toggle('active', i === pricingSlide);
+      });
+    }
+
+    function movePricingCarousel(direction) {
+      pricingSlide = (pricingSlide + direction + pricingSlideCount) % pricingSlideCount;
+      updatePricingCarousel();
+    }
+
+    function goToPricingSlide(index) {
+      pricingSlide = index;
+      updatePricingCarousel();
+    }
+
+    // Swipe support on touch devices
+    (function () {
+      const viewport = document.getElementById('pricingViewport');
+      if (!viewport) return;
+      let startX = 0;
+      viewport.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; }, { passive: true });
+      viewport.addEventListener('touchend', (e) => {
+        const diff = e.changedTouches[0].clientX - startX;
+        if (Math.abs(diff) > 50) movePricingCarousel(diff < 0 ? 1 : -1);
+      }, { passive: true });
+    })();
+  </script>
 </body>
 
 </html>
