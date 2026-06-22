@@ -362,6 +362,56 @@
               </div>
             </div>
           </div>
+
+          <!-- Bano y Deslanado Table -->
+          <div class="pricing-card">
+            <div class="pricing-card-header deslanado-header">
+              <h3>Baño y Deslanado</h3>
+            </div>
+            <div class="pricing-card-body">
+              <div class="pricing-table">
+                <div class="pricing-row pricing-row-header">
+                  <div class="pricing-cell cell-size">Tamaño</div>
+                  <div class="pricing-cell">Pelo Corto</div>
+                  <div class="pricing-cell">Pelo Largo</div>
+                  <div class="pricing-cell cell-time">Tiempo</div>
+                </div>
+                <div class="pricing-row">
+                  <div class="pricing-cell cell-size">
+                    <span class="size-badge">
+                      S
+                      <small>Hasta 10kg</small>
+                    </span>
+                  </div>
+                  <div class="pricing-cell">$1920</div>
+                  <div class="pricing-cell">$1995</div>
+                  <div class="pricing-cell cell-time">Duración 1hr + 2hrs</div>
+                </div>
+                <div class="pricing-row">
+                  <div class="pricing-cell cell-size">
+                    <span class="size-badge">
+                      M
+                      <small>De 10kg a 20kg</small>
+                    </span>
+                  </div>
+                  <div class="pricing-cell">$2110</div>
+                  <div class="pricing-cell">$2160</div>
+                  <div class="pricing-cell cell-time">Duración 1hr + 2hrs</div>
+                </div>
+                <div class="pricing-row">
+                  <div class="pricing-cell cell-size">
+                    <span class="size-badge">
+                      L+
+                      <small>Más de 20kg</small>
+                    </span>
+                  </div>
+                  <div class="pricing-cell">$2480</div>
+                  <div class="pricing-cell">$2520</div>
+                  <div class="pricing-cell cell-time">Duración 1hr 15min + 2hrs</div>
+                </div>
+              </div>
+            </div>
+          </div>
             </div>
           </div>
           <button class="pricing-nav pricing-nav-next" type="button" aria-label="Siguiente" onclick="movePricingCarousel(1)">
@@ -375,6 +425,7 @@
           <button class="pricing-dot active" type="button" aria-label="Ir a Baños" onclick="goToPricingSlide(0)"></button>
           <button class="pricing-dot" type="button" aria-label="Ir a Baños y Corte" onclick="goToPricingSlide(1)"></button>
           <button class="pricing-dot" type="button" aria-label="Ir a Baños y Esquila" onclick="goToPricingSlide(2)"></button>
+          <button class="pricing-dot" type="button" aria-label="Ir a Baño y Deslanado" onclick="goToPricingSlide(3)"></button>
         </div>
 
         <p class="pricing-disclaimer">El servicio de Baño y Deslanado suma $1200 al valor del baño. Los tiempos pueden variar según el estado del manto y el comportamiento de la
@@ -641,7 +692,7 @@
   <script>
     // ==================== PRICING CAROUSEL ====================
     let pricingSlide = 0;
-    const pricingSlideCount = 3;
+    const pricingSlideCount = 4;
 
     function updatePricingCarousel() {
       const track = document.querySelector('#pricingViewport .pricing-tables');

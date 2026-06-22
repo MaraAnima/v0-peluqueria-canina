@@ -2843,6 +2843,11 @@ body {
   border-bottom: 3px solid var(--accent-yellow);
 }
 
+.deslanado-header {
+  background: linear-gradient(135deg, rgba(67, 199, 205, 0.22) 0%, rgba(249, 199, 79, 0.14) 100%);
+  border-bottom: 3px solid var(--accent-cyan);
+}
+
 .pricing-card-body {
   padding: 8px 16px 16px;
 }
