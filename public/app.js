@@ -501,6 +501,16 @@ function selectServiceType(serviceTypeId) {
   bookingData.size = null; // Reset size when service type changes
   bookingData.corteRaza = false; // El corte de raza solo aplica a "Baño y Deslanado"
   bookingData.time = null; // La disponibilidad horaria cambia segun el servicio
+
+  // Al elegir "Baño y Deslanado" mostramos un aviso informativo sobre el precio.
+  if (serviceTypeId === 'bano-deslanado') {
+    showModal(
+      'El servicio de Baño y Deslanado tiene un precio base de $1200, contemplando hasta 2 horas de trabajo. Este valor puede variar según el estado del manto de la mascota, ya que en algunos casos puede requerir más tiempo. El tiempo extra tiene un costo de $300 por hora adicional.',
+      'info',
+      'Baño y Deslanado'
+    );
+  }
+
   setTimeout(nextStep, 200);
 }
 
