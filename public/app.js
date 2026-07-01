@@ -129,6 +129,7 @@ let bookingData = {
   extraIds: [],
   clientName: '',
   clientPhone: '',
+  clientEmail: '',
   category: null,
   serviceType: null,
   size: null,
@@ -271,6 +272,7 @@ function resetBooking() {
     extraIds: [],
     clientName: '',
     clientPhone: '',
+    clientEmail: '',
     category: null,
     serviceType: null,
     size: null,
@@ -390,6 +392,18 @@ function renderContactStep(container) {
         <input type="tel" class="form-input" id="client-phone" placeholder="Ej: 11 1234-5678 (minimo 6 digitos)" value="${bookingData.clientPhone}">
       </div>
     </div>
+
+    <div class="form-group">
+      <label class="form-label">Tu email <span style="color: #ef4444;">*</span></label>
+      <div class="input-icon-wrapper">
+        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+          <polyline points="22,6 12,13 2,6"/>
+        </svg>
+        <input type="email" class="form-input" id="client-email" placeholder="Ej: maria@correo.com" value="${bookingData.clientEmail}">
+      </div>
+      <p class="form-hint">Te enviaremos la confirmacion y el ID de reserva a este correo.</p>
+    </div>
     
     <button class="continue-btn" onclick="saveContactAndNext()">Continuar</button>
   `;
@@ -398,6 +412,7 @@ function renderContactStep(container) {
 function saveContactAndNext() {
   const name = document.getElementById('client-name').value.trim();
   const phone = document.getElementById('client-phone').value.trim();
+  const email = document.getElementById('client-email').value.trim();
 
   // Validacion del nombre
   if (!name) {
@@ -424,8 +439,20 @@ function saveContactAndNext() {
     return;
   }
 
+  // Validacion del email
+  if (!email) {
+    showModal('El email es obligatorio', 'error', 'Campo requerido');
+    return;
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    showModal('Ingresa un email valido (ej: maria@correo.com)', 'error', 'Email invalido');
+    return;
+  }
+
   bookingData.clientName = name;
   bookingData.clientPhone = phone;
+  bookingData.clientEmail = email;
   nextStep();
 }
 
@@ -941,6 +968,10 @@ function renderSummaryStep(container) {
         <span class="summary-label">Telefono</span>
         <span class="summary-value">${bookingData.clientPhone}</span>
       </div>
+      <div class="summary-row">
+        <span class="summary-label">Email</span>
+        <span class="summary-value">${bookingData.clientEmail}</span>
+      </div>
     </div>
     
     <div class="summary-section">
@@ -1111,6 +1142,7 @@ async function confirmBooking() {
     const datosReserva = {
       nombre: bookingData.clientName,
       telefono: bookingData.clientPhone,
+      email: bookingData.clientEmail,
       fecha: fecha,
       hora: bookingData.time,
       servicio: bookingData.serviceType?.name || '',
@@ -1153,7 +1185,17 @@ async function confirmBooking() {
       return;
     }
 
-    // Exito!
+    // Exito! Mostrar el ID de reserva devuelto por el servidor
+    const reservaId = result.id || result.reservaId || result.reserva || '';
+    const idBox = document.getElementById('reservation-id-box');
+    const idValue = document.getElementById('reservation-id-value');
+    if (reservaId && idBox && idValue) {
+      idValue.textContent = reservaId;
+      idBox.style.display = 'block';
+    } else if (idBox) {
+      idBox.style.display = 'none';
+    }
+
     showScreen('confirmation-screen');
 
   } catch (error) {
@@ -1186,6 +1228,66 @@ function initPricingCards() {
       });
     });
   });
+}
+
+// ==================== CANCELAR CITA ====================
+function openCancelScreen() {
+  showScreen('cancel-screen');
+  const input = document.getElementById('cancel-id');
+  if (input) {
+    input.value = '';
+    setTimeout(() => input.focus(), 150);
+  }
+}
+
+function closeCancelScreen() {
+  showScreen('home-screen');
+}
+
+async function submitCancel() {
+  const input = document.getElementById('cancel-id');
+  const id = input ? input.value.trim() : '';
+
+  if (!id) {
+    showModal('Ingresa el ID de reserva que te enviamos por email', 'error', 'Campo requerido');
+    return;
+  }
+
+  const btn = document.getElementById('cancel-submit-btn');
+  const originalText = btn ? btn.textContent : '';
+  if (btn) {
+    btn.textContent = 'Cancelando...';
+    btn.disabled = true;
+  }
+
+  try {
+    // GET evita el preflight CORS (igual que la verificacion de horarios)
+    const url = `${SCRIPT_URL}?action=cancelar&id=${encodeURIComponent(id)}`;
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.error) {
+      showModal(data.error, 'error', 'No se pudo cancelar');
+      return;
+    }
+
+    showModal(
+      data.mensaje || 'Tu cita fue cancelada correctamente. Te enviamos la confirmacion por email.',
+      'info',
+      'Cita cancelada'
+    );
+    if (input) input.value = '';
+    showScreen('home-screen');
+
+  } catch (error) {
+    console.error('Error al cancelar la cita:', error);
+    showModal('Hubo un error de conexion al cancelar tu cita. Por favor intenta de nuevo.', 'error', 'Error de conexion');
+  } finally {
+    if (btn) {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
+  }
 }
 
 // ==================== INIT ====================

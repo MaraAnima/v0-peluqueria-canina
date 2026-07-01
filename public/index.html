@@ -53,6 +53,14 @@
             <path d="M5 12h14M12 5l7 7-7 7" />
           </svg>
         </button>
+
+        <button class="cancel-cta-button" onclick="openCancelScreen()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M15 9l-6 6M9 9l6 6" />
+          </svg>
+          <span>Cancelar una cita</span>
+        </button>
       </div>
 
       <div class="home-image">
@@ -662,8 +670,54 @@
         <img src="logo.svg" alt="TRCorte Pet Spa" class="success-logo-img">
       </div>
       <p class="success-tagline">Tu mascota merece lo mejor</p>
-      <p class="success-message">Reserva confirmada. Te enviamos los detalles por WhatsApp.</p>
+      <p class="success-message">Reserva confirmada. Te enviamos la confirmacion y el ID de reserva a tu email.</p>
+
+      <div class="reservation-id-box" id="reservation-id-box" style="display:none;">
+        <span class="reservation-id-label">ID de reserva</span>
+        <strong class="reservation-id-value" id="reservation-id-value"></strong>
+        <p class="reservation-id-hint">Guarda este ID: lo necesitas para cancelar tu cita.</p>
+      </div>
+
       <button class="new-booking-btn" onclick="resetBooking()">Nueva Reserva</button>
+    </div>
+  </section>
+
+  <!-- Cancel Appointment Screen -->
+  <section id="cancel-screen" class="screen">
+    <div class="cancel-wrapper">
+      <button class="back-button-integrated" onclick="closeCancelScreen()">
+        <div class="back-button-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+        </div>
+        <span>Volver</span>
+      </button>
+
+      <div class="cancel-card">
+        <div class="cancel-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M15 9l-6 6M9 9l6 6" />
+          </svg>
+        </div>
+        <h2 class="cancel-title">Cancelar cita</h2>
+        <p class="cancel-subtitle">Ingresa el ID de reserva que te enviamos por email al confirmar tu cita.</p>
+
+        <div class="form-group">
+          <label class="form-label">ID de reserva <span style="color: #ef4444;">*</span></label>
+          <div class="input-icon-wrapper">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="16" rx="2" />
+              <path d="M7 9h10M7 13h6" />
+            </svg>
+            <input type="text" class="form-input" id="cancel-id" placeholder="Ej: TR-2026-0042" autocomplete="off">
+          </div>
+          <p class="form-hint">Encontraras el ID en el email de confirmacion de tu reserva.</p>
+        </div>
+
+        <button class="continue-btn" id="cancel-submit-btn" onclick="submitCancel()">Cancelar mi cita</button>
+      </div>
     </div>
   </section>
 
