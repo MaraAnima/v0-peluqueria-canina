@@ -1,192 +1,470 @@
 # Google Apps Script — Email de confirmación, ID de reserva y cancelación
 
-Este archivo es solo una **guía de referencia**. Copia el código en tu proyecto de
-Google Apps Script (el que está detrás de `SCRIPT_URL` en `public/app.js`) y adáptalo
-a los nombres de tu hoja de cálculo.
+Este es tu script actual **adaptado**: se agrega la columna `Email`, el envío del
+correo "Ha sido confirmada tu cita" con la agenda + el ID, y la cancelación por ID.
+Se quitó todo lo de WhatsApp.
 
-El frontend ya envía y espera lo siguiente:
+### Qué cambió respecto a tu versión
 
-- Al **confirmar** una reserva hace `POST` con un JSON que ahora incluye `email`.
-  Espera de vuelta un JSON con el **ID de reserva** en `id` (o `reservaId`).
-- Al **cancelar** hace `GET` a `?action=cancelar&id=EL_ID`.
-  Espera `{ "mensaje": "..." }` en éxito o `{ "error": "..." }` si falla.
+1. **Nueva columna `Email`** al final de la hoja (columna Q, índice 16). No toca los
+   índices de `Deslanado` [14] ni `Hora Bloqueada` [15], así que no rompe nada.
+2. **`saveReservation`** ahora guarda `data.email`.
+3. **`doPost`** manda el email de confirmación (en vez de WhatsApp) y devuelve `reservaId`.
+4. **`doGet`** ahora acepta `?action=cancelar&id=...`: busca la reserva, borra la fila
+   (libera el turno) y manda un email de cancelación.
 
----
-
-## Requisitos en tu hoja
-
-Agrega (si no existen) estas columnas en la hoja donde guardas las reservas:
-
-- `ID` — el identificador único de la reserva (ej: `TR-2026-0042`)
-- `Email` — el correo del cliente
-- `Estado` — `Confirmada` / `Cancelada`
-
-Ajusta los índices de columna (`COL_*`) según tu hoja real.
+El frontend ya envía `email` y ya lee `reservaId` de la respuesta, así que **no hay que
+tocar `public/app.js` ni `public/index.html`**.
 
 ---
 
-## Código sugerido (Code.gs)
+## Código completo (Code.gs)
 
 ```javascript
-// ====== CONFIG ======
-const SHEET_NAME = 'Reservas';        // nombre de tu hoja
-const HORARIOS = ['11:00', '13:00', '15:00', '17:00'];
+// ==================== CONFIGURACION ====================
+const SPREADSHEET_ID = '11rzRToVwRoBOVNr-G0KYV7gi_NCUEmBG2UsMhydc3Cg';
+const SHEET_NAME = 'Reservas';
+const TIME_SLOTS_WEEKDAY = ['11:00', '13:00', '15:00', '17:00'];
+const TIME_SLOTS_SATURDAY = ['10:00', '14:00'];
+const NEGOCIO = 'TR Corte'; // nombre que aparece en los emails
 
-// Índices de columnas (1 = A, 2 = B, ...). Ajusta a tu hoja.
-const COL_ID       = 1;  // A
-const COL_FECHA    = 2;  // B  (YYYY-MM-DD)
-const COL_HORA     = 3;  // C
-const COL_NOMBRE   = 4;  // D
-const COL_TELEFONO = 5;  // E
-const COL_EMAIL    = 6;  // F
-const COL_ESTADO   = 7;  // G
-// ...agrega el resto de tus columnas (servicio, tamaño, etc.)
+// Indice (0-based) de la columna Email en la hoja
+const COL_EMAIL = 16; // Q
 
-function getSheet() {
-  return SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
-}
+// ==================== FUNCIONES PRINCIPALES ====================
 
-// ====== GENERAR ID ÚNICO ======
-function generarId() {
-  const anio = new Date().getFullYear();
-  const sheet = getSheet();
-  const total = Math.max(sheet.getLastRow() - 1, 0) + 1; // filas de datos + 1
-  const secuencia = String(total).padStart(4, '0');
-  return `TR-${anio}-${secuencia}`;
-}
-
-// ====== GET: disponibilidad de horarios y cancelación ======
 function doGet(e) {
-  const params = e.parameter || {};
+  try {
+    const params = e.parameter || {};
 
-  // --- Cancelar cita ---
-  if (params.action === 'cancelar') {
-    return cancelarReserva(params.id);
-  }
-
-  // --- Horarios disponibles para una fecha (comportamiento actual) ---
-  const fecha = params.fecha;
-  const ocupados = getHorariosOcupados(fecha);
-  const horarios = HORARIOS.filter(h => !ocupados.includes(h));
-  return jsonResponse({ horarios: horarios });
-}
-
-function getHorariosOcupados(fecha) {
-  const sheet = getSheet();
-  const data = sheet.getDataRange().getValues();
-  const ocupados = [];
-  for (let i = 1; i < data.length; i++) {
-    const estado = String(data[i][COL_ESTADO - 1] || '');
-    if (estado === 'Cancelada') continue; // los cancelados liberan el horario
-    if (String(data[i][COL_FECHA - 1]) === fecha) {
-      ocupados.push(String(data[i][COL_HORA - 1]));
+    // --- Cancelar cita por ID ---
+    if (params.action === 'cancelar') {
+      return cancelarReserva(params.id);
     }
+
+    // --- Horarios disponibles (comportamiento original) ---
+    const fecha = params.fecha;
+    if (!fecha) {
+      return createJsonResponse({ error: 'Fecha requerida' });
+    }
+    const horariosDisponibles = getAvailableSlots(fecha);
+    return createJsonResponse({
+      fecha: fecha,
+      horarios: horariosDisponibles
+    });
+  } catch (error) {
+    return createJsonResponse({ error: error.toString() });
   }
-  return ocupados;
 }
 
-// ====== CANCELAR ======
-function cancelarReserva(id) {
-  if (!id) return jsonResponse({ error: 'Falta el ID de reserva.' });
+function doPost(e) {
+  const lock = LockService.getScriptLock();
 
-  const sheet = getSheet();
-  const data = sheet.getDataRange().getValues();
+  try {
+    lock.waitLock(30000);
 
-  for (let i = 1; i < data.length; i++) {
-    if (String(data[i][COL_ID - 1]).trim() === String(id).trim()) {
-      const estado = String(data[i][COL_ESTADO - 1] || '');
-      if (estado === 'Cancelada') {
-        return jsonResponse({ error: 'Esta cita ya estaba cancelada.' });
+    let data;
+    try {
+      data = JSON.parse(e.postData.contents);
+    } catch (parseError) {
+      return createJsonResponse({ error: 'Error al parsear datos' });
+    }
+
+    const camposRequeridos = ['nombre', 'telefono', 'email', 'fecha', 'hora'];
+    for (const campo of camposRequeridos) {
+      if (!data[campo]) {
+        return createJsonResponse({ error: 'Campo requerido faltante: ' + campo });
       }
-      // Marcar como cancelada (fila i+1 porque data empieza en 0 y la hoja en 1)
-      sheet.getRange(i + 1, COL_ESTADO).setValue('Cancelada');
+    }
 
-      // Email de aviso de cancelación
-      const email = String(data[i][COL_EMAIL - 1] || '');
-      if (email) {
-        MailApp.sendEmail({
-          to: email,
-          subject: 'Tu cita fue cancelada — TR Corte',
-          htmlBody:
-            '<p>Hola ' + (data[i][COL_NOMBRE - 1] || '') + ',</p>' +
-            '<p>Tu cita con <b>ID ' + id + '</b> fue cancelada correctamente.</p>' +
-            '<p>Si fue un error, podés volver a reservar desde nuestra web.</p>' +
-            '<p>— TR Corte</p>'
+    const horariosDisponibles = getAvailableSlots(data.fecha);
+    if (!horariosDisponibles.includes(data.hora)) {
+      return createJsonResponse({
+        error: 'Lo sentimos, el horario ' + data.hora + ' ya fue reservado.',
+        horariosDisponibles: horariosDisponibles
+      });
+    }
+
+    // ===== Validacion extra para el servicio de deslanado =====
+    if (data.deslanado) {
+      const slotsDelDia = getTimeSlotsByDate(data.fecha);
+      const idx = slotsDelDia.indexOf(data.hora);
+      const siguiente = slotsDelDia[idx + 1];
+
+      if (!siguiente) {
+        return createJsonResponse({
+          error: 'El horario ' + data.hora + ' no permite deslanado porque es el ultimo turno del dia.',
+          horariosDisponibles: horariosDisponibles
         });
       }
-      return jsonResponse({ mensaje: 'Tu cita fue cancelada. Te enviamos la confirmación por email.' });
+
+      if (!horariosDisponibles.includes(siguiente)) {
+        return createJsonResponse({
+          error: 'El turno siguiente (' + siguiente + '), necesario para el deslanado, ya esta reservado.',
+          horariosDisponibles: horariosDisponibles
+        });
+      }
+
+      data.horaBloqueada = siguiente;
+    }
+
+    const resultado = saveReservation(data);
+
+    if (resultado.success) {
+      const emailResult = sendEmailConfirmation(data, resultado.reservaId);
+      return createJsonResponse({
+        success: true,
+        reservaId: resultado.reservaId,
+        email: emailResult
+      });
+    } else {
+      return createJsonResponse({ error: resultado.error });
+    }
+
+  } catch (error) {
+    return createJsonResponse({ error: error.toString() });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// ==================== FUNCIONES DE DATOS ====================
+
+function getAvailableSlots(fecha) {
+  const sheet = getSheet();
+  const data = sheet.getDataRange().getValues();
+  const horariosOcupados = [];
+
+  const horariosDelDia = getTimeSlotsByDate(fecha);
+  if (horariosDelDia.length === 0) {
+    return [];
+  }
+
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    const fechaReserva = row[2];
+    const horaReserva = row[3];
+
+    if (fechaReserva && formatDateForComparison(fechaReserva) === fecha) {
+      if (horaReserva) {
+        horariosOcupados.push(formatTimeForComparison(horaReserva));
+      }
+
+      const deslanado = row[14];
+      const horaBloqueada = row[15];
+      if (deslanado === 'SI' && horaBloqueada) {
+        horariosOcupados.push(formatTimeForComparison(horaBloqueada));
+      }
     }
   }
-  return jsonResponse({ error: 'No encontramos una cita con ese ID. Revisá el email de confirmación.' });
+
+  return horariosDelDia.filter(slot => !horariosOcupados.includes(slot));
 }
 
-// ====== POST: crear reserva + email de confirmación con ID ======
-function doPost(e) {
-  const datos = JSON.parse(e.postData.contents);
+function saveReservation(data) {
+  try {
+    const sheet = getSheet();
+    const reservaId = generateReservationId();
+    const timestamp = new Date().toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' });
 
-  // (Opcional) volver a validar que el horario siga libre
-  const ocupados = getHorariosOcupados(datos.fecha);
-  if (ocupados.includes(datos.hora)) {
-    return jsonResponse({ error: 'Ese horario ya fue reservado. Elegí otro.' });
+    sheet.appendRow([
+      reservaId,
+      timestamp,
+      data.fecha,
+      data.hora,
+      data.nombre,
+      data.telefono,
+      data.servicio || '',
+      data.tamano || '',
+      data.pelaje || '',
+      data.nombreMascota || '',
+      data.notasMascota || '',
+      data.duracion || '',
+      data.precio || '',
+      data.extras || '',                                  // Extras
+      data.deslanado ? 'SI' : 'NO',                       // Deslanado
+      data.deslanado ? (data.horaBloqueada || '') : '',   // Hora Bloqueada
+      data.email || ''                                    // Email (nueva columna)
+    ]);
+
+    return { success: true, reservaId: reservaId };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+// ==================== CANCELAR CITA ====================
+
+function cancelarReserva(id) {
+  if (!id) {
+    return createJsonResponse({ error: 'Falta el ID de reserva.' });
   }
 
-  const id = generarId();
-  const sheet = getSheet();
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(30000);
 
-  // Escribí la fila con TUS columnas. Ejemplo mínimo:
-  const fila = [];
-  fila[COL_ID - 1]       = id;
-  fila[COL_FECHA - 1]    = datos.fecha;
-  fila[COL_HORA - 1]     = datos.hora;
-  fila[COL_NOMBRE - 1]   = datos.nombre;
-  fila[COL_TELEFONO - 1] = datos.telefono;
-  fila[COL_EMAIL - 1]    = datos.email;
-  fila[COL_ESTADO - 1]   = 'Confirmada';
-  sheet.appendRow(fila);
+    const sheet = getSheet();
+    const data = sheet.getDataRange().getValues();
 
-  // Email de confirmación con toda la info + ID
-  if (datos.email) {
-    MailApp.sendEmail({
-      to: datos.email,
-      subject: 'Ha sido confirmada tu cita — TR Corte',
-      htmlBody:
-        '<h2>Ha sido confirmada tu cita</h2>' +
-        '<p>Hola ' + datos.nombre + ', ¡gracias por reservar en TR Corte!</p>' +
-        '<p><b>ID de reserva:</b> ' + id + '</p>' +
-        '<h3>Detalles de la agenda</h3>' +
-        '<ul>' +
-        '<li><b>Fecha:</b> ' + datos.fecha + '</li>' +
-        '<li><b>Hora:</b> ' + datos.hora + '</li>' +
-        '<li><b>Servicio:</b> ' + (datos.servicio || '') + '</li>' +
-        '<li><b>Tamaño:</b> ' + (datos.tamano || '') + '</li>' +
-        '<li><b>Mascota:</b> ' + (datos.nombreMascota || '') + '</li>' +
-        '<li><b>Extras:</b> ' + (datos.extras || 'Sin extras') + '</li>' +
-        '<li><b>Duración:</b> ' + (datos.duracion || '') + '</li>' +
-        '<li><b>Precio estimado:</b> $' + (datos.precio || '') + '</li>' +
-        '</ul>' +
-        '<p><b>Importante:</b> guardá tu ID <b>' + id + '</b>. ' +
-        'Lo necesitás si querés cancelar la cita desde nuestra web.</p>' +
-        '<p>— TR Corte</p>'
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      if (String(row[0]).trim().toUpperCase() === String(id).trim().toUpperCase()) {
+        // Datos para el email antes de borrar
+        const reserva = {
+          nombre: row[4],
+          email: row[COL_EMAIL],
+          fecha: row[2],
+          hora: row[3],
+          servicio: row[6]
+        };
+
+        // Borrar la fila (fila i+1 porque la hoja arranca en 1 y data en 0)
+        sheet.deleteRow(i + 1);
+
+        // Email de aviso de cancelacion
+        if (reserva.email) {
+          sendEmailCancelacion(reserva, id);
+        }
+
+        return createJsonResponse({
+          mensaje: 'Tu cita fue cancelada correctamente. Te enviamos la confirmacion por email.'
+        });
+      }
+    }
+
+    return createJsonResponse({
+      error: 'No encontramos una cita con ese ID. Revisa el email de confirmacion.'
     });
-  }
 
-  // Devolver el ID para que el frontend lo muestre
-  return jsonResponse({ ok: true, id: id });
+  } catch (error) {
+    return createJsonResponse({ error: error.toString() });
+  } finally {
+    lock.releaseLock();
+  }
 }
 
-// ====== HELPER ======
-function jsonResponse(obj) {
+// ==================== EMAILS ====================
+
+function sendEmailConfirmation(data, reservaId) {
+  try {
+    if (!data.email) return { success: false, error: 'Sin email' };
+
+    const asunto = 'Ha sido confirmada tu cita - ' + NEGOCIO;
+    const htmlBody =
+      '<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;color:#243b53;">' +
+        '<h2 style="color:#1a4b8c;">Ha sido confirmada tu cita</h2>' +
+        '<p>Hola ' + escapeHtml(data.nombre) + ', gracias por reservar en ' + NEGOCIO + '.</p>' +
+        '<div style="background:#eef4fb;border:2px dashed #17b3c4;border-radius:12px;padding:16px;text-align:center;margin:16px 0;">' +
+          '<div style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#627d98;">ID de reserva</div>' +
+          '<div style="font-size:26px;font-weight:bold;color:#1a4b8c;letter-spacing:1px;">' + reservaId + '</div>' +
+          '<div style="font-size:12px;color:#627d98;">Guarda este ID: lo necesitas para cancelar tu cita.</div>' +
+        '</div>' +
+        '<h3 style="color:#1a4b8c;">Detalles de la agenda</h3>' +
+        '<ul style="line-height:1.7;">' +
+          '<li><b>Fecha:</b> ' + formatDateForClient(data.fecha) + '</li>' +
+          '<li><b>Hora:</b> ' + escapeHtml(data.hora) + '</li>' +
+          '<li><b>Servicio:</b> ' + escapeHtml(data.servicio || '') + '</li>' +
+          '<li><b>Tamano:</b> ' + escapeHtml(data.tamano || '') + '</li>' +
+          '<li><b>Mascota:</b> ' + escapeHtml(data.nombreMascota || '') + '</li>' +
+          '<li><b>Extras:</b> ' + escapeHtml(data.extras || 'Sin extras') + '</li>' +
+          '<li><b>Duracion:</b> ' + escapeHtml(String(data.duracion || '')) + '</li>' +
+          '<li><b>Precio estimado:</b> ' + escapeHtml(String(data.precio || '')) + '</li>' +
+        '</ul>' +
+        '<p style="font-size:13px;color:#627d98;">Para cancelar tu cita, entra a nuestra web, toca ' +
+        '"Cancelar una cita" e ingresa el ID <b>' + reservaId + '</b>.</p>' +
+        '<p>- ' + NEGOCIO + '</p>' +
+      '</div>';
+
+    MailApp.sendEmail({ to: data.email, subject: asunto, htmlBody: htmlBody });
+    return { success: true };
+  } catch (error) {
+    Logger.log('Error enviando email de confirmacion: ' + error.toString());
+    return { success: false, error: error.toString() };
+  }
+}
+
+function sendEmailCancelacion(reserva, reservaId) {
+  try {
+    const asunto = 'Tu cita fue cancelada - ' + NEGOCIO;
+    const htmlBody =
+      '<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;color:#243b53;">' +
+        '<h2 style="color:#1a4b8c;">Tu cita fue cancelada</h2>' +
+        '<p>Hola ' + escapeHtml(reserva.nombre || '') + ',</p>' +
+        '<p>Tu cita con <b>ID ' + reservaId + '</b> fue cancelada correctamente.</p>' +
+        '<ul style="line-height:1.7;">' +
+          '<li><b>Fecha:</b> ' + formatDateForClient(reserva.fecha) + '</li>' +
+          '<li><b>Hora:</b> ' + escapeHtml(String(reserva.hora || '')) + '</li>' +
+        '</ul>' +
+        '<p>Si fue un error, puedes volver a reservar desde nuestra web cuando quieras.</p>' +
+        '<p>- ' + NEGOCIO + '</p>' +
+      '</div>';
+
+    MailApp.sendEmail({ to: reserva.email, subject: asunto, htmlBody: htmlBody });
+    return { success: true };
+  } catch (error) {
+    Logger.log('Error enviando email de cancelacion: ' + error.toString());
+    return { success: false, error: error.toString() };
+  }
+}
+
+// ==================== FUNCIONES AUXILIARES ====================
+
+function getSheet() {
+  const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = spreadsheet.getSheetByName(SHEET_NAME);
+
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(SHEET_NAME);
+    const headers = [
+      'ID Reserva', 'Timestamp', 'Fecha', 'Hora', 'Nombre Cliente',
+      'Telefono', 'Servicio', 'Tamano', 'Pelaje', 'Nombre Mascota',
+      'Notas Mascota', 'Duracion', 'Precio',
+      'Extras', 'Deslanado', 'Hora Bloqueada', 'Email'
+    ];
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.getRange(1, 1, 1, headers.length)
+      .setFontWeight('bold')
+      .setBackground('#4a90a4')
+      .setFontColor('#ffffff');
+    sheet.setColumnWidths(1, headers.length, 120);
+  } else {
+    ensureExtraColumns(sheet);
+  }
+
+  return sheet;
+}
+
+function ensureExtraColumns(sheet) {
+  const expectedHeaders = [
+    'ID Reserva', 'Timestamp', 'Fecha', 'Hora', 'Nombre Cliente',
+    'Telefono', 'Servicio', 'Tamano', 'Pelaje', 'Nombre Mascota',
+    'Notas Mascota', 'Duracion', 'Precio',
+    'Extras', 'Deslanado', 'Hora Bloqueada', 'Email'
+  ];
+
+  const lastColumn = sheet.getLastColumn();
+  if (lastColumn >= expectedHeaders.length) {
+    return;
+  }
+
+  const newHeaders = expectedHeaders.slice(lastColumn);
+  sheet.getRange(1, lastColumn + 1, 1, newHeaders.length).setValues([newHeaders]);
+  sheet.getRange(1, lastColumn + 1, 1, newHeaders.length)
+    .setFontWeight('bold')
+    .setBackground('#4a90a4')
+    .setFontColor('#ffffff');
+}
+
+function formatDateForComparison(fecha) {
+  if (!fecha) return '';
+  if (typeof fecha === 'string' && fecha.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    return fecha;
+  }
+  if (fecha instanceof Date) {
+    const year = fecha.getFullYear();
+    const month = String(fecha.getMonth() + 1).padStart(2, '0');
+    const day = String(fecha.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+  try {
+    const dateObj = new Date(fecha);
+    if (!isNaN(dateObj.getTime())) {
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+  } catch (e) {}
+  return fecha.toString();
+}
+
+function getTimeSlotsByDate(fecha) {
+  const dateParts = fecha.split('-');
+  const year = Number(dateParts[0]);
+  const month = Number(dateParts[1]) - 1;
+  const day = Number(dateParts[2]);
+
+  const dateObj = new Date(year, month, day);
+  const dayOfWeek = dateObj.getDay();
+
+  if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+    return TIME_SLOTS_WEEKDAY;
+  }
+  if (dayOfWeek === 6) {
+    return TIME_SLOTS_SATURDAY;
+  }
+  return [];
+}
+
+function formatTimeForComparison(hora) {
+  if (!hora) return '';
+  if (typeof hora === 'string' && hora.match(/^\d{1,2}:\d{2}$/)) {
+    const parts = hora.split(':');
+    return String(parts[0]).padStart(2, '0') + ':' + parts[1];
+  }
+  if (hora instanceof Date) {
+    const hours = String(hora.getHours()).padStart(2, '0');
+    const minutes = String(hora.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }
+  try {
+    const dateObj = new Date(hora);
+    if (!isNaN(dateObj.getTime())) {
+      const hours = String(dateObj.getHours()).padStart(2, '0');
+      const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+      return `${hours}:${minutes}`;
+    }
+  } catch (e) {}
+  return hora.toString();
+}
+
+function generateReservationId() {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).substr(2, 5);
+  return `TR-${timestamp}-${random}`.toUpperCase();
+}
+
+function formatDateForClient(fecha) {
+  if (!fecha) return '';
+  const f = formatDateForComparison(fecha);
+  const parts = f.split('-');
+  if (parts.length === 3) {
+    return parts[2] + '/' + parts[1] + '/' + parts[0];
+  }
+  return f;
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function createJsonResponse(data) {
   return ContentService
-    .createTextOutput(JSON.stringify(obj))
+    .createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
 }
 ```
 
-## Notas
+---
 
-1. Después de pegar el código, **volvé a implementar** (Deploy → Manage deployments →
-   Edit → New version) para que los cambios tomen efecto en la misma URL.
-2. La primera vez que se envíe un email, Google pedirá autorizar el permiso `MailApp`.
-3. El frontend ya está listo: no necesitás tocar `public/app.js` ni `public/index.html`.
-   Si tu campo de ID usa otro nombre en la respuesta (`reservaId`, `reserva`), el
-   frontend igual lo detecta.
+## Pasos para activarlo
+
+1. Reemplaza tu `Code.gs` por el código de arriba (o pega solo las partes nuevas:
+   `doGet`, `doPost`, `saveReservation`, `cancelarReserva`, `sendEmailConfirmation`,
+   `sendEmailCancelacion`, `getSheet`/`ensureExtraColumns`, `formatDateForClient`,
+   `escapeHtml` y las constantes `NEGOCIO` y `COL_EMAIL`).
+2. **Deploy → Manage deployments → Edit (lápiz) → New version → Deploy** para que la
+   misma URL (`SCRIPT_URL`) tome los cambios.
+3. La primera vez que se envíe un correo, Google pedirá **autorizar el permiso de
+   `MailApp`**: aceptalo con tu cuenta.
+4. Probá una reserva de punta a punta: te debería llegar el email con el ID, y ese ID
+   debería cancelar la cita desde el botón "Cancelar una cita".
+
+> Nota: la cancelación **borra la fila** de la hoja, lo que libera el turno
+> automáticamente. Si preferís conservar un histórico en vez de borrar, avisame y te
+> paso la variante con una columna `Estado = Cancelada`.
