@@ -6,12 +6,16 @@ Se quitó todo lo de WhatsApp.
 
 ### Qué cambió respecto a tu versión
 
-1. **Nueva columna `Email`** al final de la hoja (columna Q, índice 16). No toca los
-   índices de `Deslanado` [14] ni `Hora Bloqueada` [15], así que no rompe nada.
-2. **`saveReservation`** ahora guarda `data.email`.
-3. **`doPost`** manda el email de confirmación (en vez de WhatsApp) y devuelve `reservaId`.
-4. **`doGet`** ahora acepta `?action=cancelar&id=...`: busca la reserva, borra la fila
-   (libera el turno) y manda un email de cancelación.
+1. **Nueva columna `Email`** (columna Q, índice 16) y **nueva columna `Estado`**
+   (columna R, índice 17). No tocan los índices de `Deslanado` [14] ni
+   `Hora Bloqueada` [15], así que no rompe nada.
+2. **`saveReservation`** ahora guarda `data.email` y marca la reserva como `Confirmada`.
+3. **`doPost`** manda el email de confirmación (en vez de WhatsApp) con la agenda + el ID,
+   y devuelve `reservaId`.
+4. **`doGet`** ahora acepta `?action=cancelar&id=...`: busca la reserva, la marca como
+   `Cancelada` (conserva el histórico) y manda un email de cancelación.
+5. **`getAvailableSlots`** ignora las filas con estado `Cancelada`, así el turno vuelve a
+   quedar libre para otra persona.
 
 El frontend ya envía `email` y ya lee `reservaId` de la respuesta, así que **no hay que
 tocar `public/app.js` ni `public/index.html`**.
@@ -28,8 +32,9 @@ const TIME_SLOTS_WEEKDAY = ['11:00', '13:00', '15:00', '17:00'];
 const TIME_SLOTS_SATURDAY = ['10:00', '14:00'];
 const NEGOCIO = 'TR Corte'; // nombre que aparece en los emails
 
-// Indice (0-based) de la columna Email en la hoja
-const COL_EMAIL = 16; // Q
+// Indice (0-based) de las columnas nuevas en la hoja
+const COL_EMAIL = 16;  // Q
+const COL_ESTADO = 17; // R
 
 // ==================== FUNCIONES PRINCIPALES ====================
 
@@ -145,6 +150,11 @@ function getAvailableSlots(fecha) {
     const fechaReserva = row[2];
     const horaReserva = row[3];
 
+    // Las citas canceladas NO ocupan turno: se saltean para liberar el horario
+    if (String(row[COL_ESTADO]).trim().toUpperCase() === 'CANCELADA') {
+      continue;
+    }
+
     if (fechaReserva && formatDateForComparison(fechaReserva) === fecha) {
       if (horaReserva) {
         horariosOcupados.push(formatTimeForComparison(horaReserva));
@@ -184,7 +194,8 @@ function saveReservation(data) {
       data.extras || '',                                  // Extras
       data.deslanado ? 'SI' : 'NO',                       // Deslanado
       data.deslanado ? (data.horaBloqueada || '') : '',   // Hora Bloqueada
-      data.email || ''                                    // Email (nueva columna)
+      data.email || '',                                   // Email (nueva columna)
+      'Confirmada'                                         // Estado (nueva columna)
     ]);
 
     return { success: true, reservaId: reservaId };
@@ -210,7 +221,15 @@ function cancelarReserva(id) {
     for (let i = 1; i < data.length; i++) {
       const row = data[i];
       if (String(row[0]).trim().toUpperCase() === String(id).trim().toUpperCase()) {
-        // Datos para el email antes de borrar
+
+        // Si ya estaba cancelada, avisamos y no hacemos nada mas
+        if (String(row[COL_ESTADO]).trim().toUpperCase() === 'CANCELADA') {
+          return createJsonResponse({
+            error: 'Esta cita ya figura como cancelada.'
+          });
+        }
+
+        // Datos para el email
         const reserva = {
           nombre: row[4],
           email: row[COL_EMAIL],
@@ -219,8 +238,10 @@ function cancelarReserva(id) {
           servicio: row[6]
         };
 
-        // Borrar la fila (fila i+1 porque la hoja arranca en 1 y data en 0)
-        sheet.deleteRow(i + 1);
+        // Marcar la fila como Cancelada (fila i+1, columna COL_ESTADO+1 en base 1)
+        // No se borra: se conserva el historico y el turno queda libre porque
+        // getAvailableSlots ignora las filas con estado "Cancelada".
+        sheet.getRange(i + 1, COL_ESTADO + 1).setValue('Cancelada');
 
         // Email de aviso de cancelacion
         if (reserva.email) {
@@ -320,7 +341,7 @@ function getSheet() {
       'ID Reserva', 'Timestamp', 'Fecha', 'Hora', 'Nombre Cliente',
       'Telefono', 'Servicio', 'Tamano', 'Pelaje', 'Nombre Mascota',
       'Notas Mascota', 'Duracion', 'Precio',
-      'Extras', 'Deslanado', 'Hora Bloqueada', 'Email'
+      'Extras', 'Deslanado', 'Hora Bloqueada', 'Email', 'Estado'
     ];
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     sheet.getRange(1, 1, 1, headers.length)
@@ -340,7 +361,7 @@ function ensureExtraColumns(sheet) {
     'ID Reserva', 'Timestamp', 'Fecha', 'Hora', 'Nombre Cliente',
     'Telefono', 'Servicio', 'Tamano', 'Pelaje', 'Nombre Mascota',
     'Notas Mascota', 'Duracion', 'Precio',
-    'Extras', 'Deslanado', 'Hora Bloqueada', 'Email'
+    'Extras', 'Deslanado', 'Hora Bloqueada', 'Email', 'Estado'
   ];
 
   const lastColumn = sheet.getLastColumn();
@@ -455,9 +476,10 @@ function createJsonResponse(data) {
 ## Pasos para activarlo
 
 1. Reemplaza tu `Code.gs` por el código de arriba (o pega solo las partes nuevas:
-   `doGet`, `doPost`, `saveReservation`, `cancelarReserva`, `sendEmailConfirmation`,
-   `sendEmailCancelacion`, `getSheet`/`ensureExtraColumns`, `formatDateForClient`,
-   `escapeHtml` y las constantes `NEGOCIO` y `COL_EMAIL`).
+   `doGet`, `doPost`, `saveReservation`, `getAvailableSlots`, `cancelarReserva`,
+   `sendEmailConfirmation`, `sendEmailCancelacion`, `getSheet`/`ensureExtraColumns`,
+   `formatDateForClient`, `escapeHtml` y las constantes `NEGOCIO`, `COL_EMAIL` y
+   `COL_ESTADO`).
 2. **Deploy → Manage deployments → Edit (lápiz) → New version → Deploy** para que la
    misma URL (`SCRIPT_URL`) tome los cambios.
 3. La primera vez que se envíe un correo, Google pedirá **autorizar el permiso de
@@ -465,6 +487,8 @@ function createJsonResponse(data) {
 4. Probá una reserva de punta a punta: te debería llegar el email con el ID, y ese ID
    debería cancelar la cita desde el botón "Cancelar una cita".
 
-> Nota: la cancelación **borra la fila** de la hoja, lo que libera el turno
-> automáticamente. Si preferís conservar un histórico en vez de borrar, avisame y te
-> paso la variante con una columna `Estado = Cancelada`.
+> Nota: la cancelación **no borra la fila**: la marca como `Cancelada` en la columna
+> `Estado`, así conservás el histórico. El turno queda libre igualmente porque
+> `getAvailableSlots` ignora las filas canceladas. Si en tu hoja ya tenés reservas
+> viejas sin la columna `Estado`, esas filas se siguen contando como ocupadas (estado
+> vacío ≠ "Cancelada"); podés completarlas a mano con `Confirmada` si querés.
