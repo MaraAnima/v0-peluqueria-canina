@@ -528,6 +528,16 @@ function selectServiceType(serviceTypeId) {
   bookingData.size = null; // Reset size when service type changes
   bookingData.corteRaza = false; // El corte de raza solo aplica a "Baño y Deslanado"
   bookingData.time = null; // La disponibilidad horaria cambia segun el servicio
+
+  // Al elegir "Baño y Deslanado" explicamos como funciona el precio y la duracion
+  if (serviceTypeId === 'bano-deslanado') {
+    showModal(
+      `El deslanado tiene un precio base de $${DESLANADO_PRICE} e incluye ${DESLANADO_HOURS} horas de servicio. Segun el estado del pelaje puede demorar mas: cada media hora extra se cobra $${DESLANADO_EXTRA_HALF_HOUR_PRICE}.`,
+      'info',
+      'Sobre el Baño y Deslanado'
+    );
+  }
+
   setTimeout(nextStep, 200);
 }
 
@@ -1185,17 +1195,7 @@ async function confirmBooking() {
       return;
     }
 
-    // Exito! Mostrar el ID de reserva devuelto por el servidor
-    const reservaId = result.id || result.reservaId || result.reserva || '';
-    const idBox = document.getElementById('reservation-id-box');
-    const idValue = document.getElementById('reservation-id-value');
-    if (reservaId && idBox && idValue) {
-      idValue.textContent = reservaId;
-      idBox.style.display = 'block';
-    } else if (idBox) {
-      idBox.style.display = 'none';
-    }
-
+    // Exito! El ID de reserva se envia por email, no se muestra en pantalla.
     showScreen('confirmation-screen');
 
   } catch (error) {
