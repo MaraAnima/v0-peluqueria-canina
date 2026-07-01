@@ -1137,6 +1137,7 @@ body {
   display: flex;
   align-items: center;
   gap: 16px;
+  min-height: 76px;
   background: transparent;
   border: none;
   border-bottom: 1px solid #edf2f7;
