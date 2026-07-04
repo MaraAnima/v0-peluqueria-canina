@@ -1125,26 +1125,39 @@ body {
 }
 
 /* Extra Services */
+.extras-grid {
+  background: var(--white);
+  border: 2px solid #e2e8f0;
+  border-radius: 18px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
 .extra-card {
   display: flex;
   align-items: center;
   gap: 16px;
-  background: var(--white);
-  border: 2px solid #e2e8f0;
-  border-radius: 16px;
+  min-height: 76px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #edf2f7;
+  border-radius: 0;
   padding: 16px;
-  margin-bottom: 12px;
+  margin-bottom: 0;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background 0.25s ease;
+}
+
+.extra-card:last-child {
+  border-bottom: none;
 }
 
 .extra-card:hover {
-  border-color: var(--accent-cyan);
+  background: rgba(67, 199, 205, 0.05);
 }
 
 .extra-card.selected {
-  border-color: var(--accent-cyan);
-  background: linear-gradient(135deg, rgba(67, 199, 205, 0.1), rgba(67, 199, 205, 0.05));
+  background: linear-gradient(135deg, rgba(67, 199, 205, 0.12), rgba(67, 199, 205, 0.05));
 }
 
 .extra-checkbox {
@@ -3451,29 +3464,36 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  margin-top: 16px;
-  padding: 12px 22px;
+  gap: 6px;
+  margin-top: 14px;
+  padding: 6px 4px;
   background: transparent;
-  border: 2px solid rgba(26, 75, 140, 0.25);
-  border-radius: 999px;
-  color: var(--primary-blue);
+  border: none;
+  color: var(--text-muted);
   font-family: 'Poppins', sans-serif;
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-size: 0.85rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: color 0.2s ease;
+}
+
+.cancel-cta-button span {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(26, 75, 140, 0.3);
 }
 
 .cancel-cta-button:hover {
-  border-color: var(--primary-blue);
-  background: rgba(26, 75, 140, 0.06);
-  transform: translateY(-1px);
+  color: var(--primary-blue);
+}
+
+.cancel-cta-button:hover span {
+  text-decoration-color: var(--primary-blue);
 }
 
 .cancel-cta-button svg {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
 }
 
 /* ==================== RESERVATION ID BOX ==================== */
