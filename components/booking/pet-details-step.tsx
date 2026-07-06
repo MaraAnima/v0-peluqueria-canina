@@ -79,7 +79,7 @@ export function PetDetailsStep({ initialPetName = "", initialNotes = "", onConti
         <div className="space-y-2">
           <Label htmlFor="notes" className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-muted-foreground" />
-            ¿Hay algo que debamos saber?
+            ¿Hay algo qué debamos saber?
           </Label>
           <Textarea
             id="notes"
