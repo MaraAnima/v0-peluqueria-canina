@@ -532,7 +532,7 @@ function selectServiceType(serviceTypeId) {
   // Al elegir "Baño y Deslanado" explicamos como funciona el precio y la duracion
   if (serviceTypeId === 'bano-deslanado') {
     showModal(
-      `El deslanado tiene un precio base de $${DESLANADO_PRICE} e incluye ${DESLANADO_HOURS} horas de servicio. Segun el estado del pelaje puede demorar mas: cada media hora extra se cobra $${DESLANADO_EXTRA_HALF_HOUR_PRICE}.`,
+      `El deslanado tiene un precio base de $${DESLANADO_PRICE} e incluye ${DESLANADO_HOURS} horas de servicio. Según el estado del pelaje puede demorar más: cada media hora extra se cobra $${DESLANADO_EXTRA_HALF_HOUR_PRICE}.`,
       'info',
       'Sobre el Baño y Deslanado'
     );
@@ -1272,7 +1272,7 @@ async function submitCancel() {
     }
 
     showModal(
-      data.mensaje || 'Tu cita fue cancelada correctamente. Te enviamos la confirmacion por email.',
+      data.mensaje || 'Tu cita fue cancelada correctamente. Te enviamos la confirmación por email.',
       'info',
       'Cita cancelada'
     );
