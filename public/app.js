@@ -121,7 +121,7 @@ const TIME_SLOTS = ['11:00', '13:00', '15:00', '17:00'];
 const SLOT_DURATION_HOURS = 2; // Duracion de cada cita en horas
 
 // URL del AppScript - REEMPLAZAR CON TU URL
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwBPLISK4aZMzDrQPKvhBWUCiIwD6G4Rfthog54r1AufNq7kOx-DisBinSzoxruodD3tg/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxdcfBD_W1NE-3aAb56U8zHMK4Z1-psNVCuO-wZ0JticYW8xeUPFh1cPeanqsCamj18dA/exec';
 
 // ==================== STATE ====================
 let currentStep = 1;
@@ -532,7 +532,7 @@ function selectServiceType(serviceTypeId) {
   // Al elegir "Baño y Deslanado" explicamos como funciona el precio y la duracion
   if (serviceTypeId === 'bano-deslanado') {
     showModal(
-      `El deslanado tiene un precio base de $${DESLANADO_PRICE} e incluye ${DESLANADO_HOURS} horas de servicio. Segun el estado del pelaje puede demorar mas: cada media hora extra se cobra $${DESLANADO_EXTRA_HALF_HOUR_PRICE}.`,
+      `El deslanado tiene un precio base de $${DESLANADO_PRICE} e incluye ${DESLANADO_HOURS} horas de servicio. Según el estado del pelaje puede demorar más: por cada media hora extra corresponderan $${DESLANADO_EXTRA_HALF_HOUR_PRICE} adicionales.`,
       'info',
       'Sobre el Baño y Deslanado'
     );
@@ -916,7 +916,7 @@ function renderPetStep(container) {
     <p class="step-subtitle">Queremos conocer mejor a tu mascota</p>
     
     <div class="form-group">
-      <label class="form-label">Como se llama tu mascota? <span style="color: #ef4444;">*</span></label>
+      <label class="form-label">¿Cómo se llama tu mascota? <span style="color: #ef4444;">*</span></label>
       <div class="input-icon-wrapper">
         <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2a4 4 0 0 1 4 4c0 1.5-.8 2.8-2 3.5v1l3 3.5c.7.8 1 1.9 1 3v3H6v-3c0-1.1.3-2.2 1-3l3-3.5v-1c-1.2-.7-2-2-2-3.5a4 4 0 0 1 4-4z"/>
@@ -926,8 +926,8 @@ function renderPetStep(container) {
     </div>
     
     <div class="form-group">
-      <label class="form-label">Hay algo que debamos saber? <span style="color: var(--text-muted); font-weight: normal;">(opcional)</span></label>
-      <textarea class="form-textarea" id="pet-notes" placeholder="Contanos si tiene algun miedo, alergia, o algo especial que debamos tener en cuenta...">${bookingData.petNotes}</textarea>
+      <label class="form-label">¿Hay algo qué debamos saber? <span style="color: var(--text-muted); font-weight: normal;">(opcional)</span></label>
+      <textarea class="form-textarea" id="pet-notes" placeholder="Contanos si tiene algún miedo, alergia, o algo especial que debamos tener en cuenta...">${bookingData.petNotes}</textarea>
     </div>
     
     <button class="continue-btn" onclick="savePetAndNext()">Continuar</button>
@@ -975,7 +975,7 @@ function renderSummaryStep(container) {
         <span class="summary-value">${bookingData.clientName}</span>
       </div>
       <div class="summary-row">
-        <span class="summary-label">Telefono</span>
+        <span class="summary-label">Teléfono</span>
         <span class="summary-value">${bookingData.clientPhone}</span>
       </div>
       <div class="summary-row">
@@ -1272,7 +1272,7 @@ async function submitCancel() {
     }
 
     showModal(
-      data.mensaje || 'Tu cita fue cancelada correctamente. Te enviamos la confirmacion por email.',
+      data.mensaje || 'Tu cita fue cancelada correctamente. Te enviamos la confirmación por email.',
       'info',
       'Cita cancelada'
     );
