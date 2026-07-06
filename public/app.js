@@ -960,7 +960,7 @@ function renderSummaryStep(container) {
 
   container.innerHTML = `
     <h2 class="step-title">Confirma tu reserva</h2>
-    <p class="step-subtitle">Revisa que todo este correcto</p>
+    <p class="step-subtitle">Revisá que todo esté correcto</p>
     
     <div class="summary-section">
       <h3>
