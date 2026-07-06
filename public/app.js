@@ -927,7 +927,7 @@ function renderPetStep(container) {
     
     <div class="form-group">
       <label class="form-label">¿Hay algo qué debamos saber? <span style="color: var(--text-muted); font-weight: normal;">(opcional)</span></label>
-      <textarea class="form-textarea" id="pet-notes" placeholder="Contanos si tiene algun miedo, alergia, o algo especial que debamos tener en cuenta...">${bookingData.petNotes}</textarea>
+      <textarea class="form-textarea" id="pet-notes" placeholder="Contanos si tiene algún miedo, alergia, o algo especial que debamos tener en cuenta...">${bookingData.petNotes}</textarea>
     </div>
     
     <button class="continue-btn" onclick="savePetAndNext()">Continuar</button>
