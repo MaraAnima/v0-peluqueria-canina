@@ -430,12 +430,12 @@ function saveContactAndNext() {
 
   // Validacion del telefono
   if (!phone) {
-    showModal('El telefono es obligatorio', 'error', 'Campo requerido');
+    showModal('El teléfono es obligatorio', 'error', 'Campo requerido');
     return;
   }
   const digitsOnly = phone.replace(/\D/g, '');
   if (digitsOnly.length < 6) {
-    showModal('El telefono debe tener al menos 6 digitos', 'error', 'Telefono invalido');
+    showModal('El teléfono debe tener al menos 6 digitos', 'error', 'Telefono invalido');
     return;
   }
 
