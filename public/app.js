@@ -1098,7 +1098,7 @@ function showTermsContent(event) {
       <p style="margin-bottom: 12px; color: #4a5568;">El cliente debera proporcionar informacion veraz y relevante sobre la mascota, incluyendo comportamiento, antecedentes y cualquier condicion que pueda influir en la prestacion del servicio.</p>
       
       <h4 style="margin: 16px 0 8px; color: #2d3748; font-weight: 600;">8. Precios</h4>
-      <p style="margin-bottom: 12px; color: #4a5568;">Los precios de los servicios podran variar en funcion del tamano, estado del pelaje y comportamiento de la mascota. Cualquier ajuste sera informado al cliente en el momento correspondiente.</p>
+      <p style="margin-bottom: 12px; color: #4a5568;">Los precios de los servicios podran variar en función del tamaño, estado del pelaje y comportamiento de la mascota. Cualquier ajuste sera informado al cliente en el momento correspondiente.</p>
       
       <h4 style="margin: 16px 0 8px; color: #2d3748; font-weight: 600;">9. Uso de imagen</h4>
       <p style="margin-bottom: 12px; color: #4a5568;">El cliente autoriza a TR Corte a tomar y utilizar fotografias o videos de la mascota con fines promocionales, incluyendo su difusion en redes sociales y medios digitales.</p>
