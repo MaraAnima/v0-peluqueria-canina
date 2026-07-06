@@ -1101,13 +1101,13 @@ function showTermsContent(event) {
       <p style="margin-bottom: 12px; color: #4a5568;">Los precios de los servicios podran variar en función del tamaño, estado del pelaje y comportamiento de la mascota. Cualquier ajuste sera informado al cliente en el momento correspondiente.</p>
       
       <h4 style="margin: 16px 0 8px; color: #2d3748; font-weight: 600;">9. Uso de imagen</h4>
-      <p style="margin-bottom: 12px; color: #4a5568;">El cliente autoriza a TR Corte a tomar y utilizar fotografias o videos de la mascota con fines promocionales, incluyendo su difusion en redes sociales y medios digitales.</p>
+      <p style="margin-bottom: 12px; color: #4a5568;">El cliente autoriza a TR Corte a tomar y utilizar fotografias o videos de la mascota con fines promocionales, incluyendo su difusión en redes sociales y medios digitales.</p>
       
       <h4 style="margin: 16px 0 8px; color: #2d3748; font-weight: 600;">10. Modificaciones</h4>
-      <p style="margin-bottom: 12px; color: #4a5568;">TR Corte se reserva el derecho de modificar los presentes Terminos y Condiciones en cualquier momento, sin necesidad de notificacion previa.</p>
+      <p style="margin-bottom: 12px; color: #4a5568;">TR Corte se reserva el derecho de modificar los presentes Terminos y Condiciones en cualquier momento, sin necesidad de notificación previa.</p>
       
       <h4 style="margin: 16px 0 8px; color: #2d3748; font-weight: 600;">11. Aceptacion</h4>
-      <p style="margin-bottom: 12px; color: #4a5568;">La contratacion de los servicios implica la aceptacion plena de estos Terminos y Condiciones.</p>
+      <p style="margin-bottom: 12px; color: #4a5568;">La contratación de los servicios implica la aceptación plena de estos Terminos y Condiciones.</p>
       
       <h4 style="margin: 16px 0 8px; color: #2d3748; font-weight: 600;">12. Contacto</h4>
       <p style="margin-bottom: 8px; color: #4a5568;">Cel: 094 066 066</p>
