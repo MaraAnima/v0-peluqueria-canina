@@ -916,7 +916,7 @@ function renderPetStep(container) {
     <p class="step-subtitle">Queremos conocer mejor a tu mascota</p>
     
     <div class="form-group">
-      <label class="form-label">Como se llama tu mascota? <span style="color: #ef4444;">*</span></label>
+      <label class="form-label">¿Cómo se llama tu mascota? <span style="color: #ef4444;">*</span></label>
       <div class="input-icon-wrapper">
         <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2a4 4 0 0 1 4 4c0 1.5-.8 2.8-2 3.5v1l3 3.5c.7.8 1 1.9 1 3v3H6v-3c0-1.1.3-2.2 1-3l3-3.5v-1c-1.2-.7-2-2-2-3.5a4 4 0 0 1 4-4z"/>
