@@ -1200,7 +1200,7 @@ async function confirmBooking() {
 
   } catch (error) {
     console.error('Error al enviar reserva:', error);
-    showModal('Hubo un error de conexion al procesar tu reserva. Por favor intenta de nuevo.', 'error', 'Error de conexion');
+    showModal('Hubo un error de conexión al procesar tu reserva. Por favor intenta de nuevo.', 'error', 'Error de conexión');
     btn.textContent = originalText;
     btn.disabled = false;
   }
