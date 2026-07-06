@@ -1077,7 +1077,7 @@ function showTermsContent(event) {
       <h3 style="margin-bottom: 16px; color: #1a365d; font-size: 18px; font-weight: 600;">TR Corte | Terminos y Condiciones</h3>
       
       <h4 style="margin: 16px 0 8px; color: #2d3748; font-weight: 600;">1. Alcance del servicio</h4>
-      <p style="margin-bottom: 12px; color: #4a5568;">TR Corte brinda servicios de peluqueria canina que incluyen baño, secado, cepillado, limpieza de oídos, corte de uñas, corte higiénico y perfume. Los servicios de corte de raza y deslanado no se encuentran incluidos en el servicio base y serán presupuestados de forma independiente segun las caracteristicas y estado del pelaje de la mascota.</p>
+      <p style="margin-bottom: 12px; color: #4a5568;">TR Corte brinda servicios de peluqueria canina que incluyen baño, secado, cepillado, limpieza de oídos, corte de uñas, corte higiénico y perfume. Los servicios de corte de raza y deslanado no se encuentran incluidos en el servicio base y serán presupuestados de forma independiente según las características y estado del pelaje de la mascota.</p>
       
       <h4 style="margin: 16px 0 8px; color: #2d3748; font-weight: 600;">2. Modalidad de atencion</h4>
       <p style="margin-bottom: 12px; color: #4a5568;">La atencion se realiza exclusivamente con cita previa. El cliente debera respetar el horario asignado. En caso de retraso superior a 15 minutos, TR Corte podra reprogramar o cancelar el turno segun disponibilidad.</p>
@@ -1086,7 +1086,7 @@ function showTermsContent(event) {
       <p style="margin-bottom: 12px; color: #4a5568;">Una vez finalizado el servicio, el cliente debera retirar a la mascota dentro de los 10 minutos. Transcurrido dicho plazo, TR Corte podra aplicar un cargo adicional por concepto de permanencia, equivalente a media hora de cuidado.</p>
       
       <h4 style="margin: 16px 0 8px; color: #2d3748; font-weight: 600;">4. Condiciones de admision</h4>
-      <p style="margin-bottom: 12px; color: #4a5568;">TR Corte presta servicios unicamente a perros. El establecimiento se reserva el derecho de rechazar o interrumpir el servicio en caso de que la mascota presente condiciones de salud, comportamiento o cualquier otra circunstancia que pueda representar un riesgo para sí misma, otros animales o el personal. No se realizan procedimientos con sedacion.</p>
+      <p style="margin-bottom: 12px; color: #4a5568;">TR Corte presta servicios únicamente a perros. El establecimiento se reserva el derecho de rechazar o interrumpir el servicio en caso de que la mascota presente condiciones de salud, comportamiento o cualquier otra circunstancia que pueda representar un riesgo para sí misma, otros animales o el personal. No se realizan procedimientos con sedacion.</p>
       
       <h4 style="margin: 16px 0 8px; color: #2d3748; font-weight: 600;">5. Estado del pelaje</h4>
       <p style="margin-bottom: 12px; color: #4a5568;">El estado del pelaje de la mascota influye directamente en el tipo de servicio a realizar. En situaciones donde existan nudos, enredos severos o falta de mantenimiento, el procedimiento y tipo de corte seran definidos segun criterio profesional, pudiendo requerir modificaciones respecto a lo inicialmente solicitado. En estos casos, se procurara acordar previamente con el cliente.</p>
