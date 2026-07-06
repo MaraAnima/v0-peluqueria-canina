@@ -1095,7 +1095,7 @@ function showTermsContent(event) {
       <p style="margin-bottom: 12px; color: #4a5568;">En caso de detectar la presencia de pulgas durante el servicio, se procedera a realizar un tratamiento adecuado. El costo del antiparasitario utilizado sera incorporado al precio final del servicio.</p>
       
       <h4 style="margin: 16px 0 8px; color: #2d3748; font-weight: 600;">7. Responsabilidad del cliente</h4>
-      <p style="margin-bottom: 12px; color: #4a5568;">El cliente debera proporcionar informacion veraz y relevante sobre la mascota, incluyendo comportamiento, antecedentes y cualquier condicion que pueda influir en la prestacion del servicio.</p>
+      <p style="margin-bottom: 12px; color: #4a5568;">El cliente debera proporcionar información veraz y relevante sobre la mascota, incluyendo comportamiento, antecedentes y cualquier condicion que pueda influir en la prestacion del servicio.</p>
       
       <h4 style="margin: 16px 0 8px; color: #2d3748; font-weight: 600;">8. Precios</h4>
       <p style="margin-bottom: 12px; color: #4a5568;">Los precios de los servicios podran variar en función del tamaño, estado del pelaje y comportamiento de la mascota. Cualquier ajuste sera informado al cliente en el momento correspondiente.</p>
@@ -1281,7 +1281,7 @@ async function submitCancel() {
 
   } catch (error) {
     console.error('Error al cancelar la cita:', error);
-    showModal('Hubo un error de conexión al cancelar tu cita. Por favor intenta de nuevo.', 'error', 'Error de conexion');
+    showModal('Hubo un error de conexión al cancelar tu cita. Por favor intenta de nuevo.', 'error', 'Error de conexión');
   } finally {
     if (btn) {
       btn.textContent = originalText;
