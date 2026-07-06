@@ -1281,7 +1281,7 @@ async function submitCancel() {
 
   } catch (error) {
     console.error('Error al cancelar la cita:', error);
-    showModal('Hubo un error de conexion al cancelar tu cita. Por favor intenta de nuevo.', 'error', 'Error de conexion');
+    showModal('Hubo un error de conexión al cancelar tu cita. Por favor intenta de nuevo.', 'error', 'Error de conexion');
   } finally {
     if (btn) {
       btn.textContent = originalText;
