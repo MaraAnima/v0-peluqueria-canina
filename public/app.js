@@ -446,7 +446,7 @@ function saveContactAndNext() {
   }
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
-    showModal('Ingresa un email valido (ej: maria@correo.com)', 'error', 'Email invalido');
+    showModal('Ingresa un email válido (ej: maria@correo.com)', 'error', 'Email invalido');
     return;
   }
 
