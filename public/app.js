@@ -435,7 +435,7 @@ function saveContactAndNext() {
   }
   const digitsOnly = phone.replace(/\D/g, '');
   if (digitsOnly.length < 6) {
-    showModal('El teléfono debe tener al menos 6 dígitos', 'error', 'Teléfono invalido');
+    showModal('El teléfono debe tener al menos 6 dígitos', 'error', 'Teléfono inválido');
     return;
   }
 
@@ -446,7 +446,7 @@ function saveContactAndNext() {
   }
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
-    showModal('Ingresa un email válido (ej: maria@correo.com)', 'error', 'Email invalido');
+    showModal('Ingresa un email válido (ej: maria@correo.com)', 'error', 'Email inválido');
     return;
   }
 
