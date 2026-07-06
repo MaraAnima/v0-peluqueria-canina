@@ -756,7 +756,7 @@ function renderDateTimeStep(container) {
 
   container.innerHTML = `
     <h2 class="step-title">Fecha y hora</h2>
-    <p class="step-subtitle">Cuando te gustaria venir?</p>
+    <p class="step-subtitle">¿Cuándo te gustaría venir?</p>
     
     <div class="calendar-container">
       <div class="calendar-header">
