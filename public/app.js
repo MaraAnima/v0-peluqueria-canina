@@ -370,7 +370,7 @@ function formatDate(dateStr) {
 function renderContactStep(container) {
   container.innerHTML = `
     <h2 class="step-title">Hola! Empecemos</h2>
-    <p class="step-subtitle">Contanos como podemos contactarte</p>
+    <p class="step-subtitle">Contanos cómo podemos contactarte</p>
     
     <div class="form-group">
       <label class="form-label">Tu nombre <span style="color: #ef4444;">*</span></label>
