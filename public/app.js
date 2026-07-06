@@ -435,7 +435,7 @@ function saveContactAndNext() {
   }
   const digitsOnly = phone.replace(/\D/g, '');
   if (digitsOnly.length < 6) {
-    showModal('El teléfono debe tener al menos 6 dígitos', 'error', 'Telefono invalido');
+    showModal('El teléfono debe tener al menos 6 dígitos', 'error', 'Teléfono invalido');
     return;
   }
 
