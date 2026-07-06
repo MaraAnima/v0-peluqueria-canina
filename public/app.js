@@ -1077,7 +1077,7 @@ function showTermsContent(event) {
       <h3 style="margin-bottom: 16px; color: #1a365d; font-size: 18px; font-weight: 600;">TR Corte | Terminos y Condiciones</h3>
       
       <h4 style="margin: 16px 0 8px; color: #2d3748; font-weight: 600;">1. Alcance del servicio</h4>
-      <p style="margin-bottom: 12px; color: #4a5568;">TR Corte brinda servicios de peluqueria canina que incluyen baño, secado, cepillado, limpieza de oídos, corte de uñas, corte higienico y perfume. Los servicios de corte de raza y deslanado no se encuentran incluidos en el servicio base y seran presupuestados de forma independiente segun las caracteristicas y estado del pelaje de la mascota.</p>
+      <p style="margin-bottom: 12px; color: #4a5568;">TR Corte brinda servicios de peluqueria canina que incluyen baño, secado, cepillado, limpieza de oídos, corte de uñas, corte higiénico y perfume. Los servicios de corte de raza y deslanado no se encuentran incluidos en el servicio base y serán presupuestados de forma independiente segun las caracteristicas y estado del pelaje de la mascota.</p>
       
       <h4 style="margin: 16px 0 8px; color: #2d3748; font-weight: 600;">2. Modalidad de atencion</h4>
       <p style="margin-bottom: 12px; color: #4a5568;">La atencion se realiza exclusivamente con cita previa. El cliente debera respetar el horario asignado. En caso de retraso superior a 15 minutos, TR Corte podra reprogramar o cancelar el turno segun disponibilidad.</p>
