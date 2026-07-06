@@ -420,11 +420,11 @@ function saveContactAndNext() {
     return;
   }
   if (name.length <= 3) {
-    showModal('El nombre debe tener más de 3 letras', 'error', 'Nombre invalido');
+    showModal('El nombre debe tener más de 3 letras', 'error', 'Nombre inválido');
     return;
   }
   if (/\d/.test(name)) {
-    showModal('El nombre no puede contener números', 'error', 'Nombre invalido');
+    showModal('El nombre no puede contener números', 'error', 'Nombre inválido');
     return;
   }
 
