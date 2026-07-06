@@ -975,7 +975,7 @@ function renderSummaryStep(container) {
         <span class="summary-value">${bookingData.clientName}</span>
       </div>
       <div class="summary-row">
-        <span class="summary-label">Telefono</span>
+        <span class="summary-label">Teléfono</span>
         <span class="summary-value">${bookingData.clientPhone}</span>
       </div>
       <div class="summary-row">
