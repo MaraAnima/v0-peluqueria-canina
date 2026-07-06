@@ -402,7 +402,7 @@ function renderContactStep(container) {
         </svg>
         <input type="email" class="form-input" id="client-email" placeholder="Ej: maria@correo.com" value="${bookingData.clientEmail}">
       </div>
-      <p class="form-hint">Te enviaremos la confirmacion y el ID de reserva a este correo.</p>
+      <p class="form-hint">Te enviaremos la confirmación y el ID de reserva a este correo.</p>
     </div>
     
     <button class="continue-btn" onclick="saveContactAndNext()">Continuar</button>
