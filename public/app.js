@@ -379,7 +379,7 @@ function renderContactStep(container) {
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
           <circle cx="12" cy="7" r="4"/>
         </svg>
-        <input type="text" class="form-input" id="client-name" placeholder="Ej: Maria Garcia (mas de 3 letras, sin numeros)" value="${bookingData.clientName}">
+        <input type="text" class="form-input" id="client-name" placeholder="Ej: María García (más de 3 letras, sin números)" value="${bookingData.clientName}">
       </div>
     </div>
     
@@ -389,7 +389,7 @@ function renderContactStep(container) {
         <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
         </svg>
-        <input type="tel" class="form-input" id="client-phone" placeholder="Ej: 11 1234-5678 (minimo 6 digitos)" value="${bookingData.clientPhone}">
+        <input type="tel" class="form-input" id="client-phone" placeholder="Ej: 094719944 (mínimo 6 digitos)" value="${bookingData.clientPhone}">
       </div>
     </div>
 
@@ -420,11 +420,11 @@ function saveContactAndNext() {
     return;
   }
   if (name.length <= 3) {
-    showModal('El nombre debe tener mas de 3 letras', 'error', 'Nombre invalido');
+    showModal('El nombre debe tener más de 3 letras', 'error', 'Nombre invalido');
     return;
   }
   if (/\d/.test(name)) {
-    showModal('El nombre no puede contener numeros', 'error', 'Nombre invalido');
+    showModal('El nombre no puede contener nmeros', 'error', 'Nombre invalido');
     return;
   }
 
