@@ -926,7 +926,7 @@ function renderPetStep(container) {
     </div>
     
     <div class="form-group">
-      <label class="form-label">¿Hay algo qué debamos saber? <span style="color: var(--text-muted); font-weight: normal;">(opcional)</span></label>
+      <label class="form-label">¿Hay algo que debamos saber? <span style="color: var(--text-muted); font-weight: normal;">(opcional)</span></label>
       <textarea class="form-textarea" id="pet-notes" placeholder="Contanos si tiene algún miedo, alergia, o algo especial que debamos tener en cuenta...">${bookingData.petNotes}</textarea>
     </div>
     
