@@ -117,11 +117,77 @@ const STEPS = [
 
 // Horarios disponibles (deben coincidir con AppScript)
 // Cada cita dura 2 horas, asi que los slots son cada 2 horas
-const TIME_SLOTS = ['11:00', '13:00', '15:00', '17:00'];
+const WEEKDAY_TIME_SLOTS = ['11:00', '13:00', '15:00', '17:00'];
+const WEEKEND_TIME_SLOTS = ['09:00', '11:00', '13:00'];
+const TIME_SLOTS = WEEKDAY_TIME_SLOTS;
 const SLOT_DURATION_HOURS = 2; // Duracion de cada cita en horas
+const BLOCKED_DATES = new Set(['01-01', '05-01', '07-18', '08-25', '12-25']);
+
+function getDateKey(date) {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${month}-${day}`;
+}
+
+function isUnavailableDate(date) {
+  const dayOfWeek = date.getDay();
+  return dayOfWeek === 2 || BLOCKED_DATES.has(getDateKey(date));
+}
+
+function getTimeSlotsByDate(date) {
+  if (!date || isUnavailableDate(date)) return [];
+
+  const dayOfWeek = date.getDay();
+  if (dayOfWeek === 0 || dayOfWeek === 6) {
+    return WEEKEND_TIME_SLOTS;
+  }
+
+  return WEEKDAY_TIME_SLOTS;
+}
+
+function getSelectedDateSlots() {
+  return getTimeSlotsByDate(bookingData.date);
+}
+
+function isSameCalendarDate(firstDate, secondDate) {
+  return firstDate.getFullYear() === secondDate.getFullYear()
+    && firstDate.getMonth() === secondDate.getMonth()
+    && firstDate.getDate() === secondDate.getDate();
+}
+
+function isPastTimeSlot(date, time) {
+  if (!date || !time) return false;
+
+  const now = new Date();
+  if (!isSameCalendarDate(date, now)) return false;
+
+  const [hours, minutes] = time.split(':').map(Number);
+  const slotDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), hours, minutes, 0, 0);
+  return slotDate <= now;
+}
+
+function filterPastTimeSlotsForDate(slots, date) {
+  return slots.filter(time => !isPastTimeSlot(date, time));
+}
+
+function getCompatibleSlotsFromResponse(data, dateSlots) {
+  if (!Array.isArray(data?.horarios)) {
+    return filterPastTimeSlotsForDate([...dateSlots], bookingData.date);
+  }
+
+  const compatibleSlots = data.horarios.filter(time => dateSlots.includes(time));
+
+  // El Apps Script actualizado devuelve success:true. Si no viene, probablemente
+  // sigue publicada una version vieja con horarios anteriores.
+  if (data.success !== true && compatibleSlots.length === 0 && dateSlots.length > 0) {
+    return filterPastTimeSlotsForDate([...dateSlots], bookingData.date);
+  }
+
+  return filterPastTimeSlotsForDate(compatibleSlots, bookingData.date);
+}
 
 // URL del AppScript - REEMPLAZAR CON TU URL
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwRHc38Y7HLLGnDsq_O0H8Bf_pFLglcSTIvA8UBsz0OVeR3FFGP4d5AKTDVa8FivEx6/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxjtqe9Oe7wcakrxJctjX6aFHhWx4cSbQWdVqtDI4O0tCfR3Jyk90NwKlIB17XZcy9T7Q/exec';
 
 // ==================== STATE ====================
 let currentStep = 1;
@@ -732,15 +798,15 @@ function renderDateTimeStep(container) {
   for (let day = 1; day <= lastDay.getDate(); day++) {
     const date = new Date(year, month, day);
     const isPast = date < today;
-    const isSunday = date.getDay() === 0;
-    const isDisabled = isPast || isSunday;
+    const isUnavailable = isUnavailableDate(date);
+    const isDisabled = isPast || isUnavailable;
     const isSelected = bookingData.date &&
       bookingData.date.getDate() === day &&
       bookingData.date.getMonth() === month &&
       bookingData.date.getFullYear() === year;
 
     daysHtml += `
-      <button class="calendar-day ${isSelected ? 'selected' : ''} ${isSunday ? 'sunday-disabled' : ''}" 
+      <button class="calendar-day ${isSelected ? 'selected' : ''} ${isUnavailable ? 'sunday-disabled' : ''}" 
               ${isDisabled ? 'disabled' : ''} 
               onclick="selectDate(${year}, ${month}, ${day})">
         ${day}
@@ -787,7 +853,7 @@ function renderDateTimeStep(container) {
       return `
       <h3 style="margin: 20px 0 12px; font-family: 'Fredoka', sans-serif; font-size: 1.1rem;">Horarios disponibles</h3>
       ${isDeslanado() ? `
-        <p style="margin: 0 0 12px; color: var(--text-muted); font-size: 0.85rem;">Con el servicio de Baño y Deslanado se reserva también el turno siguiente, por lo que el horario de las 17:00 no está disponible.</p>
+        <p style="margin: 0 0 12px; color: var(--text-muted); font-size: 0.85rem;">Con el servicio de Bano y Deslanado se reserva tambien el turno siguiente, por lo que el ultimo horario del dia no esta disponible.</p>
       ` : ''}
       <div class="time-slots">
         ${isLoadingSlots
@@ -820,27 +886,30 @@ function changeMonth(delta) {
 // Devuelve los horarios que el cliente realmente puede elegir.
 // Si pidio deslanado, el turno ocupa 2 horas extra (el turno siguiente),
 // por lo que solo se permiten horarios cuyo turno siguiente tambien este libre,
-// y nunca el ultimo turno (17:00).
+// y nunca el ultimo turno del dia.
 function getSelectableSlots() {
-  if (!isDeslanado()) return availableTimeSlots;
+  const futureSlots = filterPastTimeSlotsForDate(availableTimeSlots, bookingData.date);
+  if (!isDeslanado()) return futureSlots;
 
-  return availableTimeSlots.filter(slot => {
-    const idx = TIME_SLOTS.indexOf(slot);
-    const nextSlot = TIME_SLOTS[idx + 1];
+  const dateSlots = getSelectedDateSlots();
+  return futureSlots.filter(slot => {
+    const idx = dateSlots.indexOf(slot);
+    const nextSlot = dateSlots[idx + 1];
     // Debe existir un turno siguiente y estar disponible
-    return nextSlot && availableTimeSlots.includes(nextSlot);
+    return nextSlot && futureSlots.includes(nextSlot);
   });
 }
 
 // Devuelve el turno siguiente que se bloquea al sumar deslanado
 function getBlockedSlot() {
   if (!isDeslanado() || !bookingData.time) return null;
-  const idx = TIME_SLOTS.indexOf(bookingData.time);
-  return TIME_SLOTS[idx + 1] || null;
+  const dateSlots = getSelectedDateSlots();
+  const idx = dateSlots.indexOf(bookingData.time);
+  return dateSlots[idx + 1] || null;
 }
 
 // Variable para guardar horarios disponibles
-let availableTimeSlots = [...TIME_SLOTS];
+let availableTimeSlots = [...WEEKDAY_TIME_SLOTS];
 
 async function selectDate(year, month, day) {
   // Verificar que seguimos en el paso correcto
@@ -849,7 +918,13 @@ async function selectDate(year, month, day) {
     return;
   }
 
-  bookingData.date = new Date(year, month, day);
+  const selectedDate = new Date(year, month, day);
+  if (isUnavailableDate(selectedDate)) {
+    showModal('Ese dia no esta disponible para reservas. Por favor elegi otra fecha.', 'warning', 'Fecha no disponible');
+    return;
+  }
+
+  bookingData.date = selectedDate;
   bookingData.time = null;
   isLoadingSlots = true;
 
@@ -874,6 +949,7 @@ async function selectDate(year, month, day) {
 async function loadAvailableSlots() {
   try {
     const fecha = bookingData.date.toISOString().split('T')[0];
+    const dateSlots = getSelectedDateSlots();
     const url = `${SCRIPT_URL}?fecha=${encodeURIComponent(fecha)}`;
 
     console.log('[v0] Cargando horarios para fecha:', fecha);
@@ -889,17 +965,16 @@ async function loadAvailableSlots() {
     const data = await response.json();
     console.log('[v0] Data recibida:', data);
 
-    if (data.success && data.horarios) {
-      availableTimeSlots = data.horarios;
+    if (Array.isArray(data.horarios)) {
+      availableTimeSlots = getCompatibleSlotsFromResponse(data, dateSlots);
       console.log('[v0] Horarios disponibles:', availableTimeSlots);
     } else {
-      console.log('[v0] No se encontraron horarios, usando todos');
-      availableTimeSlots = [...TIME_SLOTS];
+      console.log('[v0] No se encontraron horarios, usando la grilla del dia');
+      availableTimeSlots = [...dateSlots];
     }
   } catch (error) {
     console.error('[v0] Error al cargar horarios:', error);
-    // En caso de error, mostrar todos los horarios
-    availableTimeSlots = [...TIME_SLOTS];
+    availableTimeSlots = [];
   }
 }
 
@@ -1133,8 +1208,12 @@ async function confirmBooking() {
     const checkUrl = `${SCRIPT_URL}?fecha=${encodeURIComponent(fecha)}`;
     const checkResponse = await fetch(checkUrl);
     const checkData = await checkResponse.json();
+    const checkSlots = filterPastTimeSlotsForDate(
+      getCompatibleSlotsFromResponse(checkData, getSelectedDateSlots()),
+      bookingData.date
+    );
 
-    if (checkData.horarios && !checkData.horarios.includes(bookingData.time)) {
+    if (!checkSlots.includes(bookingData.time)) {
       // El horario ya no esta disponible
       showModal('Lo sentimos, el horario ' + bookingData.time + ' ya fue reservado por otra persona. Por favor elige otro horario.', 'warning', 'Horario no disponible');
       btn.textContent = originalText;
