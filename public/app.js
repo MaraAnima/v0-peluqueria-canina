@@ -118,7 +118,8 @@ const STEPS = [
 // Horarios disponibles (deben coincidir con AppScript)
 // Cada cita dura 2 horas, asi que los slots son cada 2 horas
 const WEEKDAY_TIME_SLOTS = ['11:00', '13:00', '15:00', '17:00'];
-const WEEKEND_TIME_SLOTS = ['09:00', '11:00', '13:00'];
+const SATURDAY_TIME_SLOTS = ['09:00', '13:00'];
+const SUNDAY_TIME_SLOTS = ['09:00', '11:00', '13:00'];
 const TIME_SLOTS = WEEKDAY_TIME_SLOTS;
 const SLOT_DURATION_HOURS = 2; // Duracion de cada cita en horas
 const BLOCKED_DATES = new Set(['01-01', '05-01', '07-18', '08-25', '12-25']);
@@ -138,8 +139,11 @@ function getTimeSlotsByDate(date) {
   if (!date || isUnavailableDate(date)) return [];
 
   const dayOfWeek = date.getDay();
-  if (dayOfWeek === 0 || dayOfWeek === 6) {
-    return WEEKEND_TIME_SLOTS;
+  if (dayOfWeek === 6) {
+    return SATURDAY_TIME_SLOTS;
+  }
+  if (dayOfWeek === 0) {
+    return SUNDAY_TIME_SLOTS;
   }
 
   return WEEKDAY_TIME_SLOTS;

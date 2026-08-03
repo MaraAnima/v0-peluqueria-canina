@@ -2,7 +2,8 @@
 const SPREADSHEET_ID = '11rzRToVwRoBOVNr-G0KYV7gi_NCUEmBG2UsMhydc3Cg';
 const SHEET_NAME = 'Reservas';
 const TIME_SLOTS_WEEKDAY = ['11:00', '13:00', '15:00', '17:00'];
-const TIME_SLOTS_WEEKEND = ['09:00', '11:00', '13:00'];
+const TIME_SLOTS_SATURDAY = ['09:00', '13:00'];
+const TIME_SLOTS_SUNDAY = ['09:00', '11:00', '13:00'];
 const BLOCKED_DATES = ['01-01', '05-01', '07-18', '08-25', '12-25'];
 const BUSINESS_TIME_ZONE = 'America/Montevideo';
 const META_VERIFY_TOKEN = '5WtuSqoYeO4LKk1CQT2Xdwn0D3F8';
@@ -428,8 +429,12 @@ function getTimeSlotsByDate(fecha) {
     return TIME_SLOTS_WEEKDAY;
   }
 
-  if (dayOfWeek === 0 || dayOfWeek === 6) {
-    return TIME_SLOTS_WEEKEND;
+  if (dayOfWeek === 6) {
+    return TIME_SLOTS_SATURDAY;
+  }
+
+  if (dayOfWeek === 0) {
+    return TIME_SLOTS_SUNDAY;
   }
 
   return [];

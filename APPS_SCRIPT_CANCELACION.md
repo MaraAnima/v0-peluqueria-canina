@@ -10,7 +10,8 @@ La fuente de verdad para pegar en Google Apps Script es:
 - Reservas por Google Sheets en la hoja `Reservas`.
 - Horarios:
   - Lunes, miercoles, jueves y viernes: `11:00`, `13:00`, `15:00`, `17:00`.
-  - Sabados y domingos: `09:00`, `11:00`, `13:00`.
+  - Sabados: `09:00`, `13:00`.
+  - Domingos: `09:00`, `11:00`, `13:00`.
   - Martes no disponible.
 - Dias bloqueados todos los anos: `01-01`, `05-01`, `07-18`, `08-25`, `12-25`.
 - Si la fecha elegida es hoy, no acepta horarios que ya empezaron.
