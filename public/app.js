@@ -1313,6 +1313,40 @@ function initPricingCards() {
   });
 }
 
+function initHappyClientBubbles() {
+  const cards = document.querySelectorAll('.happy-client-card');
+
+  cards.forEach(card => {
+    card.addEventListener('click', event => {
+      const rect = card.getBoundingClientRect();
+      const originX = event.clientX - rect.left;
+      const originY = event.clientY - rect.top;
+      const bubbleCount = 12;
+
+      for (let index = 0; index < bubbleCount; index++) {
+        const bubble = document.createElement('span');
+        const angle = (Math.PI * 2 * index) / bubbleCount;
+        const distance = 34 + Math.random() * 46;
+        const driftX = Math.cos(angle) * distance;
+        const driftY = Math.sin(angle) * distance - 24 - Math.random() * 28;
+        const size = 12 + Math.random() * 20;
+
+        bubble.className = 'client-click-bubble';
+        bubble.style.setProperty('--bubble-x', `${originX}px`);
+        bubble.style.setProperty('--bubble-y', `${originY}px`);
+        bubble.style.setProperty('--bubble-dx', `${driftX}px`);
+        bubble.style.setProperty('--bubble-dy', `${driftY}px`);
+        bubble.style.setProperty('--bubble-size', `${size}px`);
+        bubble.style.animationDelay = `${index * 18}ms`;
+
+        card.appendChild(bubble);
+        bubble.addEventListener('animationend', () => bubble.remove(), { once: true });
+        setTimeout(() => bubble.remove(), 1300);
+      }
+    });
+  });
+}
+
 // ==================== CANCELAR CITA ====================
 function openCancelScreen() {
   showScreen('cancel-screen');
@@ -1377,4 +1411,5 @@ async function submitCancel() {
 document.addEventListener('DOMContentLoaded', () => {
   showScreen('home-screen');
   initPricingCards();
+  initHappyClientBubbles();
 });

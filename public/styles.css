@@ -2723,7 +2723,7 @@ body {
 /* ==================== PRICING SECTION ==================== */
 .pricing-section {
   padding: 60px 24px;
-  background: linear-gradient(135deg, var(--bg-light) 0%, #e8f4f8 100%);
+  background: transparent;
   position: relative;
   overflow: hidden;
 }
@@ -3265,7 +3265,7 @@ body {
 /* ==================== HAPPY CLIENTS SECTION ==================== */
 .happy-clients-section {
   padding: 78px 24px;
-  background: linear-gradient(135deg, var(--bg-light) 0%, #e8f4f8 100%);
+  background: transparent;
   position: relative;
   overflow: hidden;
   z-index: 10;
@@ -3351,6 +3351,7 @@ body {
   background: var(--bg-light);
   box-shadow: var(--shadow);
   isolation: isolate;
+  cursor: pointer;
 }
 
 .happy-client-card.featured {
@@ -3406,6 +3407,45 @@ body {
   font-family: 'Fredoka', sans-serif;
   font-size: 1.05rem;
   line-height: 1.2;
+}
+
+.client-click-bubble {
+  position: absolute;
+  left: var(--bubble-x);
+  top: var(--bubble-y);
+  width: var(--bubble-size);
+  height: var(--bubble-size);
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%,
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(212, 238, 247, 0.78) 35%,
+      rgba(168, 216, 234, 0.42) 70%,
+      rgba(168, 216, 234, 0.14) 100%);
+  box-shadow:
+    inset -4px -4px 10px rgba(255, 255, 255, 0.5),
+    0 0 14px rgba(67, 199, 205, 0.24);
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.25);
+  animation: clientBubblePop 850ms ease-out forwards;
+  z-index: 3;
+}
+
+@keyframes clientBubblePop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.2);
+  }
+
+  18% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform:
+      translate(calc(-50% + var(--bubble-dx)), calc(-50% + var(--bubble-dy)))
+      scale(1);
+  }
 }
 
 /* ==================== CONTACT & LOCATION SECTION ==================== */
