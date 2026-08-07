@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
-const port = Number(process.env.PORT || 3000);
+const port = Number(process.argv[2] || process.env.PORT || 3000);
 const types = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",

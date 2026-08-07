@@ -3262,12 +3262,146 @@ body {
   }
 }
 
+/* ==================== HAPPY CLIENTS SECTION ==================== */
+.happy-clients-section {
+  padding: 78px 24px;
+  background: var(--white);
+  position: relative;
+  z-index: 10;
+}
+
+.happy-clients-container {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.happy-clients-header {
+  max-width: 680px;
+  margin: 0 auto 34px;
+  text-align: center;
+}
+
+.happy-clients-kicker,
+.contact-section-heading span {
+  display: inline-block;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--accent-cyan);
+  margin-bottom: 10px;
+}
+
+.happy-clients-header h2,
+.contact-section-heading h2 {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 2.3rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin: 0 0 12px;
+  line-height: 1.15;
+}
+
+.happy-clients-header p {
+  font-size: 1rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.happy-clients-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  grid-auto-rows: 250px;
+  gap: 18px;
+}
+
+.happy-client-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  background: var(--bg-light);
+  box-shadow: var(--shadow);
+  isolation: isolate;
+}
+
+.happy-client-card.featured {
+  grid-row: span 2;
+}
+
+.happy-client-card img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+}
+
+.happy-client-card:hover img {
+  transform: scale(1.04);
+}
+
+.happy-client-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(15, 45, 84, 0) 45%, rgba(15, 45, 84, 0.78) 100%);
+  z-index: 1;
+}
+
+.happy-client-caption {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 18px;
+  z-index: 2;
+  color: var(--white);
+}
+
+.happy-client-caption span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 5px 10px;
+  margin-bottom: 8px;
+  border-radius: 999px;
+  background: var(--accent-yellow);
+  color: var(--text-dark);
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.happy-client-caption strong {
+  display: block;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.2;
+}
+
 /* ==================== CONTACT & LOCATION SECTION ==================== */
 .contact-location-section {
   width: 100%;
   background: var(--accent-cyan);
   position: relative;
   z-index: 10;
+  padding-top: 56px;
+}
+
+.contact-section-heading {
+  max-width: 760px;
+  margin: 0 auto 34px;
+  padding: 0 24px;
+  text-align: center;
+}
+
+.contact-section-heading span {
+  color: var(--white);
+}
+
+.contact-section-heading h2 {
+  color: var(--white);
 }
 
 .contact-location-container {
@@ -3276,9 +3410,13 @@ body {
   min-height: 350px;
 }
 
+.contact-map,
+.contact-info-side {
+  min-height: 390px;
+}
+
 .contact-map {
   flex: 1;
-  min-height: 350px;
   background: #e8f4f8;
 }
 
@@ -3366,8 +3504,48 @@ body {
   height: auto;
 }
 
+.site-footer {
+  padding: 26px 24px 30px;
+  background: var(--primary-dark);
+  color: var(--white);
+  text-align: center;
+}
+
+.site-footer-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.site-footer-logo img {
+  width: 150px;
+  max-width: 70vw;
+  height: auto;
+}
+
+.site-footer p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.9rem;
+}
+
 /* Contact Section Responsive */
 @media (max-width: 900px) {
+  .happy-clients-section {
+    padding: 62px 20px;
+  }
+
+  .happy-clients-grid {
+    grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: 240px;
+  }
+
+  .happy-client-card.featured {
+    grid-column: span 2;
+    grid-row: auto;
+  }
+
   .contact-location-container {
     flex-direction: column;
   }
@@ -3387,6 +3565,35 @@ body {
 }
 
 @media (max-width: 600px) {
+  .happy-clients-section {
+    padding: 52px 16px;
+  }
+
+  .happy-clients-header h2,
+  .contact-section-heading h2 {
+    font-size: 1.85rem;
+  }
+
+  .happy-clients-grid {
+    grid-template-columns: 1fr;
+    grid-auto-rows: 290px;
+    gap: 14px;
+  }
+
+  .happy-client-card.featured {
+    grid-column: auto;
+  }
+
+  .happy-client-caption {
+    left: 14px;
+    right: 14px;
+    bottom: 14px;
+  }
+
+  .contact-location-section {
+    padding-top: 44px;
+  }
+
   .contact-info-grid {
     grid-template-columns: 1fr;
     gap: 20px;
