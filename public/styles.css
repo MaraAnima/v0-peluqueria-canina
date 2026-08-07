@@ -3265,14 +3265,44 @@ body {
 /* ==================== HAPPY CLIENTS SECTION ==================== */
 .happy-clients-section {
   padding: 78px 24px;
-  background: var(--white);
+  background: linear-gradient(135deg, var(--bg-light) 0%, #e8f4f8 100%);
   position: relative;
+  overflow: hidden;
   z-index: 10;
+}
+
+.happy-clients-section::before,
+.happy-clients-section::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--bubble-light), var(--bubble-medium));
+  opacity: 0.42;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.happy-clients-section::before {
+  width: 170px;
+  height: 170px;
+  top: 58px;
+  left: -54px;
+  animation: float 7s ease-in-out infinite;
+}
+
+.happy-clients-section::after {
+  width: 110px;
+  height: 110px;
+  right: 7%;
+  bottom: 44px;
+  animation: float 6s ease-in-out infinite 0.8s;
 }
 
 .happy-clients-container {
   max-width: 1120px;
   margin: 0 auto;
+  position: relative;
+  z-index: 2;
 }
 
 .happy-clients-header {
@@ -3281,8 +3311,7 @@ body {
   text-align: center;
 }
 
-.happy-clients-kicker,
-.contact-section-heading span {
+.happy-clients-kicker {
   display: inline-block;
   font-family: 'Poppins', sans-serif;
   font-size: 0.78rem;
@@ -3292,8 +3321,7 @@ body {
   margin-bottom: 10px;
 }
 
-.happy-clients-header h2,
-.contact-section-heading h2 {
+.happy-clients-header h2 {
   font-family: 'Fredoka', sans-serif;
   font-size: 2.3rem;
   font-weight: 700;
@@ -3386,22 +3414,6 @@ body {
   background: var(--accent-cyan);
   position: relative;
   z-index: 10;
-  padding-top: 56px;
-}
-
-.contact-section-heading {
-  max-width: 760px;
-  margin: 0 auto 34px;
-  padding: 0 24px;
-  text-align: center;
-}
-
-.contact-section-heading span {
-  color: var(--white);
-}
-
-.contact-section-heading h2 {
-  color: var(--white);
 }
 
 .contact-location-container {
@@ -3504,32 +3516,6 @@ body {
   height: auto;
 }
 
-.site-footer {
-  padding: 26px 24px 30px;
-  background: var(--primary-dark);
-  color: var(--white);
-  text-align: center;
-}
-
-.site-footer-logo {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 12px;
-}
-
-.site-footer-logo img {
-  width: 150px;
-  max-width: 70vw;
-  height: auto;
-}
-
-.site-footer p {
-  margin: 0;
-  color: rgba(255, 255, 255, 0.78);
-  font-size: 0.9rem;
-}
-
 /* Contact Section Responsive */
 @media (max-width: 900px) {
   .happy-clients-section {
@@ -3569,8 +3555,7 @@ body {
     padding: 52px 16px;
   }
 
-  .happy-clients-header h2,
-  .contact-section-heading h2 {
+  .happy-clients-header h2 {
     font-size: 1.85rem;
   }
 
@@ -3588,10 +3573,6 @@ body {
     left: 14px;
     right: 14px;
     bottom: 14px;
-  }
-
-  .contact-location-section {
-    padding-top: 44px;
   }
 
   .contact-info-grid {
