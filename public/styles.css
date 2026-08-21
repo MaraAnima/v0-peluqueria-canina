@@ -1134,9 +1134,11 @@ body {
 }
 
 .extra-card {
-  display: flex;
+  display: grid;
+  grid-template-columns: 42px 30px minmax(0, 1fr) auto;
   align-items: center;
   gap: 16px;
+  width: 100%;
   min-height: 76px;
   background: transparent;
   border: none;
@@ -1144,6 +1146,8 @@ body {
   border-radius: 0;
   padding: 16px;
   margin-bottom: 0;
+  text-align: left;
+  box-sizing: border-box;
   cursor: pointer;
   transition: background 0.25s ease;
 }
@@ -1208,6 +1212,23 @@ body {
   font-family: 'Fredoka', sans-serif;
   font-weight: 600;
   color: var(--primary-blue);
+  white-space: nowrap;
+}
+
+.extra-content {
+  min-width: 0;
+}
+
+.extra-content strong {
+  display: inline;
+  color: var(--text-dark);
+  font-size: 0.95rem;
+}
+
+.extra-content small {
+  color: var(--text-dark);
+  font-size: 0.78rem;
+  line-height: 1.35;
 }
 
 /* Date Time Selection */
@@ -3628,10 +3649,6 @@ body {
     width: 160px;
   }
 }
-.extra-card {
-  grid-template-columns: 42px 1fr auto 34px;
-}
-
 .extra-icon {
   width: 42px;
   height: 42px;
@@ -3671,11 +3688,12 @@ body {
 
 @media (max-width: 480px) {
   .extra-card {
-    grid-template-columns: 42px 1fr 30px;
+    grid-template-columns: 42px 30px minmax(0, 1fr);
+    gap: 12px;
   }
 
   .extra-price {
-    grid-column: 2;
+    grid-column: 3;
   }
 }
 
