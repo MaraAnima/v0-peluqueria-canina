@@ -1347,6 +1347,48 @@ function initHappyClientBubbles() {
   });
 }
 
+function updateHappyClientsCarouselControls() {
+  const viewport = document.getElementById('happyClientsViewport');
+  if (!viewport) return;
+
+  const previousButton = document.querySelector('.happy-clients-nav-prev');
+  const nextButton = document.querySelector('.happy-clients-nav-next');
+  const maxScroll = viewport.scrollWidth - viewport.clientWidth;
+
+  if (previousButton) {
+    previousButton.disabled = viewport.scrollLeft <= 4;
+  }
+
+  if (nextButton) {
+    nextButton.disabled = viewport.scrollLeft >= maxScroll - 4;
+  }
+}
+
+function moveHappyClientsCarousel(direction) {
+  const viewport = document.getElementById('happyClientsViewport');
+  if (!viewport) return;
+
+  const card = viewport.querySelector('.happy-client-card');
+  const gap = 18;
+  const cardWidth = card ? card.getBoundingClientRect().width : 300;
+
+  viewport.scrollBy({
+    left: direction * (cardWidth + gap),
+    behavior: 'smooth'
+  });
+
+  setTimeout(updateHappyClientsCarouselControls, 450);
+}
+
+function initHappyClientsCarousel() {
+  const viewport = document.getElementById('happyClientsViewport');
+  if (!viewport) return;
+
+  viewport.addEventListener('scroll', updateHappyClientsCarouselControls, { passive: true });
+  window.addEventListener('resize', updateHappyClientsCarouselControls);
+  updateHappyClientsCarouselControls();
+}
+
 // ==================== CANCELAR CITA ====================
 function openCancelScreen() {
   showScreen('cancel-screen');
@@ -1412,4 +1454,5 @@ document.addEventListener('DOMContentLoaded', () => {
   showScreen('home-screen');
   initPricingCards();
   initHappyClientBubbles();
+  initHappyClientsCarousel();
 });

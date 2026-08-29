@@ -455,41 +455,82 @@
           <p>Algunos de los perritos que pasaron por TR Corte para su baño, corte o mimo de spa.</p>
         </div>
 
-        <div class="happy-clients-grid">
-          <article class="happy-client-card featured">
-            <img src="images/cliente-feliz-1.jpeg" alt="Perrito feliz durante su baño en TR Corte">
-            <div class="happy-client-caption">
-              <strong>Timón</strong>
-            </div>
-          </article>
+        <div class="happy-clients-carousel">
+          <button class="happy-clients-nav happy-clients-nav-prev" type="button" aria-label="Ver clientes anteriores"
+            onclick="moveHappyClientsCarousel(-1)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+              stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
 
-          <article class="happy-client-card">
-            <img src="images/cliente-feliz-2.jpeg" alt="Perrito esperando contento en el local">
-            <div class="happy-client-caption">
-              <strong>Roma</strong>
-            </div>
-          </article>
+          <div class="happy-clients-viewport" id="happyClientsViewport">
+            <div class="happy-clients-grid">
+              <article class="happy-client-card featured">
+                <img src="images/cliente-feliz-1.jpeg" alt="Perrito feliz durante su baño en TR Corte">
+                <div class="happy-client-caption">
+                  <strong>Timón</strong>
+                </div>
+              </article>
 
-          <article class="happy-client-card">
-            <img src="images/cliente-feliz-3.jpeg" alt="Perro grande sonriendo luego del baño">
-            <div class="happy-client-caption">
-              <strong>Ronco</strong>
-            </div>
-          </article>
+              <article class="happy-client-card">
+                <img src="images/cliente-feliz-2.jpeg" alt="Perrito esperando contento en el local">
+                <div class="happy-client-caption">
+                  <strong>Roma</strong>
+                </div>
+              </article>
 
-          <article class="happy-client-card">
-            <img src="images/cliente-feliz-4.jpeg" alt="Perrito blanco feliz luego de su visita">
-            <div class="happy-client-caption">
-              <strong>Charlotte</strong>
-            </div>
-          </article>
+              <article class="happy-client-card">
+                <img src="images/cliente-feliz-3.jpeg" alt="Perro grande sonriendo luego del baño">
+                <div class="happy-client-caption">
+                  <strong>Ronco</strong>
+                </div>
+              </article>
 
-          <article class="happy-client-card">
-            <img src="images/cliente-feliz-5-luna.png" alt="Luna posando feliz en TR Corte">
-            <div class="happy-client-caption">
-              <strong>Luna</strong>
+              <article class="happy-client-card">
+                <img src="images/cliente-feliz-4.jpeg" alt="Perrito blanco feliz luego de su visita">
+                <div class="happy-client-caption">
+                  <strong>Charlotte</strong>
+                </div>
+              </article>
+
+              <article class="happy-client-card">
+                <img src="images/cliente-feliz-5-luna.png" alt="Luna posando feliz en TR Corte">
+                <div class="happy-client-caption">
+                  <strong>Luna</strong>
+                </div>
+              </article>
+
+              <article class="happy-client-card">
+                <img src="images/cliente-feliz-6.png" alt="Cliente feliz luego de su visita a TR Corte">
+                <div class="happy-client-caption">
+                  <strong>Zaibel</strong>
+                </div>
+              </article>
+
+              <article class="happy-client-card">
+                <img src="images/cliente-feliz-7.png" alt="Cliente feliz esperando su turno en TR Corte">
+                <div class="happy-client-caption">
+                  <strong>Merlina</strong>
+                </div>
+              </article>
+
+              <article class="happy-client-card">
+                <img src="images/cliente-feliz-8.png" alt="Cliente feliz en el local de TR Corte">
+                <div class="happy-client-caption">
+                  <strong>Dante</strong>
+                </div>
+              </article>
             </div>
-          </article>
+          </div>
+
+          <button class="happy-clients-nav happy-clients-nav-next" type="button" aria-label="Ver más clientes"
+            onclick="moveHappyClientsCarousel(1)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+              stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
         </div>
       </div>
     </div>

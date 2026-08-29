@@ -3358,15 +3358,32 @@ body {
   margin: 0;
 }
 
+.happy-clients-carousel {
+  position: relative;
+}
+
+.happy-clients-viewport {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding: 4px 2px 22px;
+}
+
+.happy-clients-viewport::-webkit-scrollbar {
+  display: none;
+}
+
 .happy-clients-grid {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr 1fr;
-  grid-auto-rows: 250px;
+  display: flex;
   gap: 18px;
 }
 
 .happy-client-card {
   position: relative;
+  flex: 0 0 clamp(240px, 28vw, 330px);
+  aspect-ratio: 4 / 5;
   overflow: hidden;
   border-radius: 22px;
   background: var(--bg-light);
@@ -3376,7 +3393,7 @@ body {
 }
 
 .happy-client-card.featured {
-  grid-row: span 2;
+  flex-basis: clamp(280px, 34vw, 390px);
 }
 
 .happy-client-card img {
@@ -3426,8 +3443,57 @@ body {
 .happy-client-caption strong {
   display: block;
   font-family: 'Fredoka', sans-serif;
-  font-size: 1.05rem;
+  font-size: 1.35rem;
   line-height: 1.2;
+}
+
+.happy-clients-nav {
+  position: absolute;
+  top: 50%;
+  z-index: 4;
+  width: 46px;
+  height: 46px;
+  border: none;
+  border-radius: 50%;
+  background: var(--white);
+  color: var(--accent-cyan);
+  box-shadow: var(--shadow-lg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+}
+
+.happy-clients-nav:hover {
+  background: var(--accent-cyan);
+  color: var(--white);
+  transform: translateY(-50%) scale(1.06);
+}
+
+.happy-clients-nav:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.happy-clients-nav:disabled:hover {
+  background: var(--white);
+  color: var(--accent-cyan);
+  transform: translateY(-50%);
+}
+
+.happy-clients-nav svg {
+  width: 22px;
+  height: 22px;
+}
+
+.happy-clients-nav-prev {
+  left: -18px;
+}
+
+.happy-clients-nav-next {
+  right: -18px;
 }
 
 .client-click-bubble {
@@ -3584,13 +3650,20 @@ body {
   }
 
   .happy-clients-grid {
-    grid-template-columns: repeat(2, 1fr);
-    grid-auto-rows: 240px;
+    gap: 16px;
   }
 
+  .happy-client-card,
   .happy-client-card.featured {
-    grid-column: span 2;
-    grid-row: auto;
+    flex-basis: min(72vw, 320px);
+  }
+
+  .happy-clients-nav-prev {
+    left: -8px;
+  }
+
+  .happy-clients-nav-next {
+    right: -8px;
   }
 
   .contact-location-container {
@@ -3621,13 +3694,12 @@ body {
   }
 
   .happy-clients-grid {
-    grid-template-columns: 1fr;
-    grid-auto-rows: 290px;
     gap: 14px;
   }
 
+  .happy-client-card,
   .happy-client-card.featured {
-    grid-column: auto;
+    flex-basis: 82vw;
   }
 
   .happy-client-caption {
