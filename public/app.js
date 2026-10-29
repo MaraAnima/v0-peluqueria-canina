@@ -131,8 +131,7 @@ function getDateKey(date) {
 }
 
 function isUnavailableDate(date) {
-  const dayOfWeek = date.getDay();
-  return dayOfWeek === 2 || BLOCKED_DATES.has(getDateKey(date));
+  return BLOCKED_DATES.has(getDateKey(date));
 }
 
 function getTimeSlotsByDate(date) {

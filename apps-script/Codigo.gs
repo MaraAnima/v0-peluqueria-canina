@@ -421,11 +421,11 @@ function getTimeSlotsByDate(fecha) {
   const dayOfWeek = dateObj.getDay();
   const dateKey = String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
 
-  if (dayOfWeek === 2 || BLOCKED_DATES.includes(dateKey)) {
+  if (BLOCKED_DATES.includes(dateKey)) {
     return [];
   }
 
-  if (dayOfWeek === 1 || dayOfWeek === 3 || dayOfWeek === 4 || dayOfWeek === 5) {
+  if (dayOfWeek >= 1 && dayOfWeek <= 5) {
     return TIME_SLOTS_WEEKDAY;
   }
 
