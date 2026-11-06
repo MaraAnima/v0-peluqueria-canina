@@ -117,7 +117,7 @@ const STEPS = [
 
 // Horarios disponibles (deben coincidir con AppScript)
 // Cada cita dura 2 horas, asi que los slots son cada 2 horas
-const WEEKDAY_TIME_SLOTS = ['11:00', '13:00', '15:00', '17:00'];
+const WEEKDAY_TIME_SLOTS = ['12:00', '14:00', '16:00'];
 const SATURDAY_TIME_SLOTS = ['09:00', '13:00'];
 const SUNDAY_TIME_SLOTS = ['09:00', '11:00', '13:00'];
 const TIME_SLOTS = WEEKDAY_TIME_SLOTS;

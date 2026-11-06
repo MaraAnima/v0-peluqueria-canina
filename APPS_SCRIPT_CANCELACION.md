@@ -9,7 +9,7 @@ La fuente de verdad para pegar en Google Apps Script es:
 - Validacion de webhook Meta / WhatsApp con el token `5WtuSqoYeO4LKk1CQT2Xdwn0D3F8`.
 - Reservas por Google Sheets en la hoja `Reservas`.
 - Horarios:
-  - Lunes a viernes (incluidos los martes): `11:00`, `13:00`, `15:00`, `17:00`.
+  - Lunes a viernes (incluidos los martes): `12:00`, `14:00`, `16:00`.
   - Sabados: `09:00`, `13:00`.
   - Domingos: `09:00`, `11:00`, `13:00`.
 - Dias bloqueados todos los anos: `01-01`, `05-01`, `07-18`, `08-25`, `12-25`.

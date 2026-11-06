@@ -1,7 +1,8 @@
 // ==================== CONFIGURACION ====================
 const SPREADSHEET_ID = '11rzRToVwRoBOVNr-G0KYV7gi_NCUEmBG2UsMhydc3Cg';
 const SHEET_NAME = 'Reservas';
-const TIME_SLOTS_WEEKDAY = ['11:00', '13:00', '15:00', '17:00'];
+const TIME_SLOTS_WEEKDAY = ['12:00', '14:00', '16:00'];
+const WEEKDAY_SLOT_MINUTES = 120;
 const TIME_SLOTS_SATURDAY = ['09:00', '13:00'];
 const TIME_SLOTS_SUNDAY = ['09:00', '11:00', '13:00'];
 const BLOCKED_DATES = ['01-01', '05-01', '07-18', '08-25', '12-25'];
@@ -196,8 +197,13 @@ function getAvailableSlots(fecha) {
     }
   }
 
+  // Keep existing weekday bookings blocked when the schedule shifts.
+  const usesWeekdaySlots = horariosDelDia === TIME_SLOTS_WEEKDAY;
   return horariosDelDia
-    .filter(slot => !horariosOcupados.includes(slot))
+    .filter(slot => !horariosOcupados.some(hora =>
+      hora === slot || (usesWeekdaySlots &&
+        Math.abs(timeToMinutes(hora) - timeToMinutes(slot)) < WEEKDAY_SLOT_MINUTES)
+    ))
     .filter(slot => !isPastTimeSlot(fecha, slot));
 }
 
@@ -456,6 +462,11 @@ function formatTimeForComparison(hora) {
     }
   } catch (e) {}
   return hora.toString();
+}
+
+function timeToMinutes(hora) {
+  const [hours, minutes] = hora.split(':').map(Number);
+  return hours * 60 + minutes;
 }
 
 function isPastTimeSlot(fecha, slot) {
