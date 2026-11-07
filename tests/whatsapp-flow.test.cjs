@@ -17,26 +17,40 @@ function setup() {
     constructor(...args) { super(...(args.length ? args : ['2026-11-07T13:00:00Z'])); }
   }
   const state = { rows: [['headers']], locked: false, releases: 0, checks: [],
-    messages: [], confirmations: [], lists: [], conversation: { ID: 'test', Estado: 'Abierto', Telefono: 'test' } };
+    messages: [], confirmations: [], lists: [], emails: [], writes: 0,
+    conversation: { ID: 'test', Estado: 'Abierto', Telefono: 'test' } };
   const records = {
     Flujos: [{ ID: 'welcome_default', Activo: true, Disparadores: 'hola,agendar', 'Start Node ID': 'start' }],
     FlowNodes: [
       { ID: 'start', 'Flow ID': 'welcome_default', Tipo: 'start' },
-      { ID: 'menu', 'Flow ID': 'welcome_default', Tipo: 'question', Texto: '1. Agendar turno\n2. Cancelar turno', 'Opciones JSON': '["Agendar","Cancelar turno"]' },
+      { ID: 'menu', 'Flow ID': 'welcome_default', Tipo: 'question', Texto: '1. Agendar turno\n2. Cancelar turno\n3. Reagendar turno', 'Opciones JSON': '["Agendar","Cancelar turno","Reagendar turno"]' },
       { ID: 'schedule', 'Flow ID': 'welcome_default', Tipo: 'action' },
-      { ID: 'cancel', 'Flow ID': 'welcome_default', Tipo: 'action' }
+      { ID: 'cancel', 'Flow ID': 'welcome_default', Tipo: 'action' },
+      { ID: 'reschedule', 'Flow ID': 'welcome_default', Tipo: 'action' }
     ],
     FlowEdges: [
       { 'Flow ID': 'welcome_default', 'From Node ID': 'start', 'To Node ID': 'menu' },
       { 'Flow ID': 'welcome_default', 'From Node ID': 'menu', 'To Node ID': 'schedule', Condicion: 'agenda,agendar,agendar turno' },
-      { 'Flow ID': 'welcome_default', 'From Node ID': 'menu', 'To Node ID': 'cancel', Condicion: 'cancelar,cancelar turno' }
+      { 'Flow ID': 'welcome_default', 'From Node ID': 'menu', 'To Node ID': 'cancel', Condicion: 'cancelar,cancelar turno' },
+      { 'Flow ID': 'welcome_default', 'From Node ID': 'menu', 'To Node ID': 'reschedule', Condicion: 'reagendar,reagendar turno,reagendar cita,cambiar turno' }
     ]
   };
   const sheet = {
     getDataRange: () => ({ getValues: () => state.rows.map(row => [...row]) }),
     getLastRow: () => state.rows.length,
     getLastColumn: () => 21,
-    getRange: (row, column) => ({ getValue: () => state.rows[row - 1]?.[column - 1], setBackground() {} }),
+    getRange: (row, column, height = 1, width = 1) => ({
+      getValue: () => state.rows[row - 1]?.[column - 1],
+      setBackground() {},
+      setValues(values) {
+        assert.equal(state.locked, true);
+        assert.equal(height, 1);
+        assert.equal(values[0].length, width);
+        if (state.failWrite) throw new Error('Write failed');
+        state.rows[row - 1].splice(column - 1, width, ...values[0]);
+        state.writes++;
+      }
+    }),
     appendRow(row) {
       assert.equal(state.locked, true, 'Booking writes share the website reservation lock');
       if (state.failWrite) throw new Error('Write failed');
@@ -65,6 +79,10 @@ function setup() {
         return `${parts.day}/${parts.month}`;
       }
     },
+    MailApp: { sendEmail(message) {
+      if (state.failEmail) throw new Error('Email failed');
+      state.emails.push(message);
+    } },
     ContentService: { MimeType: { JSON: 'json' },
       createTextOutput: text => ({ setMimeType() { return this; }, getContent: () => text }) }
   });
@@ -94,7 +112,10 @@ test('menu accepts button IDs, conditions, labels, accents and numbered options'
   for (const text of ['cancel', 'Cancelar turno', 'cancelar', '2']) {
     assert.equal(ctx.trFindEdgeForAnswer_('welcome_default', 'menu', text)['To Node ID'], 'cancel');
   }
-  for (const text of ['', '0', '3', 'consultas', 'Hablar con un agente', 'unknown']) {
+  for (const text of ['reschedule', 'Reagendar', 'Reagendar turno', 'reagendar cita', 'cambiar turno', '3']) {
+    assert.equal(ctx.trFindEdgeForAnswer_('welcome_default', 'menu', text)['To Node ID'], 'reschedule');
+  }
+  for (const text of ['', '0', '4', 'consultas', 'Hablar con un agente', 'unknown']) {
     assert.equal(ctx.trFindEdgeForAnswer_('welcome_default', 'menu', text), null);
   }
 });
@@ -106,7 +127,7 @@ test('unknown answers repeat the same question without discarding a custom flow'
   ctx.trRunFlowForIncoming_(state.conversation, 'unknown');
   assert.equal(state.conversation['Flow Node ID'], 'menu');
   assert.match(state.messages[0], /No reconozco/);
-  assert.equal(state.lists[0].buttons.length, 2);
+  assert.equal(state.lists[0].buttons.length, 3);
 });
 
 test('matching custom triggers run before the fallback welcome, including resolved conversations', () => {
@@ -209,7 +230,7 @@ test('failed lock or sheet write never confirms a booking or leaves the lock hel
   }
 });
 
-test('default welcome generation contains only schedule and cancellation', () => {
+test('default welcome offers schedule, cancellation and rescheduling but no agent', () => {
   const { ctx } = setup();
   const appended = [];
   ctx.trDeleteWhere_ = () => {};
@@ -218,8 +239,161 @@ test('default welcome generation contains only schedule and cancellation', () =>
   ctx.trAppendObject_ = (sheet, row) => appended.push({ sheet, row });
   ctx.trCreateDefaultWelcomeFlow_();
   const nodes = appended.filter(item => item.sheet === 'FlowNodes').map(item => item.row);
-  assert.deepEqual(nodes.map(node => node.ID), ['start', 'menu', 'schedule', 'cancel']);
+  assert.deepEqual(nodes.map(node => node.ID), ['start', 'menu', 'schedule', 'cancel', 'reschedule']);
   const menu = nodes.find(node => node.ID === 'menu');
-  assert.deepEqual(JSON.parse(menu['Opciones JSON']), ['Agendar', 'Cancelar turno']);
+  assert.deepEqual(JSON.parse(menu['Opciones JSON']), ['Agendar', 'Cancelar turno', 'Reagendar turno']);
   assert.doesNotMatch(menu.Texto, /agente/i);
+});
+
+function rescheduleSession(overrides = {}) {
+  const api = setup();
+  const row = ['TR-TEST-001', 'created', '2026-11-10', '12:00', 'Test', '099123456',
+    'Bano', 'Chico', 'Corto', 'Test', 'Notes', '1 h', 720, 'Perfume', 'NO', '',
+    'original@example.invalid', 'Confirmada', 'Operator', api.ctx.reservationCommissionFormula()];
+  for (const [index, value] of Object.entries(overrides)) row[index] = value;
+  api.state.rows.push(row);
+  Object.assign(api.state.conversation, {
+    Telefono: '59899123456', 'Flow ID': 'welcome_default', 'Flow Node ID': 'menu'
+  });
+  const input = text => api.ctx.trRunFlowForIncoming_(api.state.conversation, text);
+  input('3');
+  assert.equal(api.state.conversation['Bot State'], 'esperando_reagenda_id');
+  return { ...api, input, data: () => JSON.parse(api.state.conversation['Bot Data JSON']) };
+}
+
+test('WhatsApp rescheduling keeps the original occupied until the new slot is confirmed', () => {
+  const api = rescheduleSession();
+  const before = [...api.state.rows[1]];
+  api.input('*tr-test-001*');
+  assert.equal(api.state.conversation['Bot State'], 'esperando_reagenda_fecha');
+  assert.deepEqual(api.state.rows[1], before);
+  assert.ok(!api.ctx.getAvailableSlots('2026-11-10').includes('12:00'));
+  api.input('2026-11-11');
+  assert.equal(api.state.conversation['Bot State'], 'esperando_reagenda_hora');
+  api.input('14:00');
+  assert.equal(api.state.rows.length, 2);
+  assert.equal(api.state.writes, 1);
+  assert.equal(api.state.rows[1][0], before[0]);
+  assert.equal(api.state.rows[1][2], '2026-11-11');
+  assert.equal(api.state.rows[1][3], '14:00');
+  const after = [...api.state.rows[1]];
+  for (const index of [2, 3, 15]) after[index] = before[index];
+  assert.deepEqual(after, before);
+  assert.ok(api.ctx.getAvailableSlots('2026-11-10').includes('12:00'));
+  assert.equal(api.state.emails.length, 1);
+  assert.equal(api.state.emails[0].to, 'original@example.invalid');
+  assert.equal(api.state.conversation.Estado, 'Resuelto');
+  assert.equal(api.state.conversation['Reserva ID'], 'TR-TEST-001');
+  assert.match(api.state.messages.at(-1), /reagendado correctamente/);
+  assert.equal(api.state.locked, false);
+});
+
+test('rescheduling rejects missing, cancelled, started and other-phone reservations without exposing details', () => {
+  for (const [overrides, id] of [
+    [{}, 'bad-id'], [{}, 'TR-MISSING-001'], [{ 17: 'Cancelada' }, 'TR-TEST-001'],
+    [{ 2: '2026-11-06' }, 'TR-TEST-001'], [{ 5: '099999999' }, 'TR-TEST-001']
+  ]) {
+    const api = rescheduleSession(overrides);
+    api.input(id);
+    assert.equal(api.state.conversation['Bot State'], 'esperando_reagenda_id');
+    assert.equal(api.state.writes, 0);
+    assert.equal(api.state.emails.length, 0);
+    assert.equal(api.state.lists.length, 0);
+  }
+});
+
+test('same-day rescheduling excludes only itself and does not offer the unchanged slot', () => {
+  const api = rescheduleSession();
+  api.input('TR-TEST-001');
+  api.input('2026-11-10');
+  assert.deepEqual(api.data().slots, ['14:00', '16:00']);
+  api.input('12:00');
+  assert.equal(api.state.writes, 0);
+  api.input('14:00');
+  assert.equal(api.state.rows[1][3], '14:00');
+});
+
+test('deslanado can move backward into its released block and keeps the extra slot', () => {
+  const api = rescheduleSession({ 3: '14:00', 6: 'Bano + desl. y corte', 14: 'SI', 15: '16:00' });
+  api.input('TR-TEST-001');
+  api.input('2026-11-10');
+  assert.deepEqual(api.data().slots, ['12:00']);
+  api.input('12:00');
+  assert.equal(api.state.rows[1][3], '12:00');
+  assert.equal(api.state.rows[1][15], '14:00');
+  assert.ok(api.ctx.getAvailableSlots('2026-11-10').includes('16:00'));
+});
+
+test('a slot taken during rescheduling refreshes choices without releasing the original', () => {
+  const api = rescheduleSession();
+  api.input('TR-TEST-001');
+  api.input('2026-11-11');
+  const competing = api.ctx.doPost({ postData: { contents: JSON.stringify(booking({ fecha: '2026-11-11', hora: '14:00' })) } });
+  assert.equal(JSON.parse(competing.getContent()).success, true);
+  api.input('14:00');
+  assert.equal(api.state.writes, 0);
+  assert.equal(api.state.rows[1][2], '2026-11-10');
+  assert.equal(api.state.rows[1][3], '12:00');
+  assert.equal(api.state.conversation['Bot State'], 'esperando_reagenda_hora');
+  assert.deepEqual(api.data().slots, ['12:00', '16:00']);
+  assert.match(api.state.messages.at(-1), /reserva anterior se mantiene/);
+  assert.equal(api.state.emails.length, 0);
+});
+
+test('a concurrent date or phone change forces a new ID lookup instead of overwriting', () => {
+  for (const change of [row => { row[3] = '14:00'; }, row => { row[5] = '099999999'; }]) {
+    const api = rescheduleSession();
+    api.input('TR-TEST-001');
+    api.input('2026-11-11');
+    change(api.state.rows[1]);
+    const before = [...api.state.rows[1]];
+    api.input('14:00');
+    assert.deepEqual(api.state.rows[1], before);
+    assert.equal(api.state.writes, 0);
+    assert.equal(api.state.conversation['Bot State'], 'esperando_reagenda_id');
+    assert.equal(api.state.emails.length, 0);
+  }
+});
+
+test('closed or invalid dates and last deslanado starts are not offered for rescheduling', () => {
+  const api = rescheduleSession({ 14: 'SI', 15: '14:00' });
+  api.input('TR-TEST-001');
+  for (const date of ['2026-12-25', '2026-02-31', '2026-11-06']) {
+    api.input(date);
+    assert.equal(api.state.conversation['Bot State'], 'esperando_reagenda_fecha');
+    assert.equal(api.state.writes, 0);
+  }
+  api.input('2026-11-11');
+  assert.deepEqual(api.data().slots, ['12:00', '14:00']);
+  api.input('16:00');
+  assert.equal(api.state.writes, 0);
+});
+
+test('reschedule lock and sheet failures do not send success or lose the original booking', () => {
+  for (const failure of ['lockUnavailable', 'failWrite']) {
+    const api = rescheduleSession();
+    api.input('TR-TEST-001');
+    api.input('2026-11-11');
+    const before = [...api.state.rows[1]];
+    api.state[failure] = true;
+    api.input('14:00');
+    assert.deepEqual(api.state.rows[1], before);
+    assert.equal(api.state.emails.length, 0);
+    assert.equal(api.state.locked, false);
+    assert.equal(api.state.conversation['Bot State'], 'esperando_reagenda_id');
+    assert.doesNotMatch(api.state.messages.at(-1), /reagendado correctamente/);
+  }
+});
+
+test('email failure does not undo a successful WhatsApp reschedule or create another booking', () => {
+  const api = rescheduleSession();
+  api.input('TR-TEST-001');
+  api.input('2026-11-11');
+  api.state.failEmail = true;
+  api.input('14:00');
+  assert.equal(api.state.rows.length, 2);
+  assert.equal(api.state.rows[1][2], '2026-11-11');
+  assert.equal(api.state.rows[1][3], '14:00');
+  assert.equal(api.state.writes, 1);
+  assert.match(api.state.messages.at(-1), /reagendado correctamente/);
 });

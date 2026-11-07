@@ -389,7 +389,7 @@ function consultarReagenda(id, fecha) {
   }
 }
 
-// Called from doPost while the reservation lock is held.
+// Called from web or WhatsApp while the reservation lock is held.
 function reagendarReserva(data) {
   const reservation = findReschedulableReservation(data.id);
   const fecha = data.fecha;
@@ -882,7 +882,7 @@ var TR_SHEETS = {
   logs: "WebhookLogs"
 };
 
-var TR_INBOX_VERSION = "2026-11-07-flow-availability-menu";
+var TR_INBOX_VERSION = "2026-11-07-whatsapp-reschedule";
 
 var TR_HEADERS = {
   Conversaciones: [
@@ -1201,6 +1201,12 @@ function trExecuteFlowNode_(conversationId, phone, flowId, nodeId, depth) {
       return;
     }
 
+    if (node.ID === "reschedule") {
+      trSetBotState_(conversationId, "esperando_reagenda_id", {});
+      trSendAutomaticMessage_(conversationId, phone, "Pasame el ID de la reserva que queres reagendar.");
+      return;
+    }
+
     if (node.ID === "consultas") {
       trSendAutomaticMessage_(conversationId, phone, trConsultasMessage_());
       trClearBotState_(conversationId);
@@ -1224,6 +1230,11 @@ function trHandleBotState_(conversation, text) {
   var conversationId = conversation.ID;
   var phone = conversation.Telefono;
   var cleanText = String(text || "").trim();
+
+  if (state === "esperando_reagenda_id") {
+    trStartRescheduleFromWhatsapp_(conversationId, phone, cleanText);
+    return;
+  }
 
   if (state === "esperando_tipo_agenda") {
     var reservationType = trResolveMappedChoice_(cleanText, {
@@ -1304,7 +1315,7 @@ function trHandleBotState_(conversation, text) {
     return;
   }
 
-  if (state === "esperando_fecha") {
+  if (state === "esperando_fecha" || state === "esperando_reagenda_fecha") {
     var selectedDate = trResolveDateInput_(cleanText, data.dateOptions || []);
     if (!selectedDate) {
       trSendAutomaticMessage_(conversationId, phone, "No reconozco esa fecha. Elegi una opcion de la lista o escribila como dia/mes, por ejemplo 10/07.");
@@ -1321,12 +1332,12 @@ function trHandleBotState_(conversation, text) {
 
     data.fecha = selectedDate;
     data.slots = slots;
-    trSetBotState_(conversationId, "esperando_hora", data);
+    trSetBotState_(conversationId, data.reagenda ? "esperando_reagenda_hora" : "esperando_hora", data);
     trSendAvailableHourList_(conversationId, phone, slots);
     return;
   }
 
-  if (state === "esperando_hora") {
+  if (state === "esperando_hora" || state === "esperando_reagenda_hora") {
     var selectedHour = trResolveSlot_(cleanText, data.slots || []);
     if (!selectedHour) {
       trSendAutomaticMessage_(conversationId, phone, "No reconozco ese horario. Elegi uno de estos:\n\n" + (data.slots || []).map(function (slot, index) {
@@ -1336,7 +1347,11 @@ function trHandleBotState_(conversation, text) {
     }
 
     data.hora = selectedHour;
-    trSaveReservationFromWhatsapp_(conversationId, phone, data);
+    if (data.reagenda) {
+      trRescheduleReservationFromWhatsapp_(conversationId, phone, data);
+    } else {
+      trSaveReservationFromWhatsapp_(conversationId, phone, data);
+    }
     return;
   }
 
@@ -1366,6 +1381,93 @@ function trHandleBotState_(conversation, text) {
 
   trClearBotState_(conversationId);
   trMarkConversation_(conversationId, { Estado: "Abierto" });
+}
+
+function trFindWhatsappReschedulableReservation_(id, phone) {
+  var reservation = findReschedulableReservation(trCleanReservationId_(id));
+  var sender = trNormalizePhone_(phone);
+  if (!sender || sender !== trNormalizePhone_(reservation.row[5])) {
+    throw new Error("El ID no corresponde a una reserva de este numero. Revisa el ID e intenta nuevamente.");
+  }
+  return reservation;
+}
+
+function trStartRescheduleFromWhatsapp_(conversationId, phone, id) {
+  try {
+    var reservation = trFindWhatsappReschedulableReservation_(id, phone);
+    var data = {
+      reagenda: true,
+      reservaId: reservation.id,
+      fechaActual: reservation.fecha,
+      horaActual: reservation.hora,
+      servicio: String(reservation.row[6] || ""),
+      deslanado: reservation.row[14] === "SI"
+    };
+    trSendAutomaticMessage_(conversationId, phone,
+      "Encontre tu reserva " + reservation.id + " para el " + trFormatDisplayDate_(reservation.fecha) +
+      " a las " + reservation.hora + ". Vamos a elegir un nuevo turno.");
+    trSendAvailableDateList_(conversationId, phone, data);
+  } catch (error) {
+    trSetBotState_(conversationId, "esperando_reagenda_id", {});
+    trSendAutomaticMessage_(conversationId, phone, trCleanCancellationMessage_(error.message || String(error)));
+  }
+}
+
+function trRescheduleReservationFromWhatsapp_(conversationId, phone, data) {
+  var lock = LockService.getScriptLock();
+  var locked = false;
+  var result;
+  try {
+    lock.waitLock(30000);
+    locked = true;
+    // Recheck ownership under the same lock used by web bookings and reschedules.
+    trFindWhatsappReschedulableReservation_(data.reservaId, phone);
+    var response = reagendarReserva({
+      id: data.reservaId,
+      fecha: data.fecha,
+      hora: data.hora,
+      fechaActual: data.fechaActual,
+      horaActual: data.horaActual
+    });
+    result = trParseJson_(response.getContent(), {});
+  } catch (error) {
+    result = { error: trCleanCancellationMessage_(error.message || String(error)) };
+  } finally {
+    if (locked) lock.releaseLock();
+  }
+
+  if (!result.success) {
+    if (result.code === "HORARIO_OCUPADO") {
+      delete data.hora;
+      data.slots = trAvailableReservationSlots_(data, data.fecha);
+      trSendAutomaticMessage_(conversationId, phone, result.error + " Tu reserva anterior se mantiene.");
+      if (data.slots.length) {
+        trSetBotState_(conversationId, "esperando_reagenda_hora", data);
+        trSendAvailableHourList_(conversationId, phone, data.slots);
+      } else {
+        delete data.fecha;
+        trSendAvailableDateList_(conversationId, phone, data);
+      }
+      return;
+    }
+    trSetBotState_(conversationId, "esperando_reagenda_id", {});
+    trSendAutomaticMessage_(conversationId, phone,
+      (result.error || "No pude confirmar el cambio.") + " Pasame nuevamente el ID para revisar la reserva actual.");
+    return;
+  }
+
+  trClearBotState_(conversationId);
+  trMarkConversation_(conversationId, {
+    Estado: "Resuelto",
+    "Reserva ID": result.reservaId,
+    Etiquetas: "reagenda"
+  });
+  trSendAutomaticMessage_(conversationId, phone,
+    "Tu turno fue reagendado correctamente.\n\n" +
+    "ID de reserva: " + result.reservaId + "\n" +
+    "Turno anterior: " + trFormatDisplayDate_(data.fechaActual) + " a las " + data.horaActual + "\n" +
+    "Nuevo turno: " + trFormatDisplayDate_(result.fecha) + " a las " + result.hora + "\n\n" +
+    "Conservas el mismo ID de reserva.");
 }
 
 function trSaveReservationFromWhatsapp_(conversationId, phone, data) {
@@ -1688,19 +1790,23 @@ function trReservationNeedsDeslanado_(data) {
 }
 
 function trAvailableReservationSlots_(data, fecha) {
-  var available = getAvailableSlots(fecha);
-  if (!trReservationNeedsDeslanado_(data)) return available;
-  var daySlots = getTimeSlotsByDate(fecha);
+  var available = getAvailableSlots(fecha, data.reagenda ? data.reservaId : undefined);
+  if (data.reagenda ? data.deslanado === true : trReservationNeedsDeslanado_(data)) {
+    var daySlots = getTimeSlotsByDate(fecha);
+    available = available.filter(function (slot) {
+      var next = daySlots[daySlots.indexOf(slot) + 1];
+      return !!next && available.indexOf(next) !== -1;
+    });
+  }
   return available.filter(function (slot) {
-    var next = daySlots[daySlots.indexOf(slot) + 1];
-    return !!next && available.indexOf(next) !== -1;
+    return !data.reagenda || fecha !== data.fechaActual || slot !== data.horaActual;
   });
 }
 
 function trSendAvailableDateList_(conversationId, phone, data) {
   var options = trBuildAvailableDateOptions_(21, 8, data);
   data.dateOptions = options;
-  trSetBotState_(conversationId, "esperando_fecha", data);
+  trSetBotState_(conversationId, data.reagenda ? "esperando_reagenda_fecha" : "esperando_fecha", data);
   if (!options.length) {
     trSendAutomaticMessage_(conversationId, phone, "No encontre fechas disponibles en las proximas semanas. Escribinos de nuevo mas tarde y volvemos a revisar.");
     trMarkConversation_(conversationId, { Estado: "Abierto" });
@@ -2317,7 +2423,8 @@ function trCreateDefaultWelcomeFlow_() {
     "¿Cómo podemos ayudarte hoy?\n\n" +
     "Elegí una opción:\n" +
     "1. Agendar turno\n" +
-    "2. Cancelar turno";
+    "2. Cancelar turno\n" +
+    "3. Reagendar turno";
   if (flows.some(function (flow) { return flow.ID === "welcome_default"; })) {
     trDeleteWhere_(TR_SHEETS.nodes, "Flow ID", "welcome_default");
     trDeleteWhere_(TR_SHEETS.edges, "Flow ID", "welcome_default");
@@ -2341,9 +2448,10 @@ function trCreateDefaultWelcomeFlow_() {
 
   [
     ["start", "welcome_default", "start", "Inicio", "", "[]", 225, 20],
-    ["menu", "welcome_default", "question", "Pregunta principal", welcomeText, JSON.stringify(["Agendar", "Cancelar turno"]), 210, 138],
+    ["menu", "welcome_default", "question", "Pregunta principal", welcomeText, JSON.stringify(["Agendar", "Cancelar turno", "Reagendar turno"]), 210, 138],
     ["schedule", "welcome_default", "action", "Agendar turno", "Perfecto. Te vamos a pedir los datos para buscar un horario disponible.", "[]", 35, 395],
-    ["cancel", "welcome_default", "action", "Cancelar turno", "Pasame el ID de reserva y lo revisamos.", "[]", 225, 395]
+    ["cancel", "welcome_default", "action", "Cancelar turno", "Pasame el ID de reserva y lo revisamos.", "[]", 225, 395],
+    ["reschedule", "welcome_default", "action", "Reagendar turno", "Pasame el ID de la reserva que queres reagendar.", "[]", 415, 395]
   ].forEach(function (row) {
     trAppendObject_(TR_SHEETS.nodes, {
       ID: row[0],
@@ -2360,7 +2468,8 @@ function trCreateDefaultWelcomeFlow_() {
   [
     ["edge_start_menu", "welcome_default", "start", "menu", ""],
     ["edge_menu_schedule", "welcome_default", "menu", "schedule", "agenda,agendar,agendar turno"],
-    ["edge_menu_cancel", "welcome_default", "menu", "cancel", "cancelar,cancelar turno"]
+    ["edge_menu_cancel", "welcome_default", "menu", "cancel", "cancelar,cancelar turno"],
+    ["edge_menu_reschedule", "welcome_default", "menu", "reschedule", "reagendar,reagendar turno,reagendar cita,cambiar turno"]
   ].forEach(function (row) {
     trAppendObject_(TR_SHEETS.edges, {
       ID: row[0],

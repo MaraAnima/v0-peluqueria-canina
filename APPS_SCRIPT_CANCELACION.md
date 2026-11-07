@@ -40,7 +40,7 @@ La fuente de verdad para pegar en Google Apps Script es:
 La fuente local incluye ahora el modulo Inbox que estaba desplegado, sin los
 diagnosticos manuales con datos de clientes.
 
-- El menu principal ofrece solamente Agendar y Cancelar turno.
+- El menu principal ofrece Agendar, Cancelar turno y Reagendar turno.
 - Admite IDs de botones, condiciones, nombres de opciones y numeros.
 - Busca flujos por disparadores antes de usar la bienvenida como alternativa.
 - Si la respuesta no coincide, repite la pregunta actual sin perder el flujo.
@@ -48,6 +48,10 @@ diagnosticos manuales con datos de clientes.
 - El deslanado solo ofrece turnos cuyo horario siguiente este libre y guarda ese bloqueo.
 - Si un turno se ocupa mientras el cliente responde, ofrece horarios o fechas nuevos.
 - No permite fechas invalidas, pasadas, feriados ni horarios ya iniciados.
+- Para reagendar, pide el ID y valida que el telefono de WhatsApp sea el de la reserva.
+- Mantiene el turno original hasta confirmar el nuevo; conserva ID, precio, extras y comision.
+- Revalida disponibilidad, bloqueo de deslanado y cambios concurrentes al confirmar la reagenda.
+- Confirma el cambio por WhatsApp y envia el email al destinatario original si existe.
 
 Al actualizar un despliegue existente, conservar las Script Properties y la URL.
 No ejecutar `setupTrInbox` para aplicar estos cambios: esa inicializacion vuelve
