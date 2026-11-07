@@ -20,7 +20,25 @@ La fuente de verdad para pegar en Google Apps Script es:
 - Las citas canceladas liberan el horario.
 - Envia email de confirmacion con ID de reserva.
 - Envia email cuando se cancela una reserva.
+- Permite consultar una cita con su ID y reagendar su fecha y hora, conservando el ID.
+- Valida nuevamente la disponibilidad bajo el bloqueo de reservas antes de reagendar.
+- Una reagenda libera el turno anterior y mueve tambien el bloqueo de deslanado.
+- Las citas canceladas o ya iniciadas no se pueden reagendar.
+- Envia la confirmacion del cambio al email original de la reserva.
 - Responde `EVENT_RECEIVED` para POSTs de Meta que no sean reservas.
+
+## Reagendar por ID
+
+La web usa `GET ?action=consultarReagenda&id=TR-...` para consultar una cita.
+Con `&fecha=YYYY-MM-DD` devuelve los horarios disponibles sin contar la propia
+reserva. La respuesta no expone email ni telefono.
+
+El cambio se confirma mediante POST JSON con `action: "reagendar"`, `id`,
+`fecha`, `hora`, `fechaActual` y `horaActual`. Los ultimos dos campos evitan
+sobrescribir un cambio que se haya hecho desde otra pantalla.
+No se crean filas nuevas ni se modifica el ID, el servicio o los datos del cliente.
+
+Pruebas locales, con una hoja y correos simulados: `npm test`.
 
 ## Columnas esperadas
 

@@ -29,6 +29,10 @@ function doGet(e) {
       return cancelarReserva(params.id);
     }
 
+    if (params.action === 'consultarReagenda') {
+      return consultarReagenda(params.id, params.fecha);
+    }
+
     const fecha = params.fecha;
     if (!fecha) {
       return createJsonResponse({ error: 'Fecha requerida' });
@@ -61,6 +65,10 @@ function doPost(e) {
       return ContentService
         .createTextOutput('EVENT_RECEIVED')
         .setMimeType(ContentService.MimeType.TEXT);
+    }
+
+    if (data.action === 'reagendar') {
+      return reagendarReserva(data);
     }
 
     const camposRequeridos = ['nombre', 'telefono', 'email', 'fecha', 'hora'];
@@ -165,7 +173,7 @@ function isMetaWebhookPayload(data) {
 
 // ==================== FUNCIONES DE DATOS ====================
 
-function getAvailableSlots(fecha) {
+function getAvailableSlots(fecha, excludedReservationId) {
   const sheet = getSheet();
   const data = sheet.getDataRange().getValues();
   const horariosOcupados = [];
@@ -179,6 +187,11 @@ function getAvailableSlots(fecha) {
     const row = data[i];
     const fechaReserva = row[2];
     const horaReserva = row[3];
+
+    if (excludedReservationId &&
+        String(row[0]).trim().toUpperCase() === excludedReservationId) {
+      continue;
+    }
 
     if (String(row[COL_ESTADO]).trim().toUpperCase() === 'CANCELADA') {
       continue;
@@ -290,6 +303,154 @@ function cancelarReserva(id) {
   }
 }
 
+// ==================== REAGENDAR CITA ====================
+
+function findReschedulableReservation(id) {
+  const normalizedId = typeof id === 'string' ? id.trim().toUpperCase() : '';
+  if (!/^TR-[A-Z0-9]+-[A-Z0-9]+$/.test(normalizedId) || normalizedId.length > 80) {
+    throw new Error('Ingresa un ID de reserva valido.');
+  }
+
+  const sheet = getSheet();
+  const rows = sheet.getDataRange().getValues();
+  const index = rows.findIndex((row, i) =>
+    i > 0 && String(row[0]).trim().toUpperCase() === normalizedId
+  );
+  if (index < 0) {
+    throw new Error('No encontramos una cita con ese ID. Revisa el email de confirmacion.');
+  }
+  const row = rows[index];
+  if (String(row[COL_ESTADO]).trim().toUpperCase() === 'CANCELADA') {
+    throw new Error('Esta cita esta cancelada y no se puede reagendar.');
+  }
+  const fecha = formatDateForComparison(row[2]);
+  const hora = formatTimeForComparison(row[3]);
+  if (!isValidReservationDate(fecha) || !/^\d{2}:\d{2}$/.test(hora) ||
+      isPastReservationTime(fecha, hora)) {
+    throw new Error('Solo se pueden reagendar citas que todavia no comenzaron.');
+  }
+  return { id: normalizedId, sheet: sheet, row: row, rowNumber: index + 1, fecha: fecha, hora: hora };
+}
+
+function isValidReservationDate(fecha) {
+  if (typeof fecha !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return false;
+  const parts = fecha.split('-').map(Number);
+  const date = new Date(parts[0], parts[1] - 1, parts[2]);
+  return date.getFullYear() === parts[0] && date.getMonth() === parts[1] - 1 &&
+    date.getDate() === parts[2];
+}
+
+function isPastReservationTime(fecha, hora) {
+  const now = new Date();
+  const today = Utilities.formatDate(now, BUSINESS_TIME_ZONE, 'yyyy-MM-dd');
+  const currentTime = Utilities.formatDate(now, BUSINESS_TIME_ZONE, 'HH:mm');
+  return fecha < today || (fecha === today && hora <= currentTime);
+}
+
+function consultarReagenda(id, fecha) {
+  try {
+    const reservation = findReschedulableReservation(id);
+    const result = {
+      success: true,
+      reserva: {
+        id: reservation.id,
+        fecha: reservation.fecha,
+        hora: reservation.hora,
+        mascota: String(reservation.row[9] || ''),
+        servicio: String(reservation.row[6] || ''),
+        deslanado: reservation.row[14] === 'SI'
+      }
+    };
+    if (fecha !== undefined) {
+      if (!isValidReservationDate(fecha)) {
+        throw new Error('La fecha elegida no es valida.');
+      }
+      result.fecha = fecha;
+      result.horarios = isPastReservationTime(fecha, '23:59') ? [] :
+        getAvailableSlots(fecha, reservation.id);
+    }
+    return createJsonResponse(result);
+  } catch (error) {
+    return createJsonResponse({ error: error.message });
+  }
+}
+
+// Called from doPost while the reservation lock is held.
+function reagendarReserva(data) {
+  const reservation = findReschedulableReservation(data.id);
+  const fecha = data.fecha;
+  const hora = data.hora;
+  if (!isValidReservationDate(fecha) || typeof hora !== 'string' ||
+      !getTimeSlotsByDate(fecha).includes(hora) || isPastReservationTime(fecha, hora)) {
+    return createJsonResponse({ error: 'La fecha o el horario elegidos no estan disponibles.' });
+  }
+  if (data.fechaActual !== reservation.fecha || data.horaActual !== reservation.hora) {
+    return createJsonResponse({
+      error: 'Esta cita cambio mientras la estabas viendo. Busca nuevamente el ID.',
+      code: 'RESERVA_ACTUALIZADA'
+    });
+  }
+  if (fecha === reservation.fecha && hora === reservation.hora) {
+    return createJsonResponse({ error: 'Elegi una fecha u hora diferente a la cita actual.' });
+  }
+
+  const available = getAvailableSlots(fecha, reservation.id);
+  if (!available.includes(hora)) {
+    return createJsonResponse({ error: 'Ese horario acaba de ocuparse. Elegi otro turno.', code: 'HORARIO_OCUPADO' });
+  }
+  let blockedTime = '';
+  if (reservation.row[14] === 'SI') {
+    const slots = getTimeSlotsByDate(fecha);
+    blockedTime = slots[slots.indexOf(hora) + 1];
+    if (!blockedTime || !available.includes(blockedTime)) {
+      return createJsonResponse({
+        error: 'El deslanado necesita que el turno siguiente tambien este libre.',
+        code: 'HORARIO_OCUPADO'
+      });
+    }
+  }
+
+  // One sheet write moves the appointment and its extra slot together.
+  const values = reservation.row.slice(2, 16);
+  values[0] = fecha;
+  values[1] = hora;
+  values[13] = blockedTime;
+  reservation.sheet.getRange(reservation.rowNumber, 3, 1, 14).setValues([values]);
+
+  const emailResult = sendEmailReagenda(reservation, fecha, hora);
+  return createJsonResponse({
+    success: true,
+    reservaId: reservation.id,
+    fecha: fecha,
+    hora: hora,
+    email: emailResult
+  });
+}
+
+function sendEmailReagenda(reservation, fecha, hora) {
+  try {
+    const email = reservation.row[COL_EMAIL];
+    if (!email) return { success: false };
+    MailApp.sendEmail({
+      to: email,
+      subject: 'Tu cita fue reagendada - ' + NEGOCIO,
+      htmlBody: '<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#243b53;">' +
+        '<h2>Tu cita fue reagendada</h2><p>Hola ' + escapeHtml(reservation.row[4]) + ',</p>' +
+        '<p><b>ID de reserva:</b> ' + escapeHtml(reservation.id) + '</p>' +
+        '<p><b>Turno anterior:</b> ' + formatDateForClient(reservation.fecha) + ' a las ' +
+        escapeHtml(reservation.hora) + '</p>' +
+        '<p><b>Nuevo turno:</b> ' + formatDateForClient(fecha) + ' a las ' + escapeHtml(hora) + '</p>' +
+        '<p><b>Mascota:</b> ' + escapeHtml(reservation.row[9]) + '<br><b>Servicio:</b> ' +
+        escapeHtml(reservation.row[6]) + '</p><p>Conserva el mismo ID para gestionar tu cita.</p>' +
+        '<p>' + NEGOCIO + '</p></div>'
+    });
+    return { success: true };
+  } catch (error) {
+    Logger.log('Error enviando email de reagenda: ' + error.toString());
+    return { success: false };
+  }
+}
+
 // ==================== EMAILS ====================
 
 function sendEmailConfirmation(data, reservaId) {
@@ -304,7 +465,7 @@ function sendEmailConfirmation(data, reservaId) {
         '<div style="background:#eef4fb;border:2px dashed #17b3c4;border-radius:12px;padding:16px;text-align:center;margin:16px 0;">' +
           '<div style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#627d98;">ID de reserva</div>' +
           '<div style="font-size:26px;font-weight:bold;color:#1a4b8c;letter-spacing:1px;">' + reservaId + '</div>' +
-          '<div style="font-size:12px;color:#627d98;">Guarda este ID: lo necesitas para cancelar tu cita.</div>' +
+          '<div style="font-size:12px;color:#627d98;">Guarda este ID: lo necesitas para reagendar o cancelar tu cita.</div>' +
         '</div>' +
         '<h3 style="color:#1a4b8c;">Detalles de la agenda</h3>' +
         '<ul style="line-height:1.7;">' +
@@ -317,7 +478,7 @@ function sendEmailConfirmation(data, reservaId) {
           '<li><b>Duracion:</b> ' + escapeHtml(String(data.duracion || '')) + '</li>' +
           '<li><b>Precio estimado:</b> $' + escapeHtml(String(data.precio || '')) + '</li>' +
         '</ul>' +
-        '<p style="font-size:13px;color:#627d98;">Para cancelar tu cita, entra a nuestra web, toca "Cancelar una cita" e ingresa el ID <b>' + reservaId + '</b>.</p>' +
+        '<p style="font-size:13px;color:#627d98;">Para gestionar tu cita, entra a nuestra web, toca "Reagendar cita" o "Cancelar una cita" e ingresa el ID <b>' + reservaId + '</b>.</p>' +
         '<p>- ' + NEGOCIO + '</p>' +
       '</div>';
 

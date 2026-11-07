@@ -771,18 +771,13 @@ function saveExtraAndNext() {
 // Variable para indicar si estamos cargando horarios
 let isLoadingSlots = false;
 
-function renderDateTimeStep(container) {
-  // Asegurarse de que estamos en el paso correcto
-  if (currentStep !== 6) {
-
-    return;
-  }
+function renderCalendar(monthDate, selectedDate, monthHandler, dateHandler) {
   const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
   const dayNames = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'];
 
-  const year = currentMonth.getFullYear();
-  const month = currentMonth.getMonth();
+  const year = monthDate.getFullYear();
+  const month = monthDate.getMonth();
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
   const startDay = firstDay.getDay();
@@ -803,15 +798,12 @@ function renderDateTimeStep(container) {
     const isPast = date < today;
     const isUnavailable = isUnavailableDate(date);
     const isDisabled = isPast || isUnavailable;
-    const isSelected = bookingData.date &&
-      bookingData.date.getDate() === day &&
-      bookingData.date.getMonth() === month &&
-      bookingData.date.getFullYear() === year;
+    const isSelected = selectedDate && isSameCalendarDate(selectedDate, date);
 
     daysHtml += `
       <button class="calendar-day ${isSelected ? 'selected' : ''} ${isUnavailable ? 'sunday-disabled' : ''}" 
               ${isDisabled ? 'disabled' : ''} 
-              onclick="selectDate(${year}, ${month}, ${day})">
+              onclick="${dateHandler}(${year}, ${month}, ${day})">
         ${day}
       </button>
     `;
@@ -823,19 +815,16 @@ function renderDateTimeStep(container) {
     daysHtml += `<button class="calendar-day other-month" disabled>${i}</button>`;
   }
 
-  container.innerHTML = `
-    <h2 class="step-title">Fecha y hora</h2>
-    <p class="step-subtitle">¿Cuándo te gustaría venir?</p>
-    
+  return `
     <div class="calendar-container">
       <div class="calendar-header">
-        <button class="calendar-nav" onclick="changeMonth(-1)">
+        <button type="button" class="calendar-nav" aria-label="Mes anterior" onclick="${monthHandler}(-1)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M15 18l-6-6 6-6"/>
           </svg>
         </button>
         <span class="calendar-month">${monthNames[month]} ${year}</span>
-        <button class="calendar-nav" onclick="changeMonth(1)">
+        <button type="button" class="calendar-nav" aria-label="Mes siguiente" onclick="${monthHandler}(1)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M9 18l6-6-6-6"/>
           </svg>
@@ -850,7 +839,15 @@ function renderDateTimeStep(container) {
         ${daysHtml}
       </div>
     </div>
-    
+  `;
+}
+
+function renderDateTimeStep(container) {
+  if (currentStep !== 6) return;
+  container.innerHTML = `
+    <h2 class="step-title">Fecha y hora</h2>
+    <p class="step-subtitle">¿Cuándo te gustaría venir?</p>
+    ${renderCalendar(currentMonth, bookingData.date, 'changeMonth', 'selectDate')}
     ${bookingData.date ? (() => {
       const selectableSlots = getSelectableSlots();
       return `
@@ -1386,6 +1383,235 @@ function initHappyClientsCarousel() {
   viewport.addEventListener('scroll', updateHappyClientsCarouselControls, { passive: true });
   window.addEventListener('resize', updateHappyClientsCarouselControls);
   updateHappyClientsCarouselControls();
+}
+
+// ==================== REAGENDAR CITA ====================
+let rescheduleState = null;
+
+function escapeRescheduleText(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]
+  );
+}
+
+function rescheduleDateLabel(fecha) {
+  const [year, month, day] = fecha.split('-').map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString('es-UY', {
+    day: 'numeric', month: 'long', year: 'numeric'
+  });
+}
+
+function openRescheduleScreen() {
+  rescheduleState = {
+    id: '', reservation: null, date: null, time: null, month: new Date(),
+    slots: [], error: '', loading: false, saving: false, result: null, request: 0
+  };
+  showScreen('reschedule-screen');
+  renderReschedule();
+  document.getElementById('reschedule-id').focus();
+}
+
+function closeRescheduleScreen() {
+  if (rescheduleState?.saving) return;
+  rescheduleState = null;
+  showScreen('home-screen');
+}
+
+function getRescheduleSlots() {
+  const state = rescheduleState;
+  if (!state?.date || !state.reservation) return [];
+  const daySlots = getTimeSlotsByDate(state.date);
+  const available = filterPastTimeSlotsForDate(state.slots.filter(time => daySlots.includes(time)), state.date);
+  if (!state.reservation.deslanado) return available;
+  return available.filter(time => available.includes(daySlots[daySlots.indexOf(time) + 1]));
+}
+
+function renderReschedule() {
+  const state = rescheduleState;
+  if (!state) return;
+  const content = document.getElementById('reschedule-content');
+  const escaped = escapeRescheduleText;
+  document.getElementById('reschedule-back').disabled = state.saving;
+  const error = state.error ? `<p class="reschedule-error" role="alert">${escaped(state.error)}</p>` : '';
+  if (state.result) {
+    content.innerHTML = `
+      <div class="reschedule-success" role="status">
+        <h3>Cita reagendada</h3>
+        <p>${escaped(rescheduleDateLabel(state.result.fecha))} a las <strong>${escaped(state.result.hora)}</strong></p>
+        <p>ID de reserva: <strong>${escaped(state.id)}</strong></p>
+        <p>${state.result.email?.success
+          ? 'Te enviamos la confirmación al correo de tu reserva.'
+          : 'El cambio quedó guardado. No se pudo enviar el correo de confirmación.'}</p>
+      </div>
+      <button type="button" class="continue-btn" onclick="closeRescheduleScreen()">Volver al inicio</button>`;
+    return;
+  }
+  if (!state.reservation) {
+    content.innerHTML = `
+      <p class="step-subtitle">Ingresá el ID que recibiste en el correo de confirmación.</p>
+      <form onsubmit="lookupReschedule(event)">
+        <div class="form-group">
+          <label class="form-label" for="reschedule-id">ID de reserva</label>
+          <input id="reschedule-id" class="form-input" type="text" placeholder="TR-..." autocomplete="off"
+            maxlength="80" value="${escaped(state.id)}" required ${state.loading ? 'disabled' : ''}>
+        </div>
+        ${error}
+        <button type="submit" class="continue-btn" ${state.loading ? 'disabled' : ''}>
+          ${state.loading ? 'Buscando cita...' : 'Buscar cita'}
+        </button>
+      </form>`;
+    return;
+  }
+  const reservation = state.reservation;
+  const slots = getRescheduleSlots();
+  const selectedFecha = state.date ? `${state.date.getFullYear()}-${getDateKey(state.date)}` : '';
+  const unchanged = selectedFecha === reservation.fecha && state.time === reservation.hora;
+  const canConfirm = state.time && slots.includes(state.time) && !unchanged && !state.loading && !state.saving;
+  content.innerHTML = `
+    <dl class="reschedule-summary">
+      <div><dt>Cita actual</dt><dd>${escaped(rescheduleDateLabel(reservation.fecha))} · ${escaped(reservation.hora)}</dd></div>
+      <div><dt>Mascota</dt><dd>${escaped(reservation.mascota || 'Sin nombre')}</dd></div>
+      <div><dt>Servicio</dt><dd>${escaped(reservation.servicio)}</dd></div>
+      <div><dt>ID</dt><dd>${escaped(state.id)}</dd></div>
+    </dl>
+    <fieldset class="reschedule-picker" ${state.saving ? 'disabled' : ''}>
+      <legend>Nueva fecha y hora</legend>
+      ${renderCalendar(state.month, state.date, 'changeRescheduleMonth', 'selectRescheduleDate')}
+      ${state.date ? `
+        <h3 class="reschedule-slots-title">Horarios disponibles</h3>
+        ${reservation.deslanado ? '<p class="reschedule-hint">El deslanado también ocupa el turno siguiente.</p>' : ''}
+        <div class="time-slots">
+          ${state.loading ? '<p class="reschedule-slot-status" role="status">Cargando horarios...</p>'
+          : slots.length ? slots.map(time => `
+            <button type="button" class="time-slot ${state.time === time ? 'selected' : ''}"
+              aria-pressed="${state.time === time}" onclick="selectRescheduleTime('${time}')">${time}</button>`).join('')
+          : '<p class="reschedule-slot-status" role="status">No hay turnos disponibles para esta fecha.</p>'}
+        </div>` : ''}
+    </fieldset>
+    ${error}
+    ${canConfirm ? `<p class="reschedule-new-time">Nuevo turno: <strong>${escaped(rescheduleDateLabel(selectedFecha))} · ${state.time}</strong></p>` : ''}
+    <button type="button" id="reschedule-confirm" class="continue-btn" onclick="confirmReschedule()" ${canConfirm ? '' : 'disabled'}>
+      ${state.saving ? 'Guardando cambio...' : 'Confirmar cambio'}
+    </button>
+    <button type="button" class="reschedule-another" onclick="openRescheduleScreen()" ${state.saving ? 'disabled' : ''}>Buscar otra cita</button>`;
+}
+
+async function lookupReschedule(event) {
+  event.preventDefault();
+  const state = rescheduleState;
+  if (!state || state.loading) return;
+  state.id = document.getElementById('reschedule-id').value.trim().toUpperCase();
+  if (!/^TR-[A-Z0-9]+-[A-Z0-9]+$/.test(state.id)) {
+    state.error = 'Ingresá un ID de reserva válido.';
+    renderReschedule();
+    return;
+  }
+  state.loading = true;
+  state.error = '';
+  renderReschedule();
+  try {
+    const response = await fetch(`${SCRIPT_URL}?action=consultarReagenda&id=${encodeURIComponent(state.id)}`, { cache: 'no-store' });
+    const data = await response.json();
+    if (rescheduleState !== state) return;
+    if (!data.success || data.reserva?.id !== state.id) throw new Error(data.error || 'No pudimos encontrar la cita.');
+    state.reservation = data.reserva;
+  } catch (error) {
+    if (rescheduleState === state) state.error = error.message || 'No pudimos buscar tu cita. Intentá nuevamente.';
+  } finally {
+    if (rescheduleState === state) {
+      state.loading = false;
+      renderReschedule();
+    }
+  }
+}
+
+function changeRescheduleMonth(delta) {
+  const state = rescheduleState;
+  if (!state || state.saving) return;
+  state.month = new Date(state.month.getFullYear(), state.month.getMonth() + delta, 1);
+  renderReschedule();
+}
+
+async function selectRescheduleDate(year, month, day) {
+  const state = rescheduleState;
+  if (!state?.reservation || state.saving) return;
+  const date = new Date(year, month, day);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (date < today || isUnavailableDate(date)) return;
+  state.date = date;
+  state.time = null;
+  state.slots = [];
+  state.error = '';
+  state.loading = true;
+  const request = ++state.request;
+  renderReschedule();
+  try {
+    const fecha = `${year}-${getDateKey(date)}`;
+    const response = await fetch(`${SCRIPT_URL}?action=consultarReagenda&id=${encodeURIComponent(state.id)}&fecha=${fecha}`, { cache: 'no-store' });
+    const data = await response.json();
+    if (rescheduleState !== state || state.request !== request) return;
+    if (!data.success || data.reserva?.id !== state.id || data.fecha !== fecha || !Array.isArray(data.horarios)) {
+      throw new Error(data.error || 'No pudimos consultar los horarios. Elegí la fecha nuevamente.');
+    }
+    state.reservation = data.reserva;
+    state.slots = data.horarios;
+  } catch (error) {
+    if (rescheduleState === state && state.request === request) {
+      state.error = error.message || 'No pudimos cargar los horarios. Elegí la fecha nuevamente.';
+    }
+  } finally {
+    if (rescheduleState === state && state.request === request) {
+      state.loading = false;
+      renderReschedule();
+    }
+  }
+}
+
+function selectRescheduleTime(time) {
+  const state = rescheduleState;
+  if (!state || state.loading || state.saving || !getRescheduleSlots().includes(time)) return;
+  state.time = time;
+  state.error = '';
+  renderReschedule();
+}
+
+async function confirmReschedule() {
+  const state = rescheduleState;
+  if (!state?.date || state.saving || state.loading || !getRescheduleSlots().includes(state.time)) return;
+  const fecha = `${state.date.getFullYear()}-${getDateKey(state.date)}`;
+  if (fecha === state.reservation.fecha && state.time === state.reservation.hora) return;
+  state.saving = true;
+  state.error = '';
+  renderReschedule();
+  try {
+    const response = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'reagendar', id: state.id, fecha: fecha, hora: state.time,
+        fechaActual: state.reservation.fecha, horaActual: state.reservation.hora
+      })
+    });
+    const data = await response.json();
+    if (!data.success) {
+      state.error = data.error || 'No pudimos reagendar tu cita.';
+      if (data.code === 'RESERVA_ACTUALIZADA') {
+        state.reservation = null;
+      } else {
+        state.time = null;
+        state.slots = [];
+      }
+    } else {
+      state.result = data;
+    }
+  } catch (error) {
+    // The write might have succeeded: force a fresh lookup before any retry.
+    state.reservation = null;
+    state.error = 'No pudimos confirmar el resultado del cambio. Buscá el ID nuevamente para ver tu turno actual.';
+  } finally {
+    state.saving = false;
+    renderReschedule();
+  }
 }
 
 // ==================== CANCELAR CITA ====================
