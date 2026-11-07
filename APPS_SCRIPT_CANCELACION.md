@@ -29,6 +29,10 @@ La fuente de verdad para pegar en Google Apps Script es:
 - El evento `onEdit` del proyecto vinculado ordena tambien cuando se editen
   manualmente las columnas Fecha u Hora. No requiere instalar disparadores.
 - `ordenarReservasPorFecha` permite ordenar las filas ya cargadas desde el editor.
+- Calcula en T el 10% del precio de M sin IVA del 22%, redondeado al peso mas cercano.
+- Las reservas nuevas incluyen la formula de comision. Si se edita Precio a mano,
+  `onEdit` repone la formula de esa fila; no se precargan filas vacias.
+- `actualizarComisionesReservas` aplica la formula a las reservas existentes.
 - Responde `EVENT_RECEIVED` para POSTs de Meta que no sean reservas.
 
 ## Reagendar por ID

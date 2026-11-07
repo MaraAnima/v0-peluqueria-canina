@@ -244,7 +244,9 @@ function saveReservation(data) {
       data.deslanado ? 'SI' : 'NO',
       data.deslanado ? (data.horaBloqueada || '') : '',
       data.email || '',
-      'Confirmada'
+      'Confirmada',
+      '',
+      reservationCommissionFormula()
     ]);
 
     trySortReservations(sheet);
@@ -517,6 +519,46 @@ function sendEmailCancelacion(reserva, reservaId) {
   }
 }
 
+// ==================== COMISIONES DE RESERVAS ====================
+
+function reservationCommissionFormula() {
+  // ROW follows the sorted reservation; separators match the sheet's es_ES locale.
+  return '=IF(INDEX($M:$M;ROW())="";"";IFERROR(ROUND(INDEX($M:$M;ROW())/(1+22%)*10%;0);""))';
+}
+
+function updateReservationCommissions(sheet, firstRow = 2, lastRow = sheet.getLastRow()) {
+  firstRow = Math.max(2, firstRow);
+  if (lastRow < firstRow) return;
+  const formulas = Array.from({ length: lastRow - firstRow + 1 }, () => [reservationCommissionFormula()]);
+  sheet.getRange(firstRow, 20, formulas.length, 1).setFormulas(formulas);
+}
+
+function actualizarComisionesReservas() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    updateReservationCommissions(getSheet());
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function updateReservationCommissionsOnEdit(e) {
+  if (!e || !e.range || !e.source || e.source.getId() !== SPREADSHEET_ID) return;
+  const sheet = e.range.getSheet();
+  if (sheet.getName() !== SHEET_NAME || e.range.getLastRow() < 2 ||
+      e.range.getColumn() > 13 || e.range.getLastColumn() < 13) return;
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(10000)) return;
+  try {
+    updateReservationCommissions(sheet, e.range.getRow(), e.range.getLastRow());
+  } catch (error) {
+    Logger.log('No se pudo actualizar la comision: ' + error.toString());
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 // ==================== ORDEN AUTOMATICO DE RESERVAS ====================
 
 function reservationDateSortKey(value) {
@@ -616,6 +658,7 @@ function sortReservationsOnEdit(e) {
 }
 
 function onEdit(e) {
+  updateReservationCommissionsOnEdit(e);
   sortReservationsOnEdit(e);
 }
 
