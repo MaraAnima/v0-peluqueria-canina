@@ -7,22 +7,13 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Reserva tu cita - Peluquería Canina',
-  description: 'Sistema de reservas para peluquería canina',
-  generator: 'v0.app',
+  title: 'TR Corte | Peluquería canina en El Pinar',
+  description: 'Baño, corte y deslanado en El Pinar. Conocé nuestros servicios y precios, y reservá tu turno online en TR Corte.',
   icons: {
     icon: [
       {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
+        url: '/images/Isotipo%20-8.png',
+        type: 'image/png',
       },
     ],
     apple: '/apple-icon.png',

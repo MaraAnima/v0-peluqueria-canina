@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://v0-peluqueria-canina.vercel.app/sitemap.xml
