@@ -25,6 +25,9 @@ function doGet(e) {
       return verifyMetaWebhook(params, queryString);
     }
 
+    const trInboxResponse = trInboxDoGet(e);
+    if (trInboxResponse) return trInboxResponse;
+
     if (params.action === 'cancelar') {
       return cancelarReserva(params.id);
     }
@@ -49,6 +52,9 @@ function doGet(e) {
 }
 
 function doPost(e) {
+  const trInboxResponse = trInboxDoPost(e);
+  if (trInboxResponse) return trInboxResponse;
+
   const lock = LockService.getScriptLock();
 
   try {
@@ -60,18 +66,13 @@ function doPost(e) {
     } catch (parseError) {
       return createJsonResponse({ error: 'Error al parsear datos' });
     }
-
-    if (isMetaWebhookPayload(data)) {
-      return ContentService
-        .createTextOutput('EVENT_RECEIVED')
-        .setMimeType(ContentService.MimeType.TEXT);
-    }
+    // Los webhooks de Meta ya fueron procesados por trInboxDoPost(e).
 
     if (data.action === 'reagendar') {
       return reagendarReserva(data);
     }
 
-    const camposRequeridos = ['nombre', 'telefono', 'email', 'fecha', 'hora'];
+    const camposRequeridos = ['nombre', 'telefono', 'fecha', 'hora', 'servicio', 'tamano', 'pelaje', 'nombreMascota'];
     for (const campo of camposRequeridos) {
       if (!data[campo]) {
         return createJsonResponse({ error: 'Campo requerido faltante: ' + campo });
@@ -113,11 +114,13 @@ function doPost(e) {
       return createJsonResponse({ error: resultado.error });
     }
 
-    const emailResult = sendEmailConfirmation(data, resultado.reservaId);
+    const emailResult = data.email ? sendEmailConfirmation(data, resultado.reservaId) : { success: false, skipped: true };
+    const whatsappResult = sendWhatsappReservationConfirmation(data, resultado.reservaId);
     return createJsonResponse({
       success: true,
       reservaId: resultado.reservaId,
-      email: emailResult
+      email: emailResult,
+      whatsapp: whatsappResult
     });
   } catch (error) {
     return createJsonResponse({ error: error.toString() });
@@ -174,6 +177,7 @@ function isMetaWebhookPayload(data) {
 // ==================== FUNCIONES DE DATOS ====================
 
 function getAvailableSlots(fecha, excludedReservationId) {
+  if (!isValidReservationDate(fecha) || isPastReservationTime(fecha, '23:59')) return [];
   const sheet = getSheet();
   const data = sheet.getDataRange().getValues();
   const horariosOcupados = [];
@@ -248,9 +252,15 @@ function saveReservation(data) {
       '',
       reservationCommissionFormula()
     ]);
+    const ultimaFila = sheet.getLastRow();
+
+if (String(sheet.getRange(ultimaFila, 2).getValue()).trim().toLowerCase() === 'cancelada') {
+  sheet
+    .getRange(ultimaFila, 1, 1, sheet.getLastColumn())
+    .setBackground('#f4cccc');
+}
 
     trySortReservations(sheet);
-
     return { success: true, reservaId: reservaId };
   } catch (error) {
     return { success: false, error: error.toString() };
@@ -292,13 +302,13 @@ function cancelarReserva(id) {
 
         return createJsonResponse({
           success: true,
-          mensaje: 'Tu cita fue cancelada correctamente. Te enviamos la confirmacion por email.'
+          mensaje: 'Tu cita fue cancelada correctamente.'
         });
       }
     }
 
     return createJsonResponse({
-      error: 'No encontramos una cita con ese ID. Revisa el email de confirmacion.'
+      error: 'No encontramos una cita con ese ID. Revisa el ID de reserva.'
     });
   } catch (error) {
     return createJsonResponse({ error: error.toString() });
@@ -842,4 +852,1967 @@ function debugVerFechas() {
     Logger.log('  - Estado: ' + row[COL_ESTADO]);
     Logger.log('  - Deslanado: ' + row[14] + ' | Hora bloqueada: ' + row[15]);
   }
+}
+
+// ==================== WHATSAPP INBOX / AUTOMATIZACION ====================
+// Pegar este archivo completo en Apps Script. Mantiene agenda web + webhook Meta + panel interno.
+/**
+ * TR Corte / Tu Racion - WhatsApp Inbox para Google Apps Script.
+ *
+ * Este archivo ya esta integrado con la agenda actual:
+ *
+ * 1. Pegar el archivo completo en Apps Script.
+ * 2. Ejecutar una vez setupTrInbox().
+ * 3. Configurar Script Properties:
+ *      WHATSAPP_ACCESS_TOKEN
+ *      WHATSAPP_PHONE_NUMBER_ID
+ *      WHATSAPP_VERIFY_TOKEN
+ *      WHATSAPP_GRAPH_VERSION
+ *      PANEL_API_KEY
+ *      WHATSAPP_RESERVATION_TEMPLATE_NAME
+ *      WHATSAPP_RESERVATION_TEMPLATE_LANGUAGE
+ */
+
+var TR_SHEETS = {
+  conversations: "Conversaciones",
+  messages: "Mensajes",
+  flows: "Flujos",
+  nodes: "FlowNodes",
+  edges: "FlowEdges",
+  logs: "WebhookLogs"
+};
+
+var TR_INBOX_VERSION = "2026-11-07-flow-availability-menu";
+
+var TR_HEADERS = {
+  Conversaciones: [
+    "ID",
+    "Telefono",
+    "Nombre Cliente",
+    "Estado",
+    "Etiquetas",
+    "Reserva ID",
+    "Ultimo Mensaje",
+    "Ultimo Mensaje At",
+    "Flow ID",
+    "Flow Node ID",
+    "Bot State",
+    "Bot Data JSON",
+    "Updated At"
+  ],
+  Mensajes: [
+    "ID",
+    "Conversation ID",
+    "WhatsApp Message ID",
+    "Direccion",
+    "Texto",
+    "Timestamp",
+    "Estado",
+    "Automatico",
+    "Usuario",
+    "Error"
+  ],
+  Flujos: ["ID", "Nombre", "Activo", "Disparadores", "Start Node ID", "Updated At"],
+  FlowNodes: ["ID", "Flow ID", "Tipo", "Titulo", "Texto", "Opciones JSON", "Pos X", "Pos Y"],
+  FlowEdges: ["ID", "Flow ID", "From Node ID", "To Node ID", "Condicion"],
+  WebhookLogs: ["Timestamp", "Tipo", "Detalle"]
+};
+
+function setupTrInbox() {
+  Object.keys(TR_HEADERS).forEach(function (sheetName) {
+    var sheet = trGetOrCreateSheet_(sheetName);
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow(TR_HEADERS[sheetName]);
+    } else {
+      trEnsureHeaders_(sheet, TR_HEADERS[sheetName]);
+    }
+  });
+  trCreateDefaultWelcomeFlow_();
+}
+
+function trInboxDoGet(e) {
+  e = e || { parameter: {} };
+  var params = e.parameter || {};
+
+  if (params["hub.mode"] === "subscribe") {
+    var verifyToken = trProp_("WHATSAPP_VERIFY_TOKEN");
+    if (params["hub.verify_token"] === verifyToken) {
+      return ContentService.createTextOutput(params["hub.challenge"] || "");
+    }
+    return ContentService.createTextOutput("Forbidden").setMimeType(ContentService.MimeType.TEXT);
+  }
+
+  if (!params.trInboxAction) return null;
+
+  var authError = trRequirePanelKey_(params.panelKey);
+  if (authError) return trJson_(authError, 401);
+
+  if (params.trInboxAction === "version") {
+    return trJson_({ version: TR_INBOX_VERSION });
+  }
+
+  if (params.trInboxAction === "listConversations") {
+    return trJson_({ conversations: trListConversations_() });
+  }
+
+  if (params.trInboxAction === "listMessages") {
+    return trJson_({ messages: trListMessages_(params.conversationId) });
+  }
+
+  if (params.trInboxAction === "listFlows") {
+    return trJson_({
+      flows: trSheetToObjects_(TR_SHEETS.flows),
+      nodes: trSheetToObjects_(TR_SHEETS.nodes),
+      edges: trSheetToObjects_(TR_SHEETS.edges)
+    });
+  }
+
+  if (params.trInboxAction === "listLogs") {
+    return trJson_({ logs: trListLogs_(params.limit) });
+  }
+
+  if (params.trInboxAction === "syncReservations") {
+    return trJson_({
+      synced: trSyncReservationConversations_(params)
+    });
+  }
+
+  return trJson_({ error: "Accion no soportada" }, 400);
+}
+
+function trInboxDoPost(e) {
+  var body = trParseBody_(e);
+  if (!body) return null;
+
+  if (body.object === "whatsapp_business_account" && body.entry) {
+    trProcessWhatsappWebhook_(body);
+    return trJson_({ ok: true });
+  }
+
+  if (!body.trInboxAction) return null;
+
+  var authError = trRequirePanelKey_(body.panelKey);
+  if (authError) return trJson_(authError, 401);
+
+  if (body.trInboxAction === "saveFlow") {
+    trSaveFlow_(body.flow || {});
+    return trJson_({ ok: true });
+  }
+
+  if (body.trInboxAction === "updateConversation") {
+    var conversation = trUpdateInboxConversation_(body.conversationId, body.patch || {});
+    return trJson_({ ok: true, conversation: conversation });
+  }
+
+  return trJson_({ error: "Accion no soportada" }, 400);
+}
+
+function trProcessWhatsappWebhook_(payload) {
+  try {
+    var summary = trWebhookSummary_(payload);
+    trLog_("webhook_received", summary);
+
+    (payload.entry || []).forEach(function (entry) {
+      (entry.changes || []).forEach(function (change) {
+        var value = change.value || {};
+
+        (value.statuses || []).forEach(function (status) {
+          trUpdateMessageStatus_(status.id, status.status, status.errors || []);
+        });
+
+        (value.messages || []).forEach(function (message) {
+          var text = trExtractIncomingText_(message);
+          if (!text) return;
+          var phone = message.from;
+          var contact = trFindContact_(value.contacts || [], phone);
+          var timestamp = message.timestamp
+            ? new Date(Number(message.timestamp) * 1000)
+            : new Date();
+
+          var conversation = trUpsertConversation_(phone, contact, text, timestamp);
+          trAppendMessage_({
+            conversationId: conversation.ID,
+            whatsappMessageId: message.id,
+            direction: "inbound",
+            text: text,
+            timestamp: timestamp,
+            status: "received",
+            automatic: false,
+            user: "",
+            error: ""
+          });
+
+          trRunFlowForIncoming_(conversation, text);
+        });
+      });
+    });
+  } catch (err) {
+    trLog_("webhook_error", err && err.stack ? err.stack : String(err));
+  }
+}
+
+function trWebhookSummary_(payload) {
+  var messageCount = 0;
+  var statusCount = 0;
+  var phones = [];
+  (payload.entry || []).forEach(function (entry) {
+    (entry.changes || []).forEach(function (change) {
+      var value = change.value || {};
+      statusCount += (value.statuses || []).length;
+      (value.messages || []).forEach(function (message) {
+        messageCount++;
+        if (message.from) phones.push(trNormalizePhone_(message.from));
+      });
+    });
+  });
+  return "messages=" + messageCount + " statuses=" + statusCount + " phones=" + phones.join(",");
+}
+
+function trRunFlowForIncoming_(conversation, text) {
+  if (conversation.Estado === "Resuelto") {
+    var reset = { Estado: "Abierto", "Flow ID": "", "Flow Node ID": "", "Bot State": "", "Bot Data JSON": "" };
+    trMarkConversation_(conversation.ID, reset);
+    conversation = Object.assign({}, conversation, reset);
+  }
+
+  if (conversation["Bot State"]) {
+    trHandleBotState_(conversation, text);
+    return;
+  }
+
+  var flowId = conversation["Flow ID"];
+  var nodeId = conversation["Flow Node ID"];
+
+  if (!flowId) {
+    var flow = trFindMatchingFlow_(text) || trFindDefaultWelcomeFlow_();
+    if (!flow) {
+      trMarkConversation_(conversation.ID, { Estado: "Abierto" });
+      return;
+    }
+    flowId = flow.ID;
+    nodeId = flow["Start Node ID"];
+    trMarkConversation_(conversation.ID, {
+      "Flow ID": flowId,
+      "Flow Node ID": nodeId,
+      Estado: "Abierto"
+    });
+  } else {
+    var currentNode = trFindNode_(flowId, nodeId);
+    if (!currentNode) {
+      trRestartWelcomeFlow_(conversation);
+      return;
+    }
+    if (currentNode && currentNode.Tipo === "question") {
+      var nextFromAnswer = trFindEdgeForAnswer_(flowId, nodeId, text);
+      if (!nextFromAnswer) {
+        trSendAutomaticMessage_(conversation.ID, conversation.Telefono, "No reconozco esa opcion. Elegi un boton, escribi su nombre o su numero.");
+        trExecuteFlowNode_(conversation.ID, conversation.Telefono, flowId, nodeId, 0);
+        return;
+      }
+      nodeId = nextFromAnswer["To Node ID"];
+    } else {
+      var nextEdge = trFirstEdgeFrom_(flowId, nodeId);
+      if (nextEdge) nodeId = nextEdge["To Node ID"];
+    }
+  }
+
+  trExecuteFlowNode_(conversation.ID, conversation.Telefono, flowId, nodeId, 0);
+}
+
+function trRestartWelcomeFlow_(conversation) {
+  var defaultFlow = trFindDefaultWelcomeFlow_();
+  if (!defaultFlow) return;
+  trMarkConversation_(conversation.ID, {
+    Estado: "Abierto",
+    "Flow ID": defaultFlow.ID,
+    "Flow Node ID": defaultFlow["Start Node ID"],
+    "Bot State": "",
+    "Bot Data JSON": ""
+  });
+  trExecuteFlowNode_(conversation.ID, conversation.Telefono, defaultFlow.ID, defaultFlow["Start Node ID"], 0);
+}
+
+function trExecuteFlowNode_(conversationId, phone, flowId, nodeId, depth) {
+  if (!nodeId || depth > 8) return;
+
+  var node = trFindNode_(flowId, nodeId);
+  if (!node) return;
+
+  trMarkConversation_(conversationId, {
+    "Flow ID": flowId,
+    "Flow Node ID": nodeId
+  });
+
+  if (node.Tipo === "start") {
+    var nextStart = trFirstEdgeFrom_(flowId, nodeId);
+    if (nextStart) trExecuteFlowNode_(conversationId, phone, flowId, nextStart["To Node ID"], depth + 1);
+    return;
+  }
+
+  if (node.Tipo === "message") {
+    trSendAutomaticMessage_(conversationId, phone, node.Texto);
+    var nextMessage = trFirstEdgeFrom_(flowId, nodeId);
+    if (nextMessage) trExecuteFlowNode_(conversationId, phone, flowId, nextMessage["To Node ID"], depth + 1);
+    return;
+  }
+
+  if (node.Tipo === "question") {
+    var options = trParseJson_(node["Opciones JSON"], []);
+    var edges = trEdgesFrom_(flowId, nodeId);
+    if (options.length && options.length <= 3) {
+      var buttons = options.map(function (item, index) {
+        return {
+          id: edges[index] ? edges[index]["To Node ID"] : String(index + 1),
+          title: item
+        };
+      });
+      trSendAutomaticButtons_(conversationId, phone, node.Texto, buttons);
+      return;
+    }
+
+    var body = node.Texto;
+    if (options.length) {
+      body += "\n\n" + options.map(function (item, index) {
+        return index + 1 + ". " + item;
+      }).join("\n");
+    }
+    trSendAutomaticMessage_(conversationId, phone, body);
+    return;
+  }
+
+  if (node.Tipo === "handoff") {
+    trSendAutomaticMessage_(conversationId, phone, node.Texto);
+    trMarkConversation_(conversationId, {
+      Estado: "Resuelto",
+      "Flow Node ID": ""
+    });
+    return;
+  }
+
+  if (node.Tipo === "action") {
+    if (node.ID === "schedule") {
+      trAskReservationType_(conversationId, phone);
+      return;
+    }
+
+    if (node.ID === "cancel") {
+      trSetBotState_(conversationId, "esperando_cancelacion_id", {});
+      trSendAutomaticMessage_(conversationId, phone, "Pasame el ID de reserva que queres cancelar.");
+      return;
+    }
+
+    if (node.ID === "consultas") {
+      trSendAutomaticMessage_(conversationId, phone, trConsultasMessage_());
+      trClearBotState_(conversationId);
+      trMarkConversation_(conversationId, {
+        Estado: "Resuelto",
+        Etiquetas: "consulta"
+      });
+      return;
+    }
+
+    trSendAutomaticMessage_(conversationId, phone, node.Texto);
+    trMarkConversation_(conversationId, {
+      Estado: "Resuelto"
+    });
+  }
+}
+
+function trHandleBotState_(conversation, text) {
+  var state = conversation["Bot State"];
+  var data = trParseJson_(conversation["Bot Data JSON"], {});
+  var conversationId = conversation.ID;
+  var phone = conversation.Telefono;
+  var cleanText = String(text || "").trim();
+
+  if (state === "esperando_tipo_agenda") {
+    var reservationType = trResolveMappedChoice_(cleanText, {
+      agenda_nueva: "Nueva reserva",
+      agenda_repetir: "Repetir ultima reserva",
+      repetir_ultima: "Repetir ultima reserva"
+    });
+
+    if (reservationType === "Nueva reserva") {
+      trStartNewReservation_(conversationId, phone);
+      return;
+    }
+
+    if (reservationType === "Repetir ultima reserva") {
+      trStartRepeatedReservation_(conversationId, phone);
+      return;
+    }
+
+    trSendAutomaticMessage_(conversationId, phone, "Elegí una de estas opciones para seguir.");
+    trAskReservationType_(conversationId, phone);
+    return;
+  }
+
+  if (state === "esperando_nombre") {
+    data.nombre = cleanText;
+    trSetBotState_(conversationId, "esperando_mascota", data);
+    trSendAutomaticMessage_(conversationId, phone, "Gracias. Como se llama la mascota?");
+    return;
+  }
+
+  if (state === "esperando_mascota") {
+    data.nombreMascota = cleanText;
+    trSetBotState_(conversationId, "esperando_tamano", data);
+    trSendAutomaticButtons_(conversationId, phone, "Que tamaño tiene?", [
+      { id: "tamano_chico", title: "Chico" },
+      { id: "tamano_mediano", title: "Mediano" },
+      { id: "tamano_grande", title: "Grande" }
+    ]);
+    return;
+  }
+
+  if (state === "esperando_servicio") {
+    data.servicio = trResolveServiceChoice_(cleanText);
+    if (!data.servicio) {
+      trSendAutomaticMessage_(conversationId, phone, "No reconozco ese servicio. Elegi una opcion de la lista.");
+      trSendServiceQuestion_(conversationId, phone, data);
+      return;
+    }
+    var servicePriceInfo = trCalculateReservationPrice_(data.servicio, data.tamano, data.pelaje);
+    data.precio = servicePriceInfo ? servicePriceInfo.price : "";
+    data.precioTexto = servicePriceInfo ? servicePriceInfo.text : "";
+    trSetBotState_(conversationId, "esperando_fecha", data);
+    trSendAvailableDateList_(conversationId, phone, data);
+    return;
+  }
+
+  if (state === "esperando_tamano") {
+    data.tamano = trResolveMappedChoice_(cleanText, {
+      tamano_chico: "Chico",
+      tamano_mediano: "Mediano",
+      tamano_grande: "Grande"
+    }) || cleanText;
+    trSetBotState_(conversationId, "esperando_pelaje", data);
+    trSendAutomaticButtons_(conversationId, phone, "Que tipo de pelaje tiene?", [
+      { id: "pelaje_corto", title: "Corto" },
+      { id: "pelaje_largo", title: "Largo" }
+    ]);
+    return;
+  }
+
+  if (state === "esperando_pelaje") {
+    data.pelaje = trResolveMappedChoice_(cleanText, {
+      pelaje_corto: "Corto",
+      pelaje_largo: "Largo"
+    }) || cleanText;
+    trSetBotState_(conversationId, "esperando_servicio", data);
+    trSendServiceQuestion_(conversationId, phone, data);
+    return;
+  }
+
+  if (state === "esperando_fecha") {
+    var selectedDate = trResolveDateInput_(cleanText, data.dateOptions || []);
+    if (!selectedDate) {
+      trSendAutomaticMessage_(conversationId, phone, "No reconozco esa fecha. Elegi una opcion de la lista o escribila como dia/mes, por ejemplo 10/07.");
+      trSendAvailableDateList_(conversationId, phone, data);
+      return;
+    }
+
+    var slots = trAvailableReservationSlots_(data, selectedDate);
+    if (!slots.length) {
+      trSendAutomaticMessage_(conversationId, phone, "Para esa fecha no hay horarios disponibles. Elegi otra fecha.");
+      trSendAvailableDateList_(conversationId, phone, data);
+      return;
+    }
+
+    data.fecha = selectedDate;
+    data.slots = slots;
+    trSetBotState_(conversationId, "esperando_hora", data);
+    trSendAvailableHourList_(conversationId, phone, slots);
+    return;
+  }
+
+  if (state === "esperando_hora") {
+    var selectedHour = trResolveSlot_(cleanText, data.slots || []);
+    if (!selectedHour) {
+      trSendAutomaticMessage_(conversationId, phone, "No reconozco ese horario. Elegi uno de estos:\n\n" + (data.slots || []).map(function (slot, index) {
+        return index + 1 + ". " + slot;
+      }).join("\n"));
+      return;
+    }
+
+    data.hora = selectedHour;
+    trSaveReservationFromWhatsapp_(conversationId, phone, data);
+    return;
+  }
+
+  if (state === "esperando_email") {
+    data.email = cleanText;
+    trSaveReservationFromWhatsapp_(conversationId, phone, data);
+    return;
+  }
+
+  if (state === "esperando_cancelacion_id") {
+    var reservaId = trCleanReservationId_(cleanText);
+    var cancelResult = trCancelReservationForWhatsapp_(reservaId);
+    if (!cancelResult.ok) {
+      trSendAutomaticMessage_(conversationId, phone, cancelResult.message);
+      return;
+    }
+
+    trClearBotState_(conversationId);
+    trMarkConversation_(conversationId, {
+      Estado: "Resuelto",
+      Etiquetas: "cancelacion",
+      "Reserva ID": reservaId
+    });
+    trSendAutomaticMessage_(conversationId, phone, "Tu turno con ID " + reservaId + " fue cancelado correctamente.");
+    return;
+  }
+
+  trClearBotState_(conversationId);
+  trMarkConversation_(conversationId, { Estado: "Abierto" });
+}
+
+function trSaveReservationFromWhatsapp_(conversationId, phone, data) {
+  data.email = data.email || "";
+  data.telefono = trNormalizePhone_(phone);
+  data.notasMascota = data.notasMascota || "";
+  data.duracion = data.duracion || "";
+  var priceInfo = trCalculateReservationPrice_(data.servicio, data.tamano, data.pelaje);
+  data.precio = priceInfo ? priceInfo.price : (data.precio || "");
+  data.precioTexto = priceInfo ? priceInfo.text : (data.precioTexto || "");
+  data.extras = data.extras || "";
+  data.deslanado = trReservationNeedsDeslanado_(data);
+
+  var lock = LockService.getScriptLock();
+  var locked = false;
+  var result;
+  var available = [];
+  var unavailable = false;
+  try {
+    lock.waitLock(30000);
+    locked = true;
+    available = trAvailableReservationSlots_(data, data.fecha);
+    if (available.indexOf(data.hora) === -1) {
+      unavailable = true;
+    } else {
+      var daySlots = getTimeSlotsByDate(data.fecha);
+      data.horaBloqueada = data.deslanado ? daySlots[daySlots.indexOf(data.hora) + 1] : "";
+      result = saveReservation(data);
+    }
+  } catch (error) {
+    result = { success: false, error: "No pude verificar el turno. Volve a intentarlo." };
+    trLog_("whatsapp_reservation_error", String(error));
+  } finally {
+    if (locked) lock.releaseLock();
+  }
+
+  if (unavailable) {
+    delete data.hora;
+    delete data.horaBloqueada;
+    data.slots = available;
+    trSendAutomaticMessage_(conversationId, phone, "Ese horario ya no esta disponible. Vamos a elegir otro turno.");
+    if (available.length) {
+      trSetBotState_(conversationId, "esperando_hora", data);
+      trSendAvailableHourList_(conversationId, phone, available);
+    } else {
+      delete data.fecha;
+      trSendAvailableDateList_(conversationId, phone, data);
+    }
+    return;
+  }
+
+  if (!result || !result.success) {
+    trSendAutomaticMessage_(conversationId, phone, "No pude guardar la reserva. " + (result && result.error ? result.error : "Volvamos a intentarlo."));
+    trMarkConversation_(conversationId, {
+      Estado: "Abierto"
+    });
+    return;
+  }
+
+  trClearBotState_(conversationId);
+  trMarkConversation_(conversationId, {
+    Estado: "Resuelto",
+    "Reserva ID": result.reservaId,
+    Etiquetas: "agenda"
+  });
+  trSendWhatsappReservationConfirmation(data, result.reservaId, conversationId);
+}
+
+function trAskReservationType_(conversationId, phone) {
+  trSetBotState_(conversationId, "esperando_tipo_agenda", {});
+  trSendAutomaticButtons_(conversationId, phone, "Perfecto. Como queres agendar?", [
+    { id: "agenda_nueva", title: "Nueva reserva" },
+    { id: "agenda_repetir", title: "Repetir ultima" }
+  ]);
+}
+
+function trStartNewReservation_(conversationId, phone) {
+  trSetBotState_(conversationId, "esperando_nombre", {});
+  trSendAutomaticMessage_(conversationId, phone, "Perfecto. Para agendar necesito algunos datos. Cual es tu nombre?");
+}
+
+function trStartRepeatedReservation_(conversationId, phone) {
+  var lastReservation = trFindLastReservationByPhone_(phone);
+  if (!lastReservation) {
+    trSendAutomaticMessage_(conversationId, phone, "No encontre una reserva anterior con este numero. Empezamos una nueva.");
+    trStartNewReservation_(conversationId, phone);
+    return;
+  }
+
+  var priceInfo = trCalculateReservationPrice_(lastReservation.servicio, lastReservation.tamano, lastReservation.pelaje);
+  lastReservation.precio = priceInfo ? priceInfo.price : (lastReservation.precio || "");
+  lastReservation.precioTexto = priceInfo ? priceInfo.text : (lastReservation.precio ? "$" + lastReservation.precio : "");
+
+  trSendAutomaticMessage_(
+    conversationId,
+    phone,
+    "Perfecto, repetimos tu ultima reserva:\n\n" +
+      "Mascota: " + (lastReservation.nombreMascota || "-") + "\n" +
+      "Servicio: " + (lastReservation.servicio || "-") + "\n" +
+      "Tamaño: " + (lastReservation.tamano || "-") + "\n" +
+      "Pelaje: " + (lastReservation.pelaje || "-") +
+      (lastReservation.precioTexto ? "\nPrecio estimado: " + lastReservation.precioTexto : "")
+  );
+
+  trSetBotState_(conversationId, "esperando_fecha", lastReservation);
+  trSendAvailableDateList_(conversationId, phone, lastReservation);
+}
+
+function trFindLastReservationByPhone_(phone) {
+  var targetPhone = trNormalizePhone_(phone);
+  var rows = trReadReservationRows_();
+  for (var i = rows.length - 1; i >= 0; i--) {
+    var row = rows[i];
+    var rowPhone = trNormalizePhone_(row[5]);
+    var status = trNormalize_(row[17]);
+    if (rowPhone !== targetPhone || status === "cancelada") continue;
+
+    var reservation = {
+      nombre: row[4] || "",
+      telefono: targetPhone,
+      servicio: row[6] || "",
+      tamano: row[7] || "",
+      pelaje: row[8] || "",
+      nombreMascota: row[9] || "",
+      notasMascota: row[10] || "",
+      duracion: row[11] || "",
+      precio: row[12] || "",
+      extras: row[13] || "",
+      deslanado: row[14] === "SI"
+    };
+
+    if (reservation.nombre && reservation.servicio && reservation.tamano && reservation.pelaje && reservation.nombreMascota) {
+      return reservation;
+    }
+  }
+  return null;
+}
+
+function trReadReservationRows_() {
+  var sheet = null;
+  if (typeof getSheet === "function") {
+    sheet = getSheet();
+  } else if (typeof SHEET_NAME !== "undefined" && SHEET_NAME) {
+    sheet = trGetOrCreateSheet_(SHEET_NAME);
+  } else {
+    sheet = trGetOrCreateSheet_("Reservas");
+  }
+
+  var values = sheet.getDataRange().getValues();
+  return values.length > 1 ? values.slice(1) : [];
+}
+
+function trReadReservationObjects_() {
+  var sheet = null;
+  if (typeof getSheet === "function") {
+    sheet = getSheet();
+  } else if (typeof SHEET_NAME !== "undefined" && SHEET_NAME) {
+    sheet = trGetOrCreateSheet_(SHEET_NAME);
+  } else {
+    sheet = trGetOrCreateSheet_("Reservas");
+  }
+
+  var values = sheet.getDataRange().getValues();
+  if (values.length < 2) return [];
+  var headers = values[0].map(trHeaderKey_);
+  return values.slice(1).filter(function (row) {
+    return row.some(function (cell) { return cell !== ""; });
+  }).map(function (row) {
+    var object = {};
+    headers.forEach(function (header, index) {
+      object[header] = row[index];
+    });
+    return object;
+  });
+}
+
+function trReservationValue_(row, keys) {
+  for (var i = 0; i < keys.length; i++) {
+    var value = row[keys[i]];
+    if (value !== undefined && value !== null && value !== "") return value;
+  }
+  return "";
+}
+
+function trReservationDataFromRow_(row) {
+  var price = trReservationValue_(row, ["Precio"]);
+  return {
+    nombre: trReservationValue_(row, ["Nombre Cliente", "Cliente", "Nombre"]),
+    telefono: trNormalizePhone_(trReservationValue_(row, ["Telefono", "Teléfono", "Celular"])),
+    fecha: trFormatStorageDate_(trReservationValue_(row, ["Fecha"])),
+    hora: trFormatDisplayTime_(trReservationValue_(row, ["Hora"])),
+    servicio: trReservationValue_(row, ["Servicio"]),
+    tamano: trReservationValue_(row, ["Tamano", "Tamaño"]),
+    pelaje: trReservationValue_(row, ["Pelaje"]),
+    nombreMascota: trReservationValue_(row, ["Nombre Mascota", "Mascota"]),
+    notasMascota: trReservationValue_(row, ["Notas Mascota"]),
+    duracion: trReservationValue_(row, ["Duracion", "Duración"]),
+    precio: price,
+    precioTexto: price ? "$" + price : "",
+    extras: trReservationValue_(row, ["Extras"]),
+    deslanado: trNormalize_(trReservationValue_(row, ["Deslanado"])) === "si"
+  };
+}
+
+function trReservationMessageExists_(reservaId, conversationId) {
+  return trSheetToObjects_(TR_SHEETS.messages).some(function (row) {
+    return row["Conversation ID"] === conversationId && String(row.Texto || "").indexOf(reservaId) >= 0;
+  });
+}
+
+function trSendServiceQuestion_(conversationId, phone, data) {
+  data = data || {};
+  trSendAutomaticList_(conversationId, phone, {
+    body: "Que servicio queres agendar?",
+    button: "Ver servicios",
+    sections: [{
+      title: "Servicios TRCorte",
+      rows: trServiceOptions_().map(function (service) {
+        var priceInfo = trCalculateReservationPrice_(service.title, data.tamano, data.pelaje);
+        return {
+          id: service.id,
+          title: service.title,
+          description: priceInfo ? service.description + " - " + priceInfo.text : service.description
+        };
+      })
+    }]
+  });
+}
+
+function trServiceOptions_() {
+  return [
+    {
+      id: "servicio_bano",
+      title: "Baño",
+      description: "Baño completo con secado"
+    },
+    {
+      id: "servicio_bano_corte",
+      title: "Baño y corte",
+      description: "Baño completo + corte de pelo"
+    },
+    {
+      id: "servicio_bano_esquila",
+      title: "Baño y esquila",
+      description: "Baño completo + esquila"
+    },
+    {
+      id: "servicio_bano_deslanado",
+      title: "Baño + deslanado",
+      description: "Baño completo + deslanado"
+    },
+    {
+      id: "servicio_bano_deslanado_corte",
+      title: "Baño + desl. y corte",
+      description: "Baño completo + deslanado + corte"
+    }
+  ];
+}
+
+function trResolveServiceChoice_(text) {
+  var normalized = trNormalize_(text).replace(/\s+/g, "_");
+  var services = trServiceOptions_();
+  for (var i = 0; i < services.length; i++) {
+    var service = services[i];
+    if (service.id === text || service.id === normalized) return service.title;
+    if (trNormalize_(service.title) === trNormalize_(text)) return service.title;
+  }
+  return "";
+}
+
+function trCalculateReservationPrice_(servicio, tamano, pelaje) {
+  var serviceKey = trNormalize_(servicio);
+  var sizeKey = trNormalize_(tamano);
+  var coatKey = trNormalize_(pelaje);
+  var prices = trReservationPriceTable_();
+  var servicePrices = prices[serviceKey];
+  if (!servicePrices) return null;
+  var sizePrices = servicePrices[sizeKey];
+  if (!sizePrices) return null;
+  var price = sizePrices[coatKey];
+  if (!price) return null;
+  return {
+    price: price,
+    text: "$" + price
+  };
+}
+
+function trReservationPriceTable_() {
+  return {
+    "bano": {
+      chico: { corto: 720, largo: 795 },
+      mediano: { corto: 910, largo: 960 },
+      grande: { corto: 1280, largo: 1320 }
+    },
+    "bano y corte": {
+      chico: { corto: 875, largo: 975 },
+      mediano: { corto: 1050, largo: 1210 },
+      grande: { corto: 1515, largo: 1665 }
+    },
+    "bano y esquila": {
+      chico: { corto: 770, largo: 860 },
+      mediano: { corto: 925, largo: 1065 },
+      grande: { corto: 1335, largo: 1465 }
+    },
+    "bano + deslanado": {
+      chico: { corto: 1920, largo: 1995 },
+      mediano: { corto: 2110, largo: 2160 },
+      grande: { corto: 2480, largo: 2520 }
+    },
+    "bano + desl. y corte": {
+      chico: { corto: 2075, largo: 2175 },
+      mediano: { corto: 2250, largo: 2410 },
+      grande: { corto: 2715, largo: 2865 }
+    }
+  };
+}
+
+function trReservationNeedsDeslanado_(data) {
+  return data.deslanado === true || trNormalize_(data.servicio).indexOf("desl") !== -1;
+}
+
+function trAvailableReservationSlots_(data, fecha) {
+  var available = getAvailableSlots(fecha);
+  if (!trReservationNeedsDeslanado_(data)) return available;
+  var daySlots = getTimeSlotsByDate(fecha);
+  return available.filter(function (slot) {
+    var next = daySlots[daySlots.indexOf(slot) + 1];
+    return !!next && available.indexOf(next) !== -1;
+  });
+}
+
+function trSendAvailableDateList_(conversationId, phone, data) {
+  var options = trBuildAvailableDateOptions_(21, 8, data);
+  data.dateOptions = options;
+  trSetBotState_(conversationId, "esperando_fecha", data);
+  if (!options.length) {
+    trSendAutomaticMessage_(conversationId, phone, "No encontre fechas disponibles en las proximas semanas. Escribinos de nuevo mas tarde y volvemos a revisar.");
+    trMarkConversation_(conversationId, { Estado: "Abierto" });
+    return;
+  }
+  trSendAutomaticList_(conversationId, phone, {
+    body: "Que fecha preferis?",
+    button: "Ver fechas",
+    sections: [{
+      title: "Fechas disponibles",
+      rows: options.map(function (option) {
+        return {
+          id: option.value,
+          title: option.title,
+          description: option.description
+        };
+      })
+    }]
+  });
+}
+
+function trSendAvailableHourList_(conversationId, phone, slots) {
+  trSendAutomaticList_(conversationId, phone, {
+    body: "Tenemos estos horarios disponibles:",
+    button: "Ver horarios",
+    sections: [{
+      title: "Horarios",
+      rows: slots.map(function (slot) {
+        return { id: slot, title: slot, description: "" };
+      })
+    }]
+  });
+}
+
+function trBuildAvailableDateOptions_(daysToCheck, maxResults, data) {
+  var options = [];
+  var timezone = Session.getScriptTimeZone();
+  var date = new Date();
+  for (var i = 0; i < daysToCheck && options.length < maxResults; i++) {
+    var candidate = new Date(date.getFullYear(), date.getMonth(), date.getDate() + i);
+    var value = Utilities.formatDate(candidate, timezone, "yyyy-MM-dd");
+    var slots = trAvailableReservationSlots_(data || {}, value);
+    if (slots && slots.length) {
+      options.push({
+        value: value,
+        title: Utilities.formatDate(candidate, timezone, "dd/MM"),
+        description: trWeekdayLabel_(candidate) + " - " + slots.length + " horarios"
+      });
+    }
+  }
+  return options;
+}
+
+function trResolveMappedChoice_(text, choices) {
+  var normalized = trNormalize_(text).replace(/\s+/g, "_");
+  if (choices[normalized]) return choices[normalized];
+  var keys = Object.keys(choices);
+  for (var i = 0; i < keys.length; i++) {
+    if (trNormalize_(choices[keys[i]]) === trNormalize_(text)) return choices[keys[i]];
+  }
+  return "";
+}
+
+function trResolveDateInput_(text, options) {
+  var clean = String(text || "").trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) return clean;
+  var optionMatch = (options || []).find(function (option) {
+    return option.value === clean || trNormalize_(option.title) === trNormalize_(clean);
+  });
+  if (optionMatch) return optionMatch.value;
+  var ddmm = clean.match(/^(\d{1,2})[\/\-](\d{1,2})$/);
+  if (ddmm) {
+    var day = ("0" + ddmm[1]).slice(-2);
+    var month = ("0" + ddmm[2]).slice(-2);
+    return "2026-" + month + "-" + day;
+  }
+  var isoDateTime = clean.match(/^(\d{4}-\d{2}-\d{2})T/);
+  if (isoDateTime) return isoDateTime[1];
+  return "";
+}
+
+function trWeekdayLabel_(date) {
+  return ["Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab"][date.getDay()];
+}
+
+function trFormatDisplayDate_(value) {
+  if (!value) return "";
+  if (Object.prototype.toString.call(value) === "[object Date]" && !isNaN(value.getTime())) {
+    return Utilities.formatDate(value, Session.getScriptTimeZone(), "dd/MM/yyyy");
+  }
+  var text = String(value);
+  var match = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) return match[3] + "/" + match[2] + "/" + match[1];
+  return text;
+}
+
+function trFormatStorageDate_(value) {
+  if (!value) return "";
+  if (Object.prototype.toString.call(value) === "[object Date]" && !isNaN(value.getTime())) {
+    return Utilities.formatDate(value, Session.getScriptTimeZone(), "yyyy-MM-dd");
+  }
+  var text = String(value).trim();
+  var match = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) return match[1] + "-" + match[2] + "-" + match[3];
+  var ddmm = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (ddmm) return ddmm[3] + "-" + ("0" + ddmm[2]).slice(-2) + "-" + ("0" + ddmm[1]).slice(-2);
+  return text;
+}
+
+function trFormatDisplayTime_(value) {
+  if (!value) return "";
+  if (Object.prototype.toString.call(value) === "[object Date]" && !isNaN(value.getTime())) {
+    return Utilities.formatDate(value, Session.getScriptTimeZone(), "HH:mm");
+  }
+  var text = String(value).trim();
+  var dateText = text.match(/\b(\d{1,2}):(\d{2})(?::\d{2})?\b/);
+  if (dateText) return ("0" + dateText[1]).slice(-2) + ":" + dateText[2];
+  var simple = text.match(/^(\d{1,2})(?::(\d{2}))?$/);
+  if (simple) return ("0" + simple[1]).slice(-2) + ":" + (simple[2] || "00");
+  return text;
+}
+
+function trSetBotState_(conversationId, state, data) {
+  trMarkConversation_(conversationId, {
+    "Bot State": state,
+    "Bot Data JSON": JSON.stringify(data || {}),
+    "Updated At": new Date()
+  });
+}
+
+function trClearBotState_(conversationId) {
+  trMarkConversation_(conversationId, {
+    "Bot State": "",
+    "Bot Data JSON": "",
+    "Flow ID": "",
+    "Flow Node ID": "",
+    "Updated At": new Date()
+  });
+}
+
+function trResolveSlot_(text, slots) {
+  var normalized = String(text || "").trim();
+  if (/^\d+$/.test(normalized)) {
+    var index = Number(normalized) - 1;
+    return slots[index] || "";
+  }
+  var comparable = formatTimeForComparison(normalized);
+  return slots.indexOf(comparable) >= 0 ? comparable : "";
+}
+
+function trCleanReservationId_(value) {
+  return String(value || "")
+    .trim()
+    .replace(/[*_`~]/g, "")
+    .replace(/\s+/g, "")
+    .toUpperCase();
+}
+
+function trCleanCancellationMessage_(message) {
+  var text = String(message || "");
+  text = text.replace(/No encontramos una cita con ese ID\.?\s*Revisa el email de confirmacion\.?/i, "No encontramos una reserva con ese ID. Revisa el ID y volve a intentarlo.");
+  text = text.replace(/No encontramos una cita con ese ID\.?\s*Revisa el email de confirmaci.n\.?/i, "No encontramos una reserva con ese ID. Revisa el ID y volve a intentarlo.");
+  text = text.replace(/Revisa el email de confirmacion\.?/i, "Revisa el ID de reserva.");
+  text = text.replace(/Revisa el email de confirmaci.n\.?/i, "Revisa el ID de reserva.");
+  return text;
+}
+
+function trCancelReservationForWhatsapp_(id) {
+  try {
+    var response = cancelarReserva(id);
+    var content = response && response.getContent ? response.getContent() : "";
+    var parsed = trParseJson_(content, {});
+    if (parsed.error) return { ok: false, message: trCleanCancellationMessage_(parsed.error) };
+    return { ok: true, message: parsed.mensaje || "Cancelada" };
+  } catch (err) {
+    return { ok: false, message: trCleanCancellationMessage_("No pude cancelar esa reserva. " + String(err)) };
+  }
+}
+
+function trSendWhatsappReservationConfirmation(data, reservaId, conversationId) {
+  var phone = trNormalizePhone_(data.telefono);
+  var priceText = data.precioTexto || (data.precio ? "$" + data.precio : "");
+  var text = trReservationConfirmationText_(data, reservaId, priceText);
+
+  if (conversationId) {
+    return trSendAutomaticMessage_(conversationId, phone, text);
+  }
+
+  var webConversation = trEnsureWebReservationConversation_(data, reservaId, text);
+  var templateName = trReservationTemplateName_();
+  var shouldUseTemplate = !!templateName;
+  var result = templateName
+    ? trSendWhatsappReservationTemplate_(phone, data, reservaId, priceText)
+    : trSendWhatsappText_(phone, text);
+  if (!result.ok) {
+    var templateResult = trSendWhatsappReservationTemplate_(phone, data, reservaId, priceText);
+    if (templateResult.ok) {
+      result = templateResult;
+    } else if (templateResult.error) {
+      result.error = result.error + " | Template: " + templateResult.error;
+    }
+  }
+  if (!result.ok) {
+    trLog_("whatsapp_confirmation_failed", "phone=" + phone + " reserva=" + reservaId + " error=" + (result.error || ""));
+  }
+  trAppendMessage_({
+    conversationId: webConversation.ID,
+    whatsappMessageId: result.messageId || "",
+    direction: "outbound",
+    text: shouldUseTemplate || result.sentAsTemplate ? "[Plantilla WhatsApp]\n" + text : text,
+    timestamp: new Date(),
+    status: result.ok ? "sent" : "failed",
+    automatic: true,
+    user: "",
+    error: result.error || ""
+  });
+  trMarkConversation_(webConversation.ID, {
+    "Ultimo Mensaje": text,
+    "Ultimo Mensaje At": new Date(),
+    "Updated At": new Date()
+  });
+  return result;
+}
+
+function trReservationConfirmationText_(data, reservaId, priceText) {
+  return "¡Hola, *" + (data.nombre || "cliente") + "*! 🐾\n\n" +
+    "Tu reserva en *TRCorte* para *" + (data.servicio || "tu servicio") + "* fue confirmada con éxito.\n\n" +
+    "🐶 ID de reserva: *" + reservaId + "*\n" +
+    (priceText ? "💰 Precio estimado: *" + priceText + "*\n" : "") +
+    "Te esperamos junto a *" + (data.nombreMascota || "tu mascota") + "* el *" +
+    trFormatDisplayDate_(data.fecha) + "* a las *" + trFormatDisplayTime_(data.hora) + "*.\n\n" +
+    "¡Gracias por elegirnos!✨";
+}
+
+function sendWhatsappReservationConfirmation(data, reservaId) {
+  return trSendWhatsappReservationConfirmation(data, reservaId);
+}
+
+function trSyncReservationConversations_(params) {
+  params = params || {};
+  var targetPhone = trNormalizePhone_(params.phone || params.telefono || "");
+  var targetReservationId = String(params.reservaId || params.reservationId || params.id || "").trim();
+  var shouldSendWhatsapp = String(params.sendWhatsapp || "").toLowerCase() === "1" ||
+    String(params.sendWhatsapp || "").toLowerCase() === "true";
+
+  if (!targetPhone && !targetReservationId) {
+    return { ok: false, error: "Indica phone o reservaId para sincronizar una reserva puntual." };
+  }
+
+  var rows = trReadReservationObjects_();
+  var matches = rows.filter(function (row) {
+    var reservaId = trReservationValue_(row, ["-", "ID", "Reserva ID"]);
+    var phone = trNormalizePhone_(trReservationValue_(row, ["Telefono", "Teléfono", "Celular"]));
+    if (targetReservationId && reservaId !== targetReservationId) return false;
+    if (targetPhone && phone !== targetPhone) return false;
+    return !!phone && !!reservaId;
+  });
+
+  var results = matches.map(function (row) {
+    var reservaId = trReservationValue_(row, ["-", "ID", "Reserva ID"]);
+    var data = trReservationDataFromRow_(row);
+    var priceText = data.precioTexto || (data.precio ? "$" + data.precio : "");
+    var text = trReservationConfirmationText_(data, reservaId, priceText);
+    var conversation = trEnsureWebReservationConversation_(data, reservaId, text);
+    var alreadyLogged = trReservationMessageExists_(reservaId, conversation.ID);
+    var sendResult = { ok: true, skipped: true };
+
+    if (shouldSendWhatsapp && !alreadyLogged) {
+      sendResult = trSendWhatsappReservationTemplate_(data.telefono, data, reservaId, priceText);
+      trAppendMessage_({
+        conversationId: conversation.ID,
+        whatsappMessageId: sendResult.messageId || "",
+        direction: "outbound",
+        text: "[Plantilla WhatsApp]\n" + text,
+        timestamp: new Date(),
+        status: sendResult.ok ? "sent" : "failed",
+        automatic: true,
+        user: "",
+        error: sendResult.error || ""
+      });
+    }
+
+    return {
+      reservaId: reservaId,
+      phone: data.telefono,
+      conversationId: conversation.ID,
+      alreadyLogged: alreadyLogged,
+      whatsapp: sendResult
+    };
+  });
+
+  return { ok: true, count: results.length, results: results };
+}
+
+function trSendWhatsappReservationTemplate_(phone, data, reservaId, priceText) {
+  var templateName = trReservationTemplateName_();
+  if (!templateName) {
+    return { ok: false, error: "Falta WHATSAPP_RESERVATION_TEMPLATE_NAME para enviar a numeros que no escribieron antes." };
+  }
+
+  if (templateName === "hello_world") {
+    return trSendWhatsappTemplate_(phone, templateName, trReservationTemplateLanguage_("en_US"), []);
+  }
+
+  var languageCode = trReservationTemplateLanguage_("es_UY");
+  if (templateName === "reserva_confirmada_trcorte" && languageCode === "en_US") {
+    languageCode = "es_UY";
+  }
+
+  return trSendWhatsappTemplate_(phone, templateName, languageCode, [
+    { name: "nombre_cliente", text: data.nombre || "cliente" },
+    { name: "servicio", text: data.servicio || "tu servicio" },
+    { name: "id_reserva", text: reservaId },
+    { name: "precio", text: priceText || "$0" },
+    { name: "nombre_mascota", text: data.nombreMascota || "tu mascota" },
+    { name: "fecha", text: trFormatDisplayDate_(data.fecha) },
+    { name: "hora", text: trFormatDisplayTime_(data.hora) }
+  ]);
+}
+
+function trReservationTemplateName_() {
+  return trProp_("WHATSAPP_RESERVATION_TEMPLATE_NAME").trim() ||
+    trProp_("WHATSAPP_RESERVATION_TEMPLATE_NAM").trim() ||
+    "reserva_confirmada_trcorte";
+}
+
+function trReservationTemplateLanguage_(fallback) {
+  return trProp_("WHATSAPP_RESERVATION_TEMPLATE_LANGUAGE").trim() ||
+    trProp_("WHATSAPP_RESERVATION_TEMPLATE_LANG").trim() ||
+    trProp_("WHATSAPP_RESERVATION_TEMPLATE_LAN").trim() ||
+    fallback ||
+    "es_UY";
+}
+
+function trEnsureWebReservationConversation_(data, reservaId, text) {
+  var phone = trNormalizePhone_(data.telefono);
+  var sheet = trGetOrCreateSheet_(TR_SHEETS.conversations);
+  var rows = trSheetToObjects_(TR_SHEETS.conversations);
+  var existing = rows.find(function (row) {
+    return trNormalizePhone_(row.Telefono) === phone;
+  });
+  var now = new Date();
+  var displayName = existing && existing["Nombre Cliente"]
+    ? existing["Nombre Cliente"]
+    : (data.nombre || phone);
+  var patch = {
+    Telefono: phone,
+    "Nombre Cliente": displayName,
+    Estado: "Resuelto",
+    Etiquetas: "agenda, web",
+    "Reserva ID": reservaId,
+    "Ultimo Mensaje": text,
+    "Ultimo Mensaje At": now,
+    "Flow ID": "",
+    "Flow Node ID": "",
+    "Bot State": "",
+    "Bot Data JSON": "",
+    "Updated At": now
+  };
+
+  if (existing) {
+    trUpdateRowById_(sheet, existing.ID, patch);
+    return Object.assign({}, existing, patch);
+  }
+
+  var row = Object.assign({ ID: "conv_" + phone }, patch);
+  trAppendObject_(TR_SHEETS.conversations, row);
+  return row;
+}
+
+function trConsultasMessage_() {
+  return "Por consultas sobre tu servicio, comunicate con Sucursal Pinar 🐾\n\n" +
+    "📍 Av. Pérez Butler esq. Eduardo Fabini\n" +
+    "📲 +598 96 235 307\n" +
+    "🕘 Lun. a vie. de 9:00 a 19:00\n" +
+    "🕘 Sáb. y dom. de 9:00 a 15:00";
+}
+
+function trSendAutomaticMessage_(conversationId, phone, text) {
+  var result = trSendWhatsappText_(phone, text);
+  trAppendMessage_({
+    conversationId: conversationId,
+    whatsappMessageId: result.messageId || "",
+    direction: "outbound",
+    text: text,
+    timestamp: new Date(),
+    status: result.ok ? "sent" : "failed",
+    automatic: true,
+    user: "",
+    error: result.error || ""
+  });
+  trMarkConversation_(conversationId, {
+    "Ultimo Mensaje": text,
+    "Ultimo Mensaje At": new Date(),
+    "Updated At": new Date()
+  });
+  return result;
+}
+
+function trSendAutomaticButtons_(conversationId, phone, text, buttons) {
+  var result = trSendWhatsappButtons_(phone, text, buttons);
+  trAppendMessage_({
+    conversationId: conversationId,
+    whatsappMessageId: result.messageId || "",
+    direction: "outbound",
+    text: text + "\n\n" + buttons.map(function (button) { return button.title; }).join(" / "),
+    timestamp: new Date(),
+    status: result.ok ? "sent" : "failed",
+    automatic: true,
+    user: "",
+    error: result.error || ""
+  });
+  trMarkConversation_(conversationId, {
+    "Ultimo Mensaje": text,
+    "Ultimo Mensaje At": new Date(),
+    "Updated At": new Date()
+  });
+  return result;
+}
+
+function trSendAutomaticList_(conversationId, phone, list) {
+  var result = trSendWhatsappList_(phone, list);
+  var text = list.body + "\n\n" + (list.sections || []).map(function (section) {
+    return (section.rows || []).map(function (row) { return row.title; }).join(" / ");
+  }).join(" / ");
+  trAppendMessage_({
+    conversationId: conversationId,
+    whatsappMessageId: result.messageId || "",
+    direction: "outbound",
+    text: text,
+    timestamp: new Date(),
+    status: result.ok ? "sent" : "failed",
+    automatic: true,
+    user: "",
+    error: result.error || ""
+  });
+  trMarkConversation_(conversationId, {
+    "Ultimo Mensaje": list.body,
+    "Ultimo Mensaje At": new Date(),
+    "Updated At": new Date()
+  });
+  return result;
+}
+
+function trSendAutomaticImage_(conversationId, phone, imageUrl, caption) {
+  var result = trSendWhatsappImage_(phone, imageUrl, caption);
+  trAppendMessage_({
+    conversationId: conversationId,
+    whatsappMessageId: result.messageId || "",
+    direction: "outbound",
+    text: caption || imageUrl,
+    timestamp: new Date(),
+    status: result.ok ? "sent" : "failed",
+    automatic: true,
+    user: "",
+    error: result.error || ""
+  });
+  return result;
+}
+
+function trSendWhatsappText_(to, text) {
+  return trSendWhatsappPayload_({
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to: trNormalizePhone_(to),
+    type: "text",
+    text: {
+      preview_url: false,
+      body: text
+    }
+  });
+}
+
+function trSendWhatsappImage_(to, imageUrl, caption) {
+  return trSendWhatsappPayload_({
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to: trNormalizePhone_(to),
+    type: "image",
+    image: {
+      link: imageUrl,
+      caption: caption || ""
+    }
+  });
+}
+
+function trSendWhatsappButtons_(to, text, buttons) {
+  return trSendWhatsappPayload_({
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to: trNormalizePhone_(to),
+    type: "interactive",
+    interactive: {
+      type: "button",
+      body: { text: text },
+      action: {
+        buttons: buttons.slice(0, 3).map(function (button) {
+          return {
+            type: "reply",
+            reply: {
+              id: String(button.id || button.title).slice(0, 256),
+              title: String(button.title).slice(0, 20)
+            }
+          };
+        })
+      }
+    }
+  });
+}
+
+function trSendWhatsappList_(to, list) {
+  return trSendWhatsappPayload_({
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to: trNormalizePhone_(to),
+    type: "interactive",
+    interactive: {
+      type: "list",
+      body: { text: list.body },
+      action: {
+        button: String(list.button || "Ver opciones").slice(0, 20),
+        sections: (list.sections || []).map(function (section) {
+          return {
+            title: String(section.title || "Opciones").slice(0, 24),
+            rows: (section.rows || []).slice(0, 10).map(function (row) {
+              return {
+                id: String(row.id || row.title).slice(0, 200),
+                title: String(row.title || row.id).slice(0, 24),
+                description: String(row.description || "").slice(0, 72)
+              };
+            })
+          };
+        })
+      }
+    }
+  });
+}
+
+function trSendWhatsappTemplate_(to, templateName, languageCode, bodyParams) {
+  var template = {
+    name: templateName,
+    language: {
+      code: languageCode || "es_UY"
+    }
+  };
+
+  if ((bodyParams || []).length) {
+    template.components = [{
+      type: "body",
+      parameters: bodyParams.map(function (value) {
+        var parameter = {
+          type: "text",
+          text: String(value && value.text !== undefined ? value.text : value || "")
+        };
+        if (value && value.name) parameter.parameter_name = value.name;
+        return parameter;
+      })
+    }];
+  }
+
+  var result = trSendWhatsappPayload_({
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to: trNormalizePhone_(to),
+    type: "template",
+    template: template
+  });
+  result.sentAsTemplate = true;
+  return result;
+}
+
+function trSendWhatsappPayload_(payload) {
+  var token = trProp_("WHATSAPP_ACCESS_TOKEN");
+  var phoneNumberId = trProp_("WHATSAPP_PHONE_NUMBER_ID");
+  var version = trProp_("WHATSAPP_GRAPH_VERSION") || "v20.0";
+  var url = "https://graph.facebook.com/" + version + "/" + phoneNumberId + "/messages";
+
+  try {
+    var response = UrlFetchApp.fetch(url, {
+      method: "post",
+      contentType: "application/json",
+      headers: { Authorization: "Bearer " + token },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    });
+    var code = response.getResponseCode();
+    var data = trParseJson_(response.getContentText(), {});
+    if (code >= 200 && code < 300) {
+      return { ok: true, messageId: data.messages && data.messages[0] && data.messages[0].id };
+    }
+    if (data.error) {
+      var errorText = data.error.message || response.getContentText();
+      if (data.error.code) errorText += " (code " + data.error.code + ")";
+      if (data.error.error_subcode) errorText += " (subcode " + data.error.error_subcode + ")";
+      if (data.error.error_data && data.error.error_data.details) {
+        errorText += " - " + data.error.error_data.details;
+      }
+      if (data.error.fbtrace_id) errorText += " fbtrace_id=" + data.error.fbtrace_id;
+      if (payload.type === "template") {
+        errorText += " payload=" + JSON.stringify(payload.template).slice(0, 900);
+      }
+      errorText += " raw=" + response.getContentText().slice(0, 900);
+      return { ok: false, error: errorText };
+    }
+    return { ok: false, error: response.getContentText() };
+  } catch (err) {
+    return { ok: false, error: String(err) };
+  }
+}
+
+function trCreateDefaultWelcomeFlow_() {
+  var flows = trSheetToObjects_(TR_SHEETS.flows);
+  var welcomeText = "¡Hola! Bienvenido a *TRCorte* 🐾\n\n" +
+    "¿Cómo podemos ayudarte hoy?\n\n" +
+    "Elegí una opción:\n" +
+    "1. Agendar turno\n" +
+    "2. Cancelar turno";
+  if (flows.some(function (flow) { return flow.ID === "welcome_default"; })) {
+    trDeleteWhere_(TR_SHEETS.nodes, "Flow ID", "welcome_default");
+    trDeleteWhere_(TR_SHEETS.edges, "Flow ID", "welcome_default");
+    trUpdateRowById_(trGetOrCreateSheet_(TR_SHEETS.flows), "welcome_default", {
+      Nombre: "Bienvenida principal",
+      Activo: "TRUE",
+      Disparadores: "hola, buenas, turno, agendar, agenda, consulta",
+      "Start Node ID": "start",
+      "Updated At": new Date()
+    });
+  } else {
+    trAppendObject_(TR_SHEETS.flows, {
+      ID: "welcome_default",
+      Nombre: "Bienvenida principal",
+      Activo: "TRUE",
+      Disparadores: "hola, buenas, turno, agendar, agenda, consulta",
+      "Start Node ID": "start",
+      "Updated At": new Date()
+    });
+  }
+
+  [
+    ["start", "welcome_default", "start", "Inicio", "", "[]", 225, 20],
+    ["menu", "welcome_default", "question", "Pregunta principal", welcomeText, JSON.stringify(["Agendar", "Cancelar turno"]), 210, 138],
+    ["schedule", "welcome_default", "action", "Agendar turno", "Perfecto. Te vamos a pedir los datos para buscar un horario disponible.", "[]", 35, 395],
+    ["cancel", "welcome_default", "action", "Cancelar turno", "Pasame el ID de reserva y lo revisamos.", "[]", 225, 395]
+  ].forEach(function (row) {
+    trAppendObject_(TR_SHEETS.nodes, {
+      ID: row[0],
+      "Flow ID": row[1],
+      Tipo: row[2],
+      Titulo: row[3],
+      Texto: row[4],
+      "Opciones JSON": row[5],
+      "Pos X": row[6],
+      "Pos Y": row[7]
+    });
+  });
+
+  [
+    ["edge_start_menu", "welcome_default", "start", "menu", ""],
+    ["edge_menu_schedule", "welcome_default", "menu", "schedule", "agenda,agendar,agendar turno"],
+    ["edge_menu_cancel", "welcome_default", "menu", "cancel", "cancelar,cancelar turno"]
+  ].forEach(function (row) {
+    trAppendObject_(TR_SHEETS.edges, {
+      ID: row[0],
+      "Flow ID": row[1],
+      "From Node ID": row[2],
+      "To Node ID": row[3],
+      Condicion: row[4]
+    });
+  });
+}
+
+function trFindMatchingFlow_(text) {
+  var normalized = trNormalize_(text);
+  return trSheetToObjects_(TR_SHEETS.flows).find(function (flow) {
+    if (String(flow.Activo).toUpperCase() !== "TRUE") return false;
+    return String(flow.Disparadores || "")
+      .split(",")
+      .map(trNormalize_)
+      .filter(Boolean)
+      .some(function (trigger) { return normalized.indexOf(trigger) !== -1; });
+  });
+}
+
+function trFindDefaultWelcomeFlow_() {
+  return trSheetToObjects_(TR_SHEETS.flows).find(function (flow) {
+    return flow.ID === "welcome_default" && String(flow.Activo).toUpperCase() === "TRUE";
+  });
+}
+
+function trFindNode_(flowId, nodeId) {
+  return trSheetToObjects_(TR_SHEETS.nodes).find(function (node) {
+    return node["Flow ID"] === flowId && node.ID === nodeId;
+  });
+}
+
+function trFirstEdgeFrom_(flowId, nodeId) {
+  return trEdgesFrom_(flowId, nodeId)[0] || null;
+}
+
+function trEdgesFrom_(flowId, nodeId) {
+  return trSheetToObjects_(TR_SHEETS.edges).filter(function (edge) {
+    return edge["Flow ID"] === flowId && edge["From Node ID"] === nodeId;
+  });
+}
+
+function trFindEdgeForAnswer_(flowId, nodeId, text) {
+  var normalized = trNormalize_(text);
+  var edges = trEdgesFrom_(flowId, nodeId);
+  if (!normalized) return null;
+  var match = edges.find(function (edge) {
+    return normalized === trNormalize_(edge["To Node ID"]) ||
+      String(edge.Condicion || "").split(",").map(trNormalize_).filter(Boolean).indexOf(normalized) !== -1;
+  });
+  if (match) return match;
+  var node = trFindNode_(flowId, nodeId);
+  var options = node ? trParseJson_(node["Opciones JSON"], []) : [];
+  var index = /^\d+$/.test(normalized) ? Number(normalized) - 1 : options.map(trNormalize_).indexOf(normalized);
+  return index >= 0 && index < options.length ? edges[index] || null : null;
+}
+
+function trUpsertConversation_(phone, contact, text, timestamp) {
+  var sheet = trGetOrCreateSheet_(TR_SHEETS.conversations);
+  var rows = trSheetToObjects_(TR_SHEETS.conversations);
+  var normalizedPhone = trNormalizePhone_(phone);
+  var existing = rows.find(function (row) {
+    return trNormalizePhone_(row.Telefono) === normalizedPhone;
+  });
+  var now = new Date();
+  var incomingName = contact && contact.profile && contact.profile.name ? contact.profile.name : phone;
+  var displayName = existing && existing["Nombre Cliente"]
+    ? existing["Nombre Cliente"]
+    : incomingName;
+  var patch = {
+    Telefono: normalizedPhone,
+    "Nombre Cliente": displayName,
+    Estado: existing ? existing.Estado : "Abierto",
+    Etiquetas: existing ? existing.Etiquetas : "",
+    "Ultimo Mensaje": text,
+    "Ultimo Mensaje At": timestamp,
+    "Updated At": now
+  };
+
+  if (existing) {
+    trUpdateRowById_(sheet, existing.ID, patch);
+    return Object.assign({}, existing, patch);
+  }
+
+  var id = "conv_" + normalizedPhone;
+  var row = Object.assign({
+    ID: id,
+    "Reserva ID": "",
+    "Flow ID": "",
+    "Flow Node ID": "",
+    "Bot State": "",
+    "Bot Data JSON": ""
+  }, patch);
+  trAppendObject_(TR_SHEETS.conversations, row);
+  return row;
+}
+
+function trAppendMessage_(message) {
+  trAppendObject_(TR_SHEETS.messages, {
+    ID: "msg_" + Utilities.getUuid(),
+    "Conversation ID": message.conversationId,
+    "WhatsApp Message ID": message.whatsappMessageId,
+    Direccion: message.direction,
+    Texto: message.text,
+    Timestamp: message.timestamp,
+    Estado: message.status,
+    Automatico: message.automatic ? "TRUE" : "FALSE",
+    Usuario: message.user || "",
+    Error: message.error || ""
+  });
+}
+
+function trUpdateMessageStatus_(whatsappMessageId, status, errors) {
+  var sheet = trGetOrCreateSheet_(TR_SHEETS.messages);
+  var rows = trSheetToObjects_(TR_SHEETS.messages);
+  var match = rows.find(function (row) {
+    return row["WhatsApp Message ID"] === whatsappMessageId;
+  });
+  if (!match) return;
+  var errorText = (errors || []).map(function (item) {
+    return item.message || item.title || "";
+  }).filter(Boolean).join("; ");
+  trUpdateRowById_(sheet, match.ID, {
+    Estado: status,
+    Error: errorText
+  });
+}
+
+function trListConversations_() {
+  var conversations = trSheetToObjects_(TR_SHEETS.conversations).map(trConversationDto_);
+  var byId = {};
+  conversations.forEach(function (conversation) {
+    byId[conversation.id] = true;
+  });
+
+  trMessagesGroupedAsConversations_().forEach(function (conversation) {
+    if (!byId[conversation.id]) {
+      conversations.push(conversation);
+      byId[conversation.id] = true;
+    }
+  });
+
+  return conversations.sort(function (a, b) {
+    return new Date(b.lastMessageAt) - new Date(a.lastMessageAt);
+  });
+}
+
+function trConversationDto_(row) {
+  return {
+    id: row.ID,
+    customerName: row["Nombre Cliente"],
+    phone: row.Telefono,
+    status: row.Estado || "Abierto",
+    tags: String(row.Etiquetas || "").split(",").map(function (tag) { return tag.trim(); }).filter(Boolean),
+    reservation: row["Reserva ID"] ? { id: row["Reserva ID"] } : null,
+    lastMessage: row["Ultimo Mensaje"],
+    lastMessageAt: row["Ultimo Mensaje At"],
+    flowId: row["Flow ID"],
+    flowNodeId: row["Flow Node ID"]
+  };
+}
+
+function trMessagesGroupedAsConversations_() {
+  var grouped = {};
+  trSheetToObjects_(TR_SHEETS.messages).forEach(function (row) {
+    var conversationId = row["Conversation ID"];
+    if (!conversationId) return;
+    var current = grouped[conversationId];
+    var timestamp = row.Timestamp || "";
+    if (!current || trTimestampValue_(timestamp) >= trTimestampValue_(current.lastMessageAt)) {
+      var phone = String(conversationId).replace(/^conv_/, "");
+      grouped[conversationId] = {
+        id: conversationId,
+        customerName: phone,
+        phone: phone,
+        status: "Abierto",
+        tags: [],
+        reservation: null,
+        lastMessage: row.Texto,
+        lastMessageAt: timestamp,
+        flowId: "",
+        flowNodeId: ""
+      };
+    }
+  });
+  return Object.keys(grouped).map(function (id) { return grouped[id]; });
+}
+
+function trTimestampValue_(value) {
+  if (!value) return 0;
+  if (Object.prototype.toString.call(value) === "[object Date]" && !isNaN(value.getTime())) return value.getTime();
+  var parsed = new Date(value);
+  if (!isNaN(parsed.getTime())) return parsed.getTime();
+  var text = String(value);
+  var match = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})/);
+  if (match) return new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]), Number(match[4]), Number(match[5])).getTime();
+  return 0;
+}
+
+function trListMessages_(conversationId) {
+  return trSheetToObjects_(TR_SHEETS.messages).filter(function (row) {
+    return row["Conversation ID"] === conversationId;
+  }).map(function (row) {
+    return {
+      id: row.ID,
+      whatsappMessageId: row["WhatsApp Message ID"],
+      direction: row.Direccion,
+      text: row.Texto,
+      createdAt: row.Timestamp,
+      status: row.Estado,
+      automatic: String(row.Automatico).toUpperCase() === "TRUE",
+      user: row.Usuario,
+      error: row.Error
+    };
+  });
+}
+
+function trListLogs_(limit) {
+  var rows = trSheetToObjects_(TR_SHEETS.logs);
+  var count = Math.max(1, Math.min(Number(limit || 30), 100));
+  return rows.slice(-count).map(function (row) {
+    return {
+      timestamp: row.Timestamp,
+      type: row.Tipo,
+      detail: row.Detalle
+    };
+  });
+}
+
+function trFindConversationById_(id) {
+  return trSheetToObjects_(TR_SHEETS.conversations).find(function (row) { return row.ID === id; });
+}
+
+function trMarkConversation_(conversationId, patch) {
+  trUpdateRowById_(trGetOrCreateSheet_(TR_SHEETS.conversations), conversationId, patch);
+}
+
+function trUpdateInboxConversation_(conversationId, patch) {
+  if (!conversationId) throw new Error("Conversation ID requerido");
+  var update = { "Updated At": new Date() };
+  if (patch.status) update.Estado = String(patch.status);
+  if (Array.isArray(patch.tags)) {
+    update.Etiquetas = patch.tags.map(function (tag) {
+      return String(tag).trim();
+    }).filter(Boolean).join(", ");
+  }
+  trMarkConversation_(conversationId, update);
+  var conversation = trListConversations_().find(function (item) {
+    return item.id === conversationId;
+  });
+  if (!conversation) throw new Error("Conversacion no encontrada");
+  conversation.messages = trListMessages_(conversationId);
+  return conversation;
+}
+
+function trFindContact_(contacts, phone) {
+  return contacts.find(function (contact) { return contact.wa_id === phone; }) || null;
+}
+
+function trSaveFlow_(flow) {
+  if (!flow.id || !flow.nodes || !flow.edges) throw new Error("Flow invalido");
+  trDeleteWhere_(TR_SHEETS.nodes, "Flow ID", flow.id);
+  trDeleteWhere_(TR_SHEETS.edges, "Flow ID", flow.id);
+  trUpdateOrAppend_(TR_SHEETS.flows, flow.id, {
+    ID: flow.id,
+    Nombre: flow.name || "Flujo sin nombre",
+    Activo: flow.active ? "TRUE" : "FALSE",
+    Disparadores: (flow.triggers || []).join(", "),
+    "Start Node ID": flow.startNodeId || "start",
+    "Updated At": new Date()
+  });
+  flow.nodes.forEach(function (node) {
+    trAppendObject_(TR_SHEETS.nodes, {
+      ID: node.id,
+      "Flow ID": flow.id,
+      Tipo: node.kind,
+      Titulo: node.title,
+      Texto: node.text,
+      "Opciones JSON": JSON.stringify(node.options || []),
+      "Pos X": node.x,
+      "Pos Y": node.y
+    });
+  });
+  flow.edges.forEach(function (edge, index) {
+    trAppendObject_(TR_SHEETS.edges, {
+      ID: edge.id || "edge_" + index + "_" + Utilities.getUuid(),
+      "Flow ID": flow.id,
+      "From Node ID": edge.from,
+      "To Node ID": edge.to,
+      Condicion: edge.condition || ""
+    });
+  });
+}
+
+function trGetOrCreateSheet_(sheetName) {
+  var spreadsheet = typeof SPREADSHEET_ID !== "undefined" && SPREADSHEET_ID
+    ? SpreadsheetApp.openById(SPREADSHEET_ID)
+    : SpreadsheetApp.getActiveSpreadsheet();
+  if (!spreadsheet) throw new Error("No se pudo abrir el spreadsheet para TR Inbox");
+  var sheet = spreadsheet.getSheetByName(sheetName);
+  if (!sheet) sheet = spreadsheet.insertSheet(sheetName);
+  return sheet;
+}
+
+function trSheetToObjects_(sheetName) {
+  var sheet = trGetOrCreateSheet_(sheetName);
+  var values = sheet.getDataRange().getValues();
+  if (values.length < 2) return [];
+  var headers = values[0].map(trHeaderKey_);
+  return values.slice(1).filter(function (row) {
+    return row.some(function (cell) { return cell !== ""; });
+  }).map(function (row) {
+    var object = {};
+    headers.forEach(function (header, index) {
+      object[header] = row[index];
+    });
+    return object;
+  });
+}
+
+function trAppendObject_(sheetName, object) {
+  var sheet = trGetOrCreateSheet_(sheetName);
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(trHeaderKey_);
+  sheet.appendRow(headers.map(function (header) { return object[header] === undefined ? "" : object[header]; }));
+}
+
+function trUpdateOrAppend_(sheetName, id, object) {
+  var sheet = trGetOrCreateSheet_(sheetName);
+  if (!trUpdateRowById_(sheet, id, object)) trAppendObject_(sheetName, object);
+}
+
+function trUpdateRowById_(sheet, id, patch) {
+  var values = sheet.getDataRange().getValues();
+  if (values.length < 2) return false;
+  var headers = values[0].map(trHeaderKey_);
+  var idIndex = headers.indexOf("ID");
+  for (var rowIndex = 1; rowIndex < values.length; rowIndex++) {
+    if (values[rowIndex][idIndex] === id) {
+      Object.keys(patch).forEach(function (key) {
+        var columnIndex = headers.indexOf(key);
+        if (columnIndex >= 0) sheet.getRange(rowIndex + 1, columnIndex + 1).setValue(patch[key]);
+      });
+      return true;
+    }
+  }
+  return false;
+}
+
+function trEnsureHeaders_(sheet, expectedHeaders) {
+  var lastColumn = Math.max(sheet.getLastColumn(), 1);
+  var existing = sheet.getRange(1, 1, 1, lastColumn).getValues()[0].map(trHeaderKey_).filter(String);
+  var missing = expectedHeaders.filter(function (header) {
+    return existing.indexOf(header) === -1;
+  });
+  if (!missing.length) return;
+  sheet.getRange(1, existing.length + 1, 1, missing.length).setValues([missing]);
+}
+
+function trDeleteWhere_(sheetName, columnName, value) {
+  var sheet = trGetOrCreateSheet_(sheetName);
+  var values = sheet.getDataRange().getValues();
+  if (values.length < 2) return;
+  var columnIndex = values[0].map(trHeaderKey_).indexOf(columnName);
+  for (var i = values.length - 1; i >= 1; i--) {
+    if (values[i][columnIndex] === value) sheet.deleteRow(i + 1);
+  }
+}
+
+function trHeaderKey_(header) {
+  var key = String(header || "").trim();
+  if (key.indexOf("Usuario ") === 0) return "Usuario";
+  return key;
+}
+
+function trParseBody_(e) {
+  if (!e || !e.postData || !e.postData.contents) return null;
+  return trParseJson_(e.postData.contents, null);
+}
+
+function trExtractIncomingText_(message) {
+  if (!message) return "";
+  if (message.type === "text") return (message.text && message.text.body) || "";
+  if (message.type === "interactive" && message.interactive) {
+    var buttonReply = message.interactive.button_reply;
+    if (buttonReply) return buttonReply.id || buttonReply.title || "";
+    var listReply = message.interactive.list_reply;
+    if (listReply) return listReply.id || listReply.title || "";
+  }
+  if (message.type === "button" && message.button) {
+    return message.button.payload || message.button.text || "";
+  }
+  return "";
+}
+
+function trParseJson_(value, fallback) {
+  try {
+    return JSON.parse(value);
+  } catch (err) {
+    return fallback;
+  }
+}
+
+function trJson_(data, status) {
+  var output = ContentService
+    .createTextOutput(JSON.stringify(Object.assign(status ? { status: status } : {}, data)))
+    .setMimeType(ContentService.MimeType.JSON);
+  return output;
+}
+
+function trProp_(key) {
+  return PropertiesService.getScriptProperties().getProperty(key) || "";
+}
+
+function trRequirePanelKey_(key) {
+  var expected = trProp_("PANEL_API_KEY");
+  if (!expected) return { error: "PANEL_API_KEY no configurado" };
+  if (key !== expected) return { error: "No autorizado" };
+  return null;
+}
+
+function trNormalize_(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+function trNormalizePhone_(phone) {
+  var digits = String(phone || "").replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.indexOf("00") === 0) digits = digits.slice(2);
+  if (digits.indexOf("598") !== 0) {
+    if (digits.indexOf("0") === 0) digits = digits.slice(1);
+    if (digits.length <= 9) digits = "598" + digits;
+  }
+  return digits;
+}
+
+function trLog_(type, detail) {
+  trAppendObject_(TR_SHEETS.logs, {
+    Timestamp: new Date(),
+    Tipo: type,
+    Detalle: detail
+  });
+}
+
+function authorizeExternalRequests() {
+  UrlFetchApp.fetch("https://graph.facebook.com/robots.txt", {
+    muteHttpExceptions: true
+  });
 }

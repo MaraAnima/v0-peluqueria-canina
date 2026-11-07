@@ -1,4 +1,4 @@
-# Google Apps Script - Reservas, Meta, email y cancelacion
+# Google Apps Script - Reservas, WhatsApp, Meta y email
 
 La fuente de verdad para pegar en Google Apps Script es:
 
@@ -33,7 +33,25 @@ La fuente de verdad para pegar en Google Apps Script es:
 - Las reservas nuevas incluyen la formula de comision. Si se edita Precio a mano,
   `onEdit` repone la formula de esa fila; no se precargan filas vacias.
 - `actualizarComisionesReservas` aplica la formula a las reservas existentes.
-- Responde `EVENT_RECEIVED` para POSTs de Meta que no sean reservas.
+- Procesa los mensajes y estados entrantes de Meta mediante el modulo Inbox.
+
+## Flujos de WhatsApp
+
+La fuente local incluye ahora el modulo Inbox que estaba desplegado, sin los
+diagnosticos manuales con datos de clientes.
+
+- El menu principal ofrece solamente Agendar y Cancelar turno.
+- Admite IDs de botones, condiciones, nombres de opciones y numeros.
+- Busca flujos por disparadores antes de usar la bienvenida como alternativa.
+- Si la respuesta no coincide, repite la pregunta actual sin perder el flujo.
+- Revalida y guarda bajo el mismo bloqueo que la web para evitar ocupar un turno dos veces.
+- El deslanado solo ofrece turnos cuyo horario siguiente este libre y guarda ese bloqueo.
+- Si un turno se ocupa mientras el cliente responde, ofrece horarios o fechas nuevos.
+- No permite fechas invalidas, pasadas, feriados ni horarios ya iniciados.
+
+Al actualizar un despliegue existente, conservar las Script Properties y la URL.
+No ejecutar `setupTrInbox` para aplicar estos cambios: esa inicializacion vuelve
+a generar el flujo predeterminado y reemplaza sus nodos.
 
 ## Reagendar por ID
 
