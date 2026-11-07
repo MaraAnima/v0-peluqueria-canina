@@ -50,6 +50,9 @@ diagnosticos manuales con datos de clientes.
 - No permite fechas invalidas, pasadas, feriados ni horarios ya iniciados.
 - Para reagendar, pide el ID y valida que el telefono de WhatsApp sea el de la reserva.
 - Mantiene el turno original hasta confirmar el nuevo; conserva ID, precio, extras y comision.
+- Antes de mover la cita muestra turno anterior y nuevo y pide Confirmar cambio.
+- Permite elegir otro turno o mantener la reserva sin modificarla. Los botones de
+  confirmacion estan asociados a cada resumen para rechazar confirmaciones viejas.
 - Revalida disponibilidad, bloqueo de deslanado y cambios concurrentes al confirmar la reagenda.
 - Confirma el cambio por WhatsApp y envia el email al destinatario original si existe.
 

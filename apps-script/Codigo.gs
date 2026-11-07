@@ -882,7 +882,7 @@ var TR_SHEETS = {
   logs: "WebhookLogs"
 };
 
-var TR_INBOX_VERSION = "2026-11-07-whatsapp-reschedule";
+var TR_INBOX_VERSION = "2026-11-07-whatsapp-reschedule-confirmation";
 
 var TR_HEADERS = {
   Conversaciones: [
@@ -1236,6 +1236,42 @@ function trHandleBotState_(conversation, text) {
     return;
   }
 
+  if (state === "esperando_reagenda_confirmacion") {
+    var reply = cleanText.match(/^reagenda_(confirmar|otro|mantener):(.+)$/);
+    if (reply && reply[2] !== data.reagendaConfirmacionId) {
+      trSendAutomaticMessage_(conversationId, phone, "Ese boton corresponde a un resumen anterior. Revisa el cambio actual.");
+      trAskRescheduleConfirmation_(conversationId, phone, data);
+      return;
+    }
+    var choice = reply ? { confirmar: "Confirmar cambio", otro: "Elegir otro turno", mantener: "Mantener turno" }[reply[1]] :
+      trResolveMappedChoice_(cleanText, {
+        "1": "Confirmar cambio", confirmar: "Confirmar cambio", si: "Confirmar cambio",
+        "2": "Elegir otro turno", volver: "Elegir otro turno",
+        "3": "Mantener turno", no: "Mantener turno", cancelar_cambio: "Mantener turno"
+      });
+    if (choice === "Confirmar cambio") {
+      trRescheduleReservationFromWhatsapp_(conversationId, phone, data, data.reagendaConfirmacionId);
+      return;
+    }
+    if (choice === "Elegir otro turno") {
+      delete data.fecha;
+      delete data.hora;
+      delete data.slots;
+      delete data.reagendaConfirmacionId;
+      trSendAvailableDateList_(conversationId, phone, data);
+      return;
+    }
+    if (choice === "Mantener turno") {
+      trClearBotState_(conversationId);
+      trMarkConversation_(conversationId, { Estado: "Resuelto", "Reserva ID": data.reservaId });
+      trSendAutomaticMessage_(conversationId, phone, "No hice cambios en tu reserva. Tu ID sigue siendo " + data.reservaId + ".");
+      return;
+    }
+    trSendAutomaticMessage_(conversationId, phone, "Para cambiar el turno necesito que confirmes el resumen.");
+    trAskRescheduleConfirmation_(conversationId, phone, data);
+    return;
+  }
+
   if (state === "esperando_tipo_agenda") {
     var reservationType = trResolveMappedChoice_(cleanText, {
       agenda_nueva: "Nueva reserva",
@@ -1348,7 +1384,7 @@ function trHandleBotState_(conversation, text) {
 
     data.hora = selectedHour;
     if (data.reagenda) {
-      trRescheduleReservationFromWhatsapp_(conversationId, phone, data);
+      trAskRescheduleConfirmation_(conversationId, phone, data);
     } else {
       trSaveReservationFromWhatsapp_(conversationId, phone, data);
     }
@@ -1413,7 +1449,27 @@ function trStartRescheduleFromWhatsapp_(conversationId, phone, id) {
   }
 }
 
-function trRescheduleReservationFromWhatsapp_(conversationId, phone, data) {
+function trAskRescheduleConfirmation_(conversationId, phone, data) {
+  data.reagendaConfirmacionId = Utilities.getUuid();
+  trSetBotState_(conversationId, "esperando_reagenda_confirmacion", data);
+  trSendAutomaticButtons_(conversationId, phone,
+    "Revisa el cambio antes de confirmar:\n\n" +
+    "ID de reserva: " + data.reservaId + "\n" +
+    "Turno anterior: " + trFormatDisplayDate_(data.fechaActual) + " a las " + data.horaActual + "\n" +
+    "Nuevo turno: " + trFormatDisplayDate_(data.fecha) + " a las " + data.hora + "\n\n" +
+    "Tu reserva no se modifica hasta que confirmes.", [
+      { id: "reagenda_confirmar:" + data.reagendaConfirmacionId, title: "Confirmar cambio" },
+      { id: "reagenda_otro:" + data.reagendaConfirmacionId, title: "Elegir otro turno" },
+      { id: "reagenda_mantener:" + data.reagendaConfirmacionId, title: "Mantener turno" }
+    ]);
+}
+
+function trRescheduleReservationFromWhatsapp_(conversationId, phone, data, confirmationId) {
+  if (!data.reagendaConfirmacionId || confirmationId !== data.reagendaConfirmacionId) {
+    trAskRescheduleConfirmation_(conversationId, phone, data);
+    return;
+  }
+  delete data.reagendaConfirmacionId;
   var lock = LockService.getScriptLock();
   var locked = false;
   var result;

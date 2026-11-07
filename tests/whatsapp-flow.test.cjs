@@ -17,7 +17,7 @@ function setup() {
     constructor(...args) { super(...(args.length ? args : ['2026-11-07T13:00:00Z'])); }
   }
   const state = { rows: [['headers']], locked: false, releases: 0, checks: [],
-    messages: [], confirmations: [], lists: [], emails: [], writes: 0,
+    messages: [], confirmations: [], lists: [], emails: [], writes: 0, confirmationSerial: 0,
     conversation: { ID: 'test', Estado: 'Abierto', Telefono: 'test' } };
   const records = {
     Flujos: [{ ID: 'welcome_default', Activo: true, Disparadores: 'hola,agendar', 'Start Node ID': 'start' }],
@@ -69,6 +69,7 @@ function setup() {
     LockService: { getScriptLock: () => lock },
     Session: { getScriptTimeZone: () => 'America/Montevideo' },
     Utilities: {
+      getUuid: () => 'confirmation-' + ++state.confirmationSerial,
       formatDate(date, zone, format) {
         const parts = Object.fromEntries(new Intl.DateTimeFormat('en-CA', {
           timeZone: zone, year: 'numeric', month: '2-digit', day: '2-digit',
@@ -271,6 +272,14 @@ test('WhatsApp rescheduling keeps the original occupied until the new slot is co
   api.input('2026-11-11');
   assert.equal(api.state.conversation['Bot State'], 'esperando_reagenda_hora');
   api.input('14:00');
+  assert.equal(api.state.conversation['Bot State'], 'esperando_reagenda_confirmacion');
+  assert.deepEqual(api.state.rows[1], before);
+  assert.equal(api.state.emails.length, 0);
+  const preview = api.state.lists.at(-1);
+  assert.match(preview.text, /Turno anterior: 10\/11\/2026 a las 12:00/);
+  assert.match(preview.text, /Nuevo turno: 11\/11\/2026 a las 14:00/);
+  assert.deepEqual(Array.from(preview.buttons, button => button.title), ['Confirmar cambio', 'Elegir otro turno', 'Mantener turno']);
+  api.input('Confirmar cambio');
   assert.equal(api.state.rows.length, 2);
   assert.equal(api.state.writes, 1);
   assert.equal(api.state.rows[1][0], before[0]);
@@ -310,6 +319,8 @@ test('same-day rescheduling excludes only itself and does not offer the unchange
   api.input('12:00');
   assert.equal(api.state.writes, 0);
   api.input('14:00');
+  assert.equal(api.state.rows[1][3], '12:00');
+  api.input('1');
   assert.equal(api.state.rows[1][3], '14:00');
 });
 
@@ -319,6 +330,9 @@ test('deslanado can move backward into its released block and keeps the extra sl
   api.input('2026-11-10');
   assert.deepEqual(api.data().slots, ['12:00']);
   api.input('12:00');
+  assert.equal(api.state.rows[1][3], '14:00');
+  assert.equal(api.state.rows[1][15], '16:00');
+  api.input('Si');
   assert.equal(api.state.rows[1][3], '12:00');
   assert.equal(api.state.rows[1][15], '14:00');
   assert.ok(api.ctx.getAvailableSlots('2026-11-10').includes('16:00'));
@@ -328,9 +342,10 @@ test('a slot taken during rescheduling refreshes choices without releasing the o
   const api = rescheduleSession();
   api.input('TR-TEST-001');
   api.input('2026-11-11');
+  api.input('14:00');
   const competing = api.ctx.doPost({ postData: { contents: JSON.stringify(booking({ fecha: '2026-11-11', hora: '14:00' })) } });
   assert.equal(JSON.parse(competing.getContent()).success, true);
-  api.input('14:00');
+  api.input('Confirmar');
   assert.equal(api.state.writes, 0);
   assert.equal(api.state.rows[1][2], '2026-11-10');
   assert.equal(api.state.rows[1][3], '12:00');
@@ -345,9 +360,10 @@ test('a concurrent date or phone change forces a new ID lookup instead of overwr
     const api = rescheduleSession();
     api.input('TR-TEST-001');
     api.input('2026-11-11');
+    api.input('14:00');
     change(api.state.rows[1]);
     const before = [...api.state.rows[1]];
-    api.input('14:00');
+    api.input('Confirmar');
     assert.deepEqual(api.state.rows[1], before);
     assert.equal(api.state.writes, 0);
     assert.equal(api.state.conversation['Bot State'], 'esperando_reagenda_id');
@@ -374,9 +390,10 @@ test('reschedule lock and sheet failures do not send success or lose the origina
     const api = rescheduleSession();
     api.input('TR-TEST-001');
     api.input('2026-11-11');
+    api.input('14:00');
     const before = [...api.state.rows[1]];
     api.state[failure] = true;
-    api.input('14:00');
+    api.input('Confirmar');
     assert.deepEqual(api.state.rows[1], before);
     assert.equal(api.state.emails.length, 0);
     assert.equal(api.state.locked, false);
@@ -389,11 +406,92 @@ test('email failure does not undo a successful WhatsApp reschedule or create ano
   const api = rescheduleSession();
   api.input('TR-TEST-001');
   api.input('2026-11-11');
-  api.state.failEmail = true;
   api.input('14:00');
+  api.state.failEmail = true;
+  api.input('Confirmar');
   assert.equal(api.state.rows.length, 2);
   assert.equal(api.state.rows[1][2], '2026-11-11');
   assert.equal(api.state.rows[1][3], '14:00');
   assert.equal(api.state.writes, 1);
   assert.match(api.state.messages.at(-1), /reagendado correctamente/);
+});
+
+function confirmationSession() {
+  const api = rescheduleSession();
+  api.input('TR-TEST-001');
+  api.input('2026-11-11');
+  api.input('14:00');
+  assert.equal(api.state.conversation['Bot State'], 'esperando_reagenda_confirmacion');
+  return api;
+}
+
+test('unknown answers or old confirmation buttons never move the reservation', () => {
+  const api = confirmationSession();
+  const before = [...api.state.rows[1]];
+  for (const answer of ['tal vez', '14:00', '99', 'reagenda_confirmar:expired']) {
+    api.input(answer);
+    assert.deepEqual(api.state.rows[1], before);
+    assert.equal(api.state.writes, 0);
+    assert.equal(api.state.emails.length, 0);
+    assert.equal(api.state.conversation['Bot State'], 'esperando_reagenda_confirmacion');
+    assert.match(api.state.lists.at(-1).text, /Turno anterior: 10\/11\/2026 a las 12:00/);
+    assert.match(api.state.lists.at(-1).text, /Nuevo turno: 11\/11\/2026 a las 14:00/);
+  }
+});
+
+test('keeping the original turn closes only the change request, not the appointment', () => {
+  for (const answer of ['no', '3', 'Mantener turno', 'Cancelar cambio', 'button']) {
+    const api = confirmationSession();
+    const before = [...api.state.rows[1]];
+    api.input(answer === 'button' ? api.state.lists.at(-1).buttons[2].id : answer);
+    assert.deepEqual(api.state.rows[1], before);
+    assert.equal(api.state.rows[1][17], 'Confirmada');
+    assert.equal(api.state.writes, 0);
+    assert.equal(api.state.emails.length, 0);
+    assert.equal(api.state.conversation['Bot State'], '');
+    assert.equal(api.state.conversation.Estado, 'Resuelto');
+    assert.match(api.state.messages.at(-1), /No hice cambios/);
+  }
+});
+
+test('choosing another turn requires a new summary and rejects a previous summary approval', () => {
+  const api = confirmationSession();
+  const oldButton = api.state.lists.at(-1).buttons[0].id;
+  api.input(api.state.lists.at(-1).buttons[1].id);
+  assert.equal(api.state.conversation['Bot State'], 'esperando_reagenda_fecha');
+  assert.equal(api.data().reagendaConfirmacionId, undefined);
+  api.input('2026-11-12');
+  api.input('16:00');
+  assert.equal(api.state.writes, 0);
+  assert.notEqual(api.state.lists.at(-1).buttons[0].id, oldButton);
+  api.input(oldButton);
+  assert.equal(api.state.writes, 0);
+  assert.equal(api.state.emails.length, 0);
+  assert.match(api.state.messages.at(-1), /resumen anterior/);
+  api.input(api.state.lists.at(-1).buttons[0].id);
+  assert.equal(api.state.writes, 1);
+  assert.equal(api.state.rows[1][2], '2026-11-12');
+  assert.equal(api.state.rows[1][3], '16:00');
+});
+
+test('reschedule mutation helper cannot skip explicit confirmation', () => {
+  const api = confirmationSession();
+  const before = [...api.state.rows[1]];
+  api.ctx.trRescheduleReservationFromWhatsapp_('test', '59899123456', api.data());
+  assert.deepEqual(api.state.rows[1], before);
+  assert.equal(api.state.writes, 0);
+  assert.equal(api.state.emails.length, 0);
+  assert.equal(api.state.conversation['Bot State'], 'esperando_reagenda_confirmacion');
+});
+
+test('repeating a confirmation button after success does not move the reservation twice', () => {
+  const api = confirmationSession();
+  const button = api.state.lists.at(-1).buttons[0].id;
+  api.input(button);
+  const after = [...api.state.rows[1]];
+  api.input(button);
+  assert.deepEqual(api.state.rows[1], after);
+  assert.equal(api.state.rows.length, 2);
+  assert.equal(api.state.writes, 1);
+  assert.equal(api.state.emails.length, 1);
 });
