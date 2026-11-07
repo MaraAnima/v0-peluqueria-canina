@@ -247,6 +247,8 @@ function saveReservation(data) {
       'Confirmada'
     ]);
 
+    trySortReservations(sheet);
+
     return { success: true, reservaId: reservaId };
   } catch (error) {
     return { success: false, error: error.toString() };
@@ -416,6 +418,7 @@ function reagendarReserva(data) {
   values[1] = hora;
   values[13] = blockedTime;
   reservation.sheet.getRange(reservation.rowNumber, 3, 1, 14).setValues([values]);
+  trySortReservations(reservation.sheet);
 
   const emailResult = sendEmailReagenda(reservation, fecha, hora);
   return createJsonResponse({
@@ -512,6 +515,108 @@ function sendEmailCancelacion(reserva, reservaId) {
     Logger.log('Error enviando email de cancelacion: ' + error.toString());
     return { success: false, error: error.toString() };
   }
+}
+
+// ==================== ORDEN AUTOMATICO DE RESERVAS ====================
+
+function reservationDateSortKey(value) {
+  if (value instanceof Date && !isNaN(value.getTime())) {
+    return Number(Utilities.formatDate(value, BUSINESS_TIME_ZONE, 'yyyyMMdd'));
+  }
+  if (typeof value === 'number' && isFinite(value) && value >= 0 && value < 2958466) {
+    const date = new Date(Date.UTC(1899, 11, 30) + Math.floor(value) * 86400000);
+    return date.getUTCFullYear() * 10000 + (date.getUTCMonth() + 1) * 100 + date.getUTCDate();
+  }
+  const text = String(value || '').trim();
+  const iso = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const local = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  const parts = iso ? [Number(iso[1]), Number(iso[2]), Number(iso[3])] :
+    local ? [Number(local[3]), Number(local[2]), Number(local[1])] : null;
+  if (parts) {
+    const date = new Date(parts[0], parts[1] - 1, parts[2]);
+    if (date.getFullYear() === parts[0] && date.getMonth() === parts[1] - 1 &&
+        date.getDate() === parts[2]) {
+      return parts[0] * 10000 + parts[1] * 100 + parts[2];
+    }
+  }
+  return 99999999;
+}
+
+function reservationTimeSortKey(value) {
+  if (value instanceof Date && !isNaN(value.getTime())) {
+    return timeToMinutes(Utilities.formatDate(value, BUSINESS_TIME_ZONE, 'HH:mm'));
+  }
+  if (typeof value === 'number' && isFinite(value)) {
+    if (value >= 0 && value < 1) return Math.round(value * 1440);
+    if (Number.isInteger(value) && value >= 1 && value <= 23) return value * 60;
+  }
+  const match = String(value ?? '').trim().match(/^(\d{1,2})(?::(\d{2})(?::\d{2})?)?$/);
+  if (match && Number(match[1]) < 24 && Number(match[2] || 0) < 60) {
+    return Number(match[1]) * 60 + Number(match[2] || 0);
+  }
+  return 9999;
+}
+
+function sortReservationsByDate(sheet) {
+  const count = sheet.getLastRow() - 1;
+  if (count < 2) return;
+  const lastDataColumn = Math.max(sheet.getLastColumn(), COL_ESTADO + 1);
+  const firstKeyColumn = lastDataColumn + 1;
+  const extraColumns = firstKeyColumn + 1 - sheet.getMaxColumns();
+  if (extraColumns > 0) sheet.insertColumnsAfter(sheet.getMaxColumns(), extraColumns);
+
+  const values = sheet.getRange(2, 3, count, 2).getValues();
+  const keys = values.map(row => [reservationDateSortKey(row[0]), reservationTimeSortKey(row[1])]);
+  const keyRange = sheet.getRange(2, firstKeyColumn, count, 2);
+  try {
+    keyRange.setValues(keys);
+    // Native sorting preserves whole rows, including formatting, notes and formulas.
+    sheet.getRange(2, 1, count, firstKeyColumn + 1).sort([
+      { column: firstKeyColumn, ascending: true },
+      { column: firstKeyColumn + 1, ascending: true }
+    ]);
+  } finally {
+    keyRange.clearContent();
+  }
+}
+
+function trySortReservations(sheet) {
+  try {
+    sortReservationsByDate(sheet);
+    return true;
+  } catch (error) {
+    // A completed reservation remains successful even if the sorting service fails.
+    Logger.log('No se pudo ordenar Reservas: ' + error.toString());
+    return false;
+  }
+}
+
+function ordenarReservasPorFecha() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    sortReservationsByDate(getSheet());
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function sortReservationsOnEdit(e) {
+  if (!e || !e.range || !e.source || e.source.getId() !== SPREADSHEET_ID) return;
+  const sheet = e.range.getSheet();
+  if (sheet.getName() !== SHEET_NAME || e.range.getLastRow() < 2 ||
+      e.range.getColumn() > 4 || e.range.getLastColumn() < 3) return;
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(10000)) return;
+  try {
+    trySortReservations(sheet);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function onEdit(e) {
+  sortReservationsOnEdit(e);
 }
 
 // ==================== FUNCIONES AUXILIARES ====================

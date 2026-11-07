@@ -19,7 +19,7 @@ function row(overrides = {}) {
 }
 
 function backend(bookings = [row()]) {
-  const state = { rows: [['headers'], ...bookings], emails: [], writes: 0, locked: false };
+  const state = { rows: [['headers'], ...bookings], emails: [], writes: 0, locked: false, sorts: 0 };
   const sheet = {
     getDataRange: () => ({ getValues: () => state.rows.map(values => [...values]) }),
     getLastRow: () => state.rows.length,
@@ -59,6 +59,7 @@ function backend(bookings = [row()]) {
   });
   vm.runInContext(backendCode, ctx);
   ctx.getSheet = () => sheet;
+  ctx.trySortReservations = () => { state.sorts++; return true; };
   ctx.sendWhatsappReservationConfirmation = () => ({ success: true });
   return {
     state, ctx,
@@ -90,6 +91,7 @@ test('move preserves ID and metadata, releases old slot, and emails original add
   assert.equal(result.reservaId, id);
   assert.equal(api.state.rows.length, 2);
   assert.equal(api.state.writes, 1);
+  assert.equal(api.state.sorts, 1);
   const after = [...api.state.rows[1]];
   for (const index of [2, 3, 15]) after[index] = before[index];
   assert.deepEqual(after, before);

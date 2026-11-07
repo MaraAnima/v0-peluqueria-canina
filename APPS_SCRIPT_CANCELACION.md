@@ -25,6 +25,10 @@ La fuente de verdad para pegar en Google Apps Script es:
 - Una reagenda libera el turno anterior y mueve tambien el bloqueo de deslanado.
 - Las citas canceladas o ya iniciadas no se pueden reagendar.
 - Envia la confirmacion del cambio al email original de la reserva.
+- Ordena las filas completas por fecha y hora despues de reservar o reagendar.
+- El evento `onEdit` del proyecto vinculado ordena tambien cuando se editen
+  manualmente las columnas Fecha u Hora. No requiere instalar disparadores.
+- `ordenarReservasPorFecha` permite ordenar las filas ya cargadas desde el editor.
 - Responde `EVENT_RECEIVED` para POSTs de Meta que no sean reservas.
 
 ## Reagendar por ID
