@@ -210,7 +210,7 @@ test('invalid, past, holiday, elapsed and out-of-schedule slots are rejected wit
   for (const [fecha, hora] of [
     ['2026-02-31', '12:30'], ['2026-11-06', '12:30'], ['2026-12-25', '12:30'],
     ['2026-11-10', '12:00'],
-    ['2026-11-07', '09:00'], ['2026-11-07', '11:00'], ['2026-11-08', '15:00']
+    ['2026-11-07', '09:00'], ['2026-11-07', '12:00'], ['2026-11-08', '15:00']
   ]) {
     const { state, save } = setup();
     save(booking({ fecha, hora }));
@@ -218,6 +218,16 @@ test('invalid, past, holiday, elapsed and out-of-schedule slots are rejected wit
     assert.equal(state.confirmations.length, 0);
     assert.equal(state.locked, false);
   }
+});
+
+test('WhatsApp offers Saturday 11:00 and deslanado blocks the following slot', () => {
+  const { ctx, state, save } = setup();
+  const data = booking({ fecha: '2026-11-14', hora: '11:00', servicio: 'Bano + deslanado' });
+  assert.deepEqual(Array.from(ctx.trAvailableReservationSlots_(data, data.fecha)), ['09:00', '11:00']);
+  save(data);
+  assert.equal(state.rows[1][3], '11:00');
+  assert.equal(state.rows[1][15], '13:00');
+  assert.deepEqual(Array.from(ctx.getAvailableSlots(data.fecha)), ['09:00']);
 });
 
 test('failed lock or sheet write never confirms a booking or leaves the lock held', () => {

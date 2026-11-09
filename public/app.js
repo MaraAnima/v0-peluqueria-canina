@@ -129,7 +129,7 @@ const STEPS = [
 const SMALL_MEDIUM_TIME_SLOT = '12:30';
 const WEEKDAY_TIME_SLOTS = [SMALL_MEDIUM_TIME_SLOT, '14:00', '16:00'];
 const SMALL_MEDIUM_SLOT_MESSAGE = 'El turno de las 12:30 es solo para perros chicos o medianos.';
-const SATURDAY_TIME_SLOTS = ['09:00', '13:00'];
+const SATURDAY_TIME_SLOTS = ['09:00', '11:00', '13:00'];
 const SUNDAY_TIME_SLOTS = ['09:00', '11:00', '13:00'];
 const BLOCKED_DATES = new Set(['01-01', '05-01', '07-18', '08-25', '12-25']);
 

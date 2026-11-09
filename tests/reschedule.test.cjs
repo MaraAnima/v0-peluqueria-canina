@@ -183,8 +183,20 @@ test('ordinary booking, cancellation, and weekend schedules still work', () => {
   const createdId = api.state.rows[1][0];
   assert.equal(api.get({ action: 'cancelar', id: createdId }).success, true);
   assert.deepEqual(api.get({ fecha: '2026-11-10' }).horarios, ['12:30', '14:00', '16:00']);
-  assert.deepEqual(api.get({ fecha: '2026-11-14' }).horarios, ['09:00', '13:00']);
+  assert.deepEqual(api.get({ fecha: '2026-11-14' }).horarios, ['09:00', '11:00', '13:00']);
   assert.deepEqual(api.get({ fecha: '2026-11-15' }).horarios, ['09:00', '11:00', '13:00']);
+});
+
+test('Saturday 11:00 is available for bookings and rescheduling', () => {
+  const booked = backend([]);
+  const result = booked.post({ nombre: 'Test', telefono: 'test', fecha: '2026-11-14', hora: '11:00',
+    servicio: 'Bano', tamano: 'RG', pelaje: 'Pelo corto', nombreMascota: 'Test' });
+  assert.equal(result.success, true);
+  assert.deepEqual(booked.get({ fecha: '2026-11-14' }).horarios, ['09:00', '13:00']);
+
+  const moved = backend();
+  assert.ok(moved.get({ action: 'consultarReagenda', id, fecha: '2026-11-14' }).horarios.includes('11:00'));
+  assert.equal(moved.move({ fecha: '2026-11-14', hora: '11:00' }).success, true);
 });
 
 test('weekday 12:30 and 14:00 can both be booked unless the service needs the next slot', () => {
@@ -256,6 +268,15 @@ test('booking UI offers 12:30 only for eligible sizes and explains why', async (
   assert.doesNotMatch(container.innerHTML, /selectTime\('12:30'\)/);
   app.ctx.selectTime('12:30');
   assert.equal(vm.runInContext('bookingData.time', app.ctx), null);
+});
+
+test('booking UI offers all three Saturday times', async () => {
+  const app = frontend(async () => ({ json: async () => ({ horarios: ['09:00', '11:00', '13:00'] }) }));
+  vm.runInContext("currentStep = 6; bookingData.size = { size: 'RG' };", app.ctx);
+  await app.ctx.selectDate(2030, 10, 16);
+  assert.deepEqual(Array.from(app.ctx.getSelectableSlots()), ['09:00', '11:00', '13:00']);
+  app.ctx.selectTime('11:00');
+  assert.equal(vm.runInContext('bookingData.time', app.ctx), '11:00');
 });
 
 test('frontend discards late availability responses', async () => {
