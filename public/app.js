@@ -4,6 +4,16 @@ const CATEGORIES = [
   { id: 'pelo-largo', name: 'Pelo largo', image: 'images/pelo-largo.jpg' }
 ];
 
+const PET_BREEDS = [
+  'Mestizo', 'Beagle', 'Bichón frisé', 'Border collie', 'Bóxer',
+  'Bulldog francés', 'Bulldog inglés', 'Caniche', 'Chihuahua',
+  'Cocker spaniel', 'Dálmata', 'Doberman', 'Dogo argentino',
+  'Golden retriever', 'Husky siberiano', 'Jack Russell terrier',
+  'Labrador retriever', 'Maltés', 'Pastor alemán', 'Pequinés', 'Pitbull',
+  'Pomerania', 'Pug', 'Rottweiler', 'Salchicha (Dachshund)', 'Schnauzer',
+  'Shar pei', 'Shih tzu', 'Yorkshire terrier', 'Otra raza'
+];
+
 // Tipos de servicio
 const SERVICE_TYPES = [
   { id: 'bano', name: 'Baño', description: 'Baño completo con secado' },
@@ -206,6 +216,7 @@ let bookingData = {
   date: null,
   time: null,
   petName: '',
+  petBreed: '',
   petNotes: ''
 };
 
@@ -349,6 +360,7 @@ function resetBooking() {
     date: null,
     time: null,
     petName: '',
+    petBreed: '',
     petNotes: ''
   };
   showScreen('home-screen');
@@ -369,6 +381,10 @@ function renderStep() {
     case 6: renderDateTimeStep(content); break;
     case 7: renderPetStep(content); break;
     case 8: renderSummaryStep(content); break;
+  }
+
+  if (window.matchMedia('(max-width: 600px)').matches) {
+    window.scrollTo(0, 0);
   }
 
   // Animate
@@ -400,8 +416,9 @@ function renderProgressSteps() {
     const completedValue = completedValues[step.id];
 
     const stepHtml = `
-      <div class="${className}">
+      <div class="${className}"${isActive ? ' aria-current="step"' : ''}>
         <div class="step-item-content">
+          ${isActive ? `<span class="step-position">Paso ${step.id} de ${STEPS.length}</span>` : ''}
           <div class="step-header">
             ${isCompleted ? `
               <svg class="step-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
@@ -442,36 +459,36 @@ function renderContactStep(container) {
     <p class="step-subtitle">Contanos cómo podemos contactarte</p>
     
     <div class="form-group">
-      <label class="form-label">Tu nombre <span style="color: #ef4444;">*</span></label>
+      <label class="form-label" for="client-name">Tu nombre <span style="color: #ef4444;">*</span></label>
       <div class="input-icon-wrapper">
         <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
           <circle cx="12" cy="7" r="4"/>
         </svg>
-        <input type="text" class="form-input" id="client-name" placeholder="Ej: María García (más de 3 letras, sin números)" value="${bookingData.clientName}">
+        <input type="text" class="form-input" id="client-name" name="name" autocomplete="name" placeholder="Ej: María García" value="${bookingData.clientName}">
       </div>
     </div>
     
     <div class="form-group">
-      <label class="form-label">Tu teléfono <span style="color: #ef4444;">*</span></label>
+      <label class="form-label" for="client-phone">Tu teléfono <span style="color: #ef4444;">*</span></label>
       <div class="input-icon-wrapper">
         <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
         </svg>
-        <input type="tel" class="form-input" id="client-phone" placeholder="Ej: 094719944 (mínimo 6 dígitos)" value="${bookingData.clientPhone}">
+        <input type="tel" class="form-input" id="client-phone" name="tel" autocomplete="tel" placeholder="Ej: 094 719 944" value="${bookingData.clientPhone}">
       </div>
     </div>
 
     <div class="form-group">
-      <label class="form-label">Tu email <span style="color: #ef4444;">*</span></label>
+      <label class="form-label" for="client-email">Tu email <span style="color: #ef4444;">*</span></label>
       <div class="input-icon-wrapper">
         <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
           <polyline points="22,6 12,13 2,6"/>
         </svg>
-        <input type="email" class="form-input" id="client-email" placeholder="Ej: maria@correo.com" value="${bookingData.clientEmail}">
+        <input type="email" class="form-input" id="client-email" name="email" autocomplete="email" autocapitalize="none" aria-describedby="client-email-hint" placeholder="Ej: maria@correo.com" value="${bookingData.clientEmail}">
       </div>
-      <p class="form-hint">Te enviaremos la confirmación y el ID de reserva a este correo.</p>
+      <p class="form-hint" id="client-email-hint">Te enviaremos la confirmación y el ID de reserva a este correo.</p>
     </div>
     
     <button class="continue-btn" onclick="saveContactAndNext()">Continuar</button>
@@ -991,7 +1008,7 @@ function renderPetStep(container) {
     <p class="step-subtitle">Queremos conocer mejor a tu mascota</p>
     
     <div class="form-group">
-      <label class="form-label">¿Cómo se llama tu mascota? <span style="color: #ef4444;">*</span></label>
+      <label class="form-label" for="pet-name">¿Cómo se llama tu mascota? <span style="color: #ef4444;">*</span></label>
       <div class="input-icon-wrapper">
         <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2a4 4 0 0 1 4 4c0 1.5-.8 2.8-2 3.5v1l3 3.5c.7.8 1 1.9 1 3v3H6v-3c0-1.1.3-2.2 1-3l3-3.5v-1c-1.2-.7-2-2-2-3.5a4 4 0 0 1 4-4z"/>
@@ -1001,7 +1018,15 @@ function renderPetStep(container) {
     </div>
     
     <div class="form-group">
-      <label class="form-label">¿Hay algo que debamos saber? <span style="color: var(--text-muted); font-weight: normal;">(opcional)</span></label>
+      <label class="form-label" for="pet-breed">Raza <span style="color: var(--text-muted); font-weight: normal;">(opcional)</span></label>
+      <select class="form-input" id="pet-breed" name="pet-breed">
+        <option value="">Elegí una raza</option>
+        ${PET_BREEDS.map(breed => `<option value="${breed}"${bookingData.petBreed === breed ? ' selected' : ''}>${breed}</option>`).join('')}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="pet-notes">¿Hay algo que debamos saber? <span style="color: var(--text-muted); font-weight: normal;">(opcional)</span></label>
       <textarea class="form-textarea" id="pet-notes" placeholder="Contanos si tiene algún miedo, alergia, o algo especial que debamos tener en cuenta...">${bookingData.petNotes}</textarea>
     </div>
     
@@ -1011,6 +1036,7 @@ function renderPetStep(container) {
 
 function savePetAndNext() {
   const name = document.getElementById('pet-name').value.trim();
+  const breed = document.getElementById('pet-breed').value;
   const notes = document.getElementById('pet-notes').value.trim();
 
   if (!name) {
@@ -1019,6 +1045,7 @@ function savePetAndNext() {
   }
 
   bookingData.petName = name;
+  bookingData.petBreed = PET_BREEDS.includes(breed) ? breed : '';
   bookingData.petNotes = notes;
   nextStep();
 }
@@ -1070,6 +1097,12 @@ function renderSummaryStep(container) {
         <span class="summary-label">Nombre</span>
         <span class="summary-value">${bookingData.petName}</span>
       </div>
+      ${bookingData.petBreed ? `
+        <div class="summary-row">
+          <span class="summary-label">Raza</span>
+          <span class="summary-value">${bookingData.petBreed}</span>
+        </div>
+      ` : ''}
       <div class="summary-row">
         <span class="summary-label">Tipo de pelo</span>
         <span class="summary-value">${bookingData.category?.name}</span>
@@ -1238,7 +1271,7 @@ async function confirmBooking() {
       tamano: bookingData.size?.size || '',
       pelaje: bookingData.category?.name || '',
       nombreMascota: bookingData.petName,
-      notasMascota: bookingData.petNotes,
+      notasMascota: [bookingData.petBreed && `Raza: ${bookingData.petBreed}`, bookingData.petNotes].filter(Boolean).join('\n'),
       extras: getSelectedExtrasText(),
       deslanado: isDeslanado(),
       corteRaza: isDeslanado() && bookingData.corteRaza,
