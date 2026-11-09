@@ -43,6 +43,23 @@ test('crawling files include only the canonical page and keep public resources a
   assert.ok(read('app/page.tsx').includes("permanentRedirect('/index.html')"));
 });
 
+test('local business metadata and public contact links use the same reservation number', () => {
+  const head = html.slice(0, html.indexOf('</head>'));
+  const markup = head.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+  assert.ok(markup, 'Missing LocalBusiness JSON-LD');
+  const business = JSON.parse(markup[1]);
+  assert.equal(business['@type'], 'LocalBusiness');
+  assert.equal(business.name, 'TR Corte');
+  assert.equal(business.url, canonical);
+  assert.equal(business.address['@type'], 'PostalAddress');
+  assert.equal(business.address.addressCountry, 'UY');
+  assert.equal(business.telephone, '+59897089390');
+  assert.equal(business.openingHoursSpecification, undefined);
+  const chatLink = `href="https://wa.me/${business.telephone.slice(1)}"`;
+  assert.equal(html.split(chatLink).length - 1, 2);
+  assert.ok(html.includes('>097 089 390</a>'));
+});
+
 test('optimized photos and responsive gallery variants exist within a size budget', () => {
   const names = ['cliente-feliz-1', 'cliente-feliz-2', 'cliente-feliz-3',
     'cliente-feliz-4', 'cliente-feliz-5-luna', 'cliente-feliz-6',
