@@ -224,13 +224,28 @@ function getAvailableSlots(fecha, excludedReservationId) {
     .filter(slot => !isPastTimeSlot(fecha, slot));
 }
 
+function reservationBreedColumn(sheet, fixedColumns) {
+  const lastColumn = sheet.getLastColumn();
+  if (lastColumn > fixedColumns) {
+    const headers = sheet.getRange(1, fixedColumns + 1, 1, lastColumn - fixedColumns).getValues()[0];
+    const index = headers.findIndex(header => String(header).trim().toLowerCase() === 'raza');
+    if (index >= 0) return fixedColumns + index + 1;
+  }
+
+  const column = Math.max(lastColumn, fixedColumns) + 1;
+  const maxColumns = sheet.getMaxColumns();
+  if (column > maxColumns) sheet.insertColumnsAfter(maxColumns, column - maxColumns);
+  sheet.getRange(1, column).setValue('Raza');
+  return column;
+}
+
 function saveReservation(data) {
   try {
     const sheet = getSheet();
     const reservaId = generateReservationId();
     const timestamp = new Date().toLocaleString('es-UY', { timeZone: BUSINESS_TIME_ZONE });
 
-    sheet.appendRow([
+    const row = [
       reservaId,
       timestamp,
       data.fecha,
@@ -251,7 +266,15 @@ function saveReservation(data) {
       'Confirmada',
       '',
       reservationCommissionFormula()
-    ]);
+    ];
+
+    const breed = typeof data.razaMascota === 'string' ? data.razaMascota.trim() : '';
+    if (breed && breed.length <= 80 && !/^[=+@-]|[\r\n]/.test(breed)) {
+      const breedColumn = reservationBreedColumn(sheet, row.length);
+      while (row.length < breedColumn) row.push('');
+      row[breedColumn - 1] = breed;
+    }
+    sheet.appendRow(row);
     const ultimaFila = sheet.getLastRow();
 
 if (String(sheet.getRange(ultimaFila, 2).getValue()).trim().toLowerCase() === 'cancelada') {
