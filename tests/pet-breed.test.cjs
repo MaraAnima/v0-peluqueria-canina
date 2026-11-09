@@ -25,14 +25,18 @@ function bookingForm() {
       sent.push(JSON.parse(options.body));
       return { json: async () => ({ error: 'Stopped by test' }) };
     }
-    return { json: async () => ({ horarios: ['12:00'] }) };
+    return { json: async () => ({ horarios: ['12:30'] }) };
   };
   const ctx = vm.createContext({ Date, document, fetch, console });
   vm.runInContext(source, ctx);
   ctx.nextStep = () => {};
   ctx.showModal = () => {};
   const data = vm.runInContext('bookingData', ctx);
-  Object.assign(data, { date: new Date(2030, 10, 11, 12), time: '12:00' });
+  Object.assign(data, {
+    date: new Date(2030, 10, 11, 12),
+    time: '12:30',
+    size: vm.runInContext("SIZES.find(size => size.id === 'bano-rp')", ctx),
+  });
   document.getElementById('pet-name').value = 'Luna';
   return { ctx, data, document, sent };
 }

@@ -11,7 +11,7 @@ const frontendCode = fs.readFileSync(path.join(root, 'public/app.js'), 'utf8');
 const id = 'TR-TEST-001';
 
 function row(overrides = {}) {
-  const values = [id, 'created', '2026-11-10', '12:00', 'Cliente de prueba',
+  const values = [id, 'created', '2026-11-10', '12:30', 'Cliente de prueba',
     'test', 'Bano', 'RP', 'Pelo corto', 'Mascota de prueba', '', '1 h', 720,
     'Perfume', 'NO', '', 'original@example.invalid', 'Confirmada'];
   for (const [index, value] of Object.entries(overrides)) values[index] = value;
@@ -66,7 +66,7 @@ function backend(bookings = [row()]) {
     get: params => JSON.parse(ctx.doGet({ parameter: params }).getContent()),
     post: data => JSON.parse(ctx.doPost({ postData: { contents: JSON.stringify(data) } }).getContent()),
     move: changes => JSON.parse(ctx.doPost({ postData: { contents: JSON.stringify({
-      action: 'reagendar', id, fechaActual: '2026-11-10', horaActual: '12:00',
+      action: 'reagendar', id, fechaActual: '2026-11-10', horaActual: '12:30',
       fecha: '2026-11-11', hora: '14:00', ...changes
     }) } }).getContent())
   };
@@ -95,7 +95,7 @@ test('move preserves ID and metadata, releases old slot, and emails original add
   const after = [...api.state.rows[1]];
   for (const index of [2, 3, 15]) after[index] = before[index];
   assert.deepEqual(after, before);
-  assert.ok(Array.from(api.ctx.getAvailableSlots('2026-11-10')).includes('12:00'));
+  assert.ok(Array.from(api.ctx.getAvailableSlots('2026-11-10')).includes('12:30'));
   assert.ok(!Array.from(api.ctx.getAvailableSlots('2026-11-11')).includes('14:00'));
   assert.equal(api.state.emails[0].to, 'original@example.invalid');
   assert.match(api.state.emails[0].htmlBody, /11\/11\/2026/);
@@ -105,25 +105,25 @@ test('move preserves ID and metadata, releases old slot, and emails original add
 test('same-day availability ignores only the matching appointment', () => {
   const api = backend([row(), row({ 0: 'TR-OTHER-001', 3: '16:00' })]);
   const available = api.get({ action: 'consultarReagenda', id, fecha: '2026-11-10' }).horarios;
-  assert.deepEqual(available, ['12:00', '14:00']);
+  assert.deepEqual(available, ['12:30', '14:00']);
   assert.equal(api.move({ fecha: '2026-11-10' }).success, true);
 });
 
 test('deslanado moves both slots and cannot be downgraded by the request', () => {
   const api = backend([row({ 14: 'SI', 15: '14:00' })]);
-  const result = api.move({ hora: '12:00', deslanado: false });
+  const result = api.move({ hora: '12:30', deslanado: false });
   assert.equal(result.success, true);
   assert.equal(api.state.rows[1][14], 'SI');
   assert.equal(api.state.rows[1][15], '14:00');
   assert.deepEqual(Array.from(api.ctx.getAvailableSlots('2026-11-11')), ['16:00']);
-  assert.deepEqual(Array.from(api.ctx.getAvailableSlots('2026-11-10')), ['12:00', '14:00', '16:00']);
+  assert.deepEqual(Array.from(api.ctx.getAvailableSlots('2026-11-10')), ['12:30', '14:00', '16:00']);
 });
 
 test('failed validation never releases the old booking or sends email', () => {
   for (const changes of [
     { fecha: '2027-02-30' }, { fecha: '2026-12-25' }, { fecha: '2026-11-06' },
     { fecha: '2026-11-07', hora: '09:00' }, { hora: '11:00' }, { hora: '25:00' },
-    { fecha: '2026-11-10', hora: '12:00' }, { fechaActual: '2026-11-09' }
+    { fecha: '2026-11-10', hora: '12:30' }, { fechaActual: '2026-11-09' }
   ]) {
     const api = backend();
     const before = structuredClone(api.state.rows);
@@ -154,7 +154,7 @@ test('POST rechecks a slot taken after loading availability', () => {
 
 test('deslanado rejects last slot and an occupied following slot', () => {
   const api = backend([row({ 14: 'SI', 15: '14:00' }), row({ 0: 'TR-OTHER-001', 2: '2026-11-11', 3: '14:00' })]);
-  assert.equal(api.move({ hora: '12:00' }).code, 'HORARIO_OCUPADO');
+  assert.equal(api.move({ hora: '12:30' }).code, 'HORARIO_OCUPADO');
   assert.equal(api.move({ hora: '16:00' }).code, 'HORARIO_OCUPADO');
   assert.equal(api.state.writes, 0);
 });
@@ -177,14 +177,52 @@ test('sheet and email failures do not create duplicate appointments', () => {
 test('ordinary booking, cancellation, and weekend schedules still work', () => {
   const api = backend([]);
   const created = api.post({ nombre: 'Test', telefono: 'test', email: 'test@example.invalid',
-    fecha: '2026-11-10', hora: '12:00', servicio: 'Bano', tamano: 'RP',
+    fecha: '2026-11-10', hora: '12:30', servicio: 'Bano', tamano: 'RP',
     pelaje: 'Pelo corto', nombreMascota: 'Test' });
   assert.equal(created.success, true, JSON.stringify(created));
   const createdId = api.state.rows[1][0];
   assert.equal(api.get({ action: 'cancelar', id: createdId }).success, true);
-  assert.deepEqual(api.get({ fecha: '2026-11-10' }).horarios, ['12:00', '14:00', '16:00']);
+  assert.deepEqual(api.get({ fecha: '2026-11-10' }).horarios, ['12:30', '14:00', '16:00']);
   assert.deepEqual(api.get({ fecha: '2026-11-14' }).horarios, ['09:00', '13:00']);
   assert.deepEqual(api.get({ fecha: '2026-11-15' }).horarios, ['09:00', '11:00', '13:00']);
+});
+
+test('weekday 12:30 and 14:00 can both be booked unless the service needs the next slot', () => {
+  const fecha = '2026-11-10';
+  for (const [occupied, remaining] of [['12:30', '14:00'], ['14:00', '12:30']]) {
+    const api = backend([row({ 3: occupied })]);
+    assert.deepEqual(api.get({ fecha }).horarios, [remaining, '16:00']);
+  }
+});
+
+test('old or manual weekday reservations still protect overlapping new slots', () => {
+  const fecha = '2026-11-10';
+  const oldStart = backend([row({ 3: '12:00' })]);
+  assert.deepEqual(oldStart.get({ fecha }).horarios, ['14:00', '16:00']);
+  const offGrid = backend([row({ 3: '13:00' })]);
+  assert.deepEqual(offGrid.get({ fecha }).horarios, ['16:00']);
+  assert.equal(offGrid.state.rows[1][3], '13:00');
+});
+
+test('web booking accepts only small and medium dogs at 12:30', () => {
+  for (const [tamano, allowed] of [['RP', true], ['RM', true], ['Chico', true], ['Mediano', true],
+    ['RG', false], ['Grande', false], ['Desconocido', false]]) {
+    const api = backend([]);
+    const result = api.post({ nombre: 'Test', telefono: 'test', fecha: '2026-11-10', hora: '12:30',
+      servicio: 'Bano', tamano, pelaje: 'Pelo corto', nombreMascota: 'Test' });
+    if (allowed) assert.equal(result.success, true, tamano);
+    else assert.match(result.error, /solo para perros chicos o medianos/);
+    assert.equal(api.state.rows.length, allowed ? 2 : 1);
+  }
+});
+
+test('web rescheduling uses the saved size for eligibility, not the request', () => {
+  const api = backend([row({ 3: '14:00', 7: 'RG' })]);
+  assert.deepEqual(api.get({ action: 'consultarReagenda', id, fecha: '2026-11-11' }).horarios, ['14:00', '16:00']);
+  const rejected = api.move({ horaActual: '14:00', hora: '12:30', tamano: 'RP' });
+  assert.match(rejected.error, /solo para perros chicos o medianos/);
+  assert.equal(api.state.writes, 0);
+  assert.equal(api.move({ horaActual: '14:00', fecha: '2026-11-14', hora: '09:00' }).success, true);
 });
 
 function frontend(fetch) {
@@ -204,6 +242,22 @@ function frontend(fetch) {
   return { ctx, document, state: () => vm.runInContext('rescheduleState', ctx) };
 }
 
+test('booking UI offers 12:30 only for eligible sizes and explains why', async () => {
+  const app = frontend(async () => ({ json: async () => ({ horarios: ['12:00', '12:30', '14:00', '16:00'] }) }));
+  vm.runInContext("currentStep = 6; bookingData.size = { size: 'RM' };", app.ctx);
+  await app.ctx.selectDate(2030, 10, 12);
+  const container = app.document.getElementById('step-content');
+  assert.deepEqual(Array.from(app.ctx.getSelectableSlots()), ['12:30', '14:00', '16:00']);
+  assert.match(container.innerHTML, /solo para perros chicos o medianos/);
+  app.ctx.selectTime('12:30');
+  vm.runInContext("bookingData.size = { size: 'RG' };", app.ctx);
+  app.ctx.renderDateTimeStep(container);
+  assert.deepEqual(Array.from(app.ctx.getSelectableSlots()), ['14:00', '16:00']);
+  assert.doesNotMatch(container.innerHTML, /selectTime\('12:30'\)/);
+  app.ctx.selectTime('12:30');
+  assert.equal(vm.runInContext('bookingData.time', app.ctx), null);
+});
+
 test('frontend discards late availability responses', async () => {
   const pending = [];
   const app = frontend(() => new Promise(resolve => pending.push(resolve)));
@@ -215,7 +269,7 @@ test('frontend discards late availability responses', async () => {
   const second = app.ctx.selectRescheduleDate(2030, 10, 12);
   pending[1]({ json: async () => ({ success: true, reserva: state.reservation, fecha: '2030-11-12', horarios: ['14:00'] }) });
   await second;
-  pending[0]({ json: async () => ({ success: true, reserva: state.reservation, fecha: '2030-11-11', horarios: ['12:00'] }) });
+  pending[0]({ json: async () => ({ success: true, reserva: state.reservation, fecha: '2030-11-11', horarios: ['12:30'] }) });
   await first;
   assert.deepEqual(Array.from(state.slots), ['14:00']);
   assert.match(app.document.getElementById('reschedule-content').innerHTML, /&lt;img/);

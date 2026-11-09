@@ -9,7 +9,8 @@ La fuente de verdad para pegar en Google Apps Script es:
 - Validacion de webhook Meta / WhatsApp con el token `5WtuSqoYeO4LKk1CQT2Xdwn0D3F8`.
 - Reservas por Google Sheets en la hoja `Reservas`.
 - Horarios:
-  - Lunes a viernes (incluidos los martes): `12:00`, `14:00`, `16:00`.
+  - Lunes a viernes (incluidos los martes): `12:30`, `14:00`, `16:00`.
+  - El turno de `12:30` solo admite perros chicos o medianos al reservar o reagendar, por web o WhatsApp.
   - Sabados: `09:00`, `13:00`.
   - Domingos: `09:00`, `11:00`, `13:00`.
 - Dias bloqueados todos los anos: `01-01`, `05-01`, `07-18`, `08-25`, `12-25`.

@@ -126,12 +126,11 @@ const STEPS = [
 ];
 
 // Horarios disponibles (deben coincidir con AppScript)
-// Cada cita dura 2 horas, asi que los slots son cada 2 horas
-const WEEKDAY_TIME_SLOTS = ['12:00', '14:00', '16:00'];
+const SMALL_MEDIUM_TIME_SLOT = '12:30';
+const WEEKDAY_TIME_SLOTS = [SMALL_MEDIUM_TIME_SLOT, '14:00', '16:00'];
+const SMALL_MEDIUM_SLOT_MESSAGE = 'El turno de las 12:30 es solo para perros chicos o medianos.';
 const SATURDAY_TIME_SLOTS = ['09:00', '13:00'];
 const SUNDAY_TIME_SLOTS = ['09:00', '11:00', '13:00'];
-const TIME_SLOTS = WEEKDAY_TIME_SLOTS;
-const SLOT_DURATION_HOURS = 2; // Duracion de cada cita en horas
 const BLOCKED_DATES = new Set(['01-01', '05-01', '07-18', '08-25', '12-25']);
 
 function getDateKey(date) {
@@ -184,19 +183,7 @@ function filterPastTimeSlotsForDate(slots, date) {
 }
 
 function getCompatibleSlotsFromResponse(data, dateSlots) {
-  if (!Array.isArray(data?.horarios)) {
-    return filterPastTimeSlotsForDate([...dateSlots], bookingData.date);
-  }
-
-  const compatibleSlots = data.horarios.filter(time => dateSlots.includes(time));
-
-  // El Apps Script actualizado devuelve success:true. Si no viene, probablemente
-  // sigue publicada una version vieja con horarios anteriores.
-  if (data.success !== true && compatibleSlots.length === 0 && dateSlots.length > 0) {
-    return filterPastTimeSlotsForDate([...dateSlots], bookingData.date);
-  }
-
-  return filterPastTimeSlotsForDate(compatibleSlots, bookingData.date);
+  return Array.isArray(data?.horarios) ? data.horarios.filter(time => dateSlots.includes(time)) : [];
 }
 
 // URL del AppScript - REEMPLAZAR CON TU URL
@@ -348,6 +335,8 @@ function nextStep() {
 
 function resetBooking() {
   currentStep = 1;
+  availableTimeSlots = [];
+  isLoadingSlots = false;
   bookingData = {
     extraIds: [],
     clientName: '',
@@ -861,16 +850,17 @@ function renderCalendar(monthDate, selectedDate, monthHandler, dateHandler) {
 
 function renderDateTimeStep(container) {
   if (currentStep !== 6) return;
+  const selectableSlots = getSelectableSlots();
+  if (!selectableSlots.includes(bookingData.time)) bookingData.time = null;
   container.innerHTML = `
     <h2 class="step-title">Fecha y hora</h2>
     <p class="step-subtitle">¿Cuándo te gustaría venir?</p>
     ${renderCalendar(currentMonth, bookingData.date, 'changeMonth', 'selectDate')}
-    ${bookingData.date ? (() => {
-      const selectableSlots = getSelectableSlots();
-      return `
+    ${bookingData.date ? `
       <h3 style="margin: 20px 0 12px; font-family: 'Fredoka', sans-serif; font-size: 1.1rem;">Horarios disponibles</h3>
+      ${getSelectedDateSlots().includes(SMALL_MEDIUM_TIME_SLOT) ? `<p class="slot-hint">${SMALL_MEDIUM_SLOT_MESSAGE}</p>` : ''}
       ${isDeslanado() ? `
-        <p style="margin: 0 0 12px; color: var(--text-muted); font-size: 0.85rem;">Con el servicio de Bano y Deslanado se reserva tambien el turno siguiente, por lo que el ultimo horario del dia no esta disponible.</p>
+        <p class="slot-hint">Con el servicio de Baño y Deslanado se reserva también el turno siguiente, por lo que el último horario del día no está disponible.</p>
       ` : ''}
       <div class="time-slots">
         ${isLoadingSlots
@@ -885,10 +875,9 @@ function renderDateTimeStep(container) {
           )
         }
       </div>
-    `;
-    })() : ''}
+    ` : ''}
     
-    <button class="continue-btn" onclick="nextStep()" ${!bookingData.date || !bookingData.time ? 'disabled' : ''}>
+    <button class="continue-btn" onclick="nextStep()" ${isLoadingSlots || !bookingData.time ? 'disabled' : ''}>
       Continuar
     </button>
   `;
@@ -900,20 +889,13 @@ function changeMonth(delta) {
   renderDateTimeStep(document.getElementById('step-content'));
 }
 
-// Devuelve los horarios que el cliente realmente puede elegir.
-// Si pidio deslanado, el turno ocupa 2 horas extra (el turno siguiente),
-// por lo que solo se permiten horarios cuyo turno siguiente tambien este libre,
-// y nunca el ultimo turno del dia.
-function getSelectableSlots() {
-  const futureSlots = filterPastTimeSlotsForDate(availableTimeSlots, bookingData.date);
-  if (!isDeslanado()) return futureSlots;
-
+// Para deslanado, el turno siguiente tiene que existir y estar libre.
+function getSelectableSlots(slots = availableTimeSlots) {
   const dateSlots = getSelectedDateSlots();
+  const futureSlots = filterPastTimeSlotsForDate(slots.filter(time => dateSlots.includes(time)), bookingData.date);
   return futureSlots.filter(slot => {
-    const idx = dateSlots.indexOf(slot);
-    const nextSlot = dateSlots[idx + 1];
-    // Debe existir un turno siguiente y estar disponible
-    return nextSlot && futureSlots.includes(nextSlot);
+    if (slot === SMALL_MEDIUM_TIME_SLOT && !['RP', 'RM'].includes(bookingData.size?.size)) return false;
+    return !isDeslanado() || futureSlots.includes(dateSlots[dateSlots.indexOf(slot) + 1]);
   });
 }
 
@@ -926,7 +908,7 @@ function getBlockedSlot() {
 }
 
 // Variable para guardar horarios disponibles
-let availableTimeSlots = [...WEEKDAY_TIME_SLOTS];
+let availableTimeSlots = [];
 
 async function selectDate(year, month, day) {
   // Verificar que seguimos en el paso correcto
@@ -952,6 +934,7 @@ async function selectDate(year, month, day) {
   // Cargar horarios disponibles del AppScript
   await loadAvailableSlots();
 
+  if (bookingData.date !== selectedDate) return;
   isLoadingSlots = false;
 
   // Verificar que seguimos en el paso correcto despues de la carga async
@@ -964,8 +947,10 @@ async function selectDate(year, month, day) {
 }
 
 async function loadAvailableSlots() {
+  const selectedDate = bookingData.date;
+  availableTimeSlots = [];
   try {
-    const fecha = bookingData.date.toISOString().split('T')[0];
+    const fecha = `${selectedDate.getFullYear()}-${getDateKey(selectedDate)}`;
     const dateSlots = getSelectedDateSlots();
     const url = `${SCRIPT_URL}?fecha=${encodeURIComponent(fecha)}`;
 
@@ -982,21 +967,17 @@ async function loadAvailableSlots() {
     const data = await response.json();
     console.log('[v0] Data recibida:', data);
 
-    if (Array.isArray(data.horarios)) {
+    if (bookingData.date === selectedDate) {
       availableTimeSlots = getCompatibleSlotsFromResponse(data, dateSlots);
       console.log('[v0] Horarios disponibles:', availableTimeSlots);
-    } else {
-      console.log('[v0] No se encontraron horarios, usando la grilla del dia');
-      availableTimeSlots = [...dateSlots];
     }
   } catch (error) {
     console.error('[v0] Error al cargar horarios:', error);
-    availableTimeSlots = [];
   }
 }
 
 function selectTime(time) {
-  if (currentStep !== 6) return;
+  if (currentStep !== 6 || isLoadingSlots || !getSelectableSlots().includes(time)) return;
   bookingData.time = time;
   renderDateTimeStep(document.getElementById('step-content'));
 }
@@ -1234,21 +1215,19 @@ async function confirmBooking() {
 
   try {
     // Formatear fecha para AppScript (YYYY-MM-DD)
-    const fecha = bookingData.date.toISOString().split('T')[0];
+    const fecha = `${bookingData.date.getFullYear()}-${getDateKey(bookingData.date)}`;
 
     // PASO 1: Verificar que el horario sigue disponible antes de enviar
     btn.textContent = 'Verificando horario...';
     const checkUrl = `${SCRIPT_URL}?fecha=${encodeURIComponent(fecha)}`;
     const checkResponse = await fetch(checkUrl);
     const checkData = await checkResponse.json();
-    const checkSlots = filterPastTimeSlotsForDate(
-      getCompatibleSlotsFromResponse(checkData, getSelectedDateSlots()),
-      bookingData.date
-    );
+    const checkSlots = getSelectableSlots(getCompatibleSlotsFromResponse(checkData, getSelectedDateSlots()));
 
     if (!checkSlots.includes(bookingData.time)) {
       // El horario ya no esta disponible
-      showModal('Lo sentimos, el horario ' + bookingData.time + ' ya fue reservado por otra persona. Por favor elige otro horario.', 'warning', 'Horario no disponible');
+      showModal('El horario ' + bookingData.time + ' no está disponible para este turno. Elegí otro horario.', 'warning', 'Horario no disponible');
+      bookingData.time = null;
       btn.textContent = originalText;
       btn.disabled = false;
       // Volver al paso de fecha/hora para elegir otro
@@ -1513,7 +1492,8 @@ function renderReschedule() {
       ${renderCalendar(state.month, state.date, 'changeRescheduleMonth', 'selectRescheduleDate')}
       ${state.date ? `
         <h3 class="reschedule-slots-title">Horarios disponibles</h3>
-        ${reservation.deslanado ? '<p class="reschedule-hint">El deslanado también ocupa el turno siguiente.</p>' : ''}
+        ${getTimeSlotsByDate(state.date).includes(SMALL_MEDIUM_TIME_SLOT) ? `<p class="slot-hint">${SMALL_MEDIUM_SLOT_MESSAGE}</p>` : ''}
+        ${reservation.deslanado ? '<p class="slot-hint">El deslanado también ocupa el turno siguiente.</p>' : ''}
         <div class="time-slots">
           ${state.loading ? '<p class="reschedule-slot-status" role="status">Cargando horarios...</p>'
           : slots.length ? slots.map(time => `

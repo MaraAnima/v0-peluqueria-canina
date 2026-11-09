@@ -1,8 +1,10 @@
 // ==================== CONFIGURACION ====================
 const SPREADSHEET_ID = '11rzRToVwRoBOVNr-G0KYV7gi_NCUEmBG2UsMhydc3Cg';
 const SHEET_NAME = 'Reservas';
-const TIME_SLOTS_WEEKDAY = ['12:00', '14:00', '16:00'];
-const WEEKDAY_SLOT_MINUTES = 120;
+const SMALL_MEDIUM_TIME_SLOT = '12:30';
+const TIME_SLOTS_WEEKDAY = [SMALL_MEDIUM_TIME_SLOT, '14:00', '16:00'];
+const SMALL_MEDIUM_SLOT_MESSAGE = 'El turno de las 12:30 es solo para perros chicos o medianos.';
+const LEGACY_WEEKDAY_SLOT_MINUTES = 120;
 const TIME_SLOTS_SATURDAY = ['09:00', '13:00'];
 const TIME_SLOTS_SUNDAY = ['09:00', '11:00', '13:00'];
 const BLOCKED_DATES = ['01-01', '05-01', '07-18', '08-25', '12-25'];
@@ -77,6 +79,10 @@ function doPost(e) {
       if (!data[campo]) {
         return createJsonResponse({ error: 'Campo requerido faltante: ' + campo });
       }
+    }
+
+    if (!isSizeAllowedForSlot(data.hora, data.tamano)) {
+      return createJsonResponse({ error: SMALL_MEDIUM_SLOT_MESSAGE });
     }
 
     const horariosDisponibles = getAvailableSlots(data.fecha);
@@ -214,14 +220,19 @@ function getAvailableSlots(fecha, excludedReservationId) {
     }
   }
 
-  // Keep existing weekday bookings blocked when the schedule shifts.
+  // Current slots block themselves; keep the overlap buffer for off-grid bookings.
   const usesWeekdaySlots = horariosDelDia === TIME_SLOTS_WEEKDAY;
   return horariosDelDia
     .filter(slot => !horariosOcupados.some(hora =>
-      hora === slot || (usesWeekdaySlots &&
-        Math.abs(timeToMinutes(hora) - timeToMinutes(slot)) < WEEKDAY_SLOT_MINUTES)
+      hora === slot || (usesWeekdaySlots && !horariosDelDia.includes(hora) &&
+        Math.abs(timeToMinutes(hora) - timeToMinutes(slot)) < LEGACY_WEEKDAY_SLOT_MINUTES)
     ))
     .filter(slot => !isPastTimeSlot(fecha, slot));
+}
+
+function isSizeAllowedForSlot(hora, tamano) {
+  return hora !== SMALL_MEDIUM_TIME_SLOT ||
+    ['rp', 'rm', 'chico', 'mediano'].includes(trNormalize_(tamano));
 }
 
 function reservationBreedColumn(sheet, fixedColumns) {
@@ -404,7 +415,7 @@ function consultarReagenda(id, fecha) {
       }
       result.fecha = fecha;
       result.horarios = isPastReservationTime(fecha, '23:59') ? [] :
-        getAvailableSlots(fecha, reservation.id);
+        getAvailableSlots(fecha, reservation.id).filter(hora => isSizeAllowedForSlot(hora, reservation.row[7]));
     }
     return createJsonResponse(result);
   } catch (error) {
@@ -429,6 +440,10 @@ function reagendarReserva(data) {
   }
   if (fecha === reservation.fecha && hora === reservation.hora) {
     return createJsonResponse({ error: 'Elegi una fecha u hora diferente a la cita actual.' });
+  }
+
+  if (!isSizeAllowedForSlot(hora, reservation.row[7])) {
+    return createJsonResponse({ error: SMALL_MEDIUM_SLOT_MESSAGE });
   }
 
   const available = getAvailableSlots(fecha, reservation.id);
@@ -1460,6 +1475,7 @@ function trStartRescheduleFromWhatsapp_(conversationId, phone, id) {
       fechaActual: reservation.fecha,
       horaActual: reservation.hora,
       servicio: String(reservation.row[6] || ""),
+      tamano: reservation.row[7],
       deslanado: reservation.row[14] === "SI"
     };
     trSendAutomaticMessage_(conversationId, phone,
@@ -1584,10 +1600,13 @@ function trSaveReservationFromWhatsapp_(conversationId, phone, data) {
   }
 
   if (unavailable) {
+    var unavailableMessage = isSizeAllowedForSlot(data.hora, data.tamano)
+      ? "Ese horario ya no esta disponible. Vamos a elegir otro turno."
+      : SMALL_MEDIUM_SLOT_MESSAGE + " Elegi otro horario.";
     delete data.hora;
     delete data.horaBloqueada;
     data.slots = available;
-    trSendAutomaticMessage_(conversationId, phone, "Ese horario ya no esta disponible. Vamos a elegir otro turno.");
+    trSendAutomaticMessage_(conversationId, phone, unavailableMessage);
     if (available.length) {
       trSetBotState_(conversationId, "esperando_hora", data);
       trSendAvailableHourList_(conversationId, phone, available);
@@ -1878,7 +1897,8 @@ function trAvailableReservationSlots_(data, fecha) {
     });
   }
   return available.filter(function (slot) {
-    return !data.reagenda || fecha !== data.fechaActual || slot !== data.horaActual;
+    return isSizeAllowedForSlot(slot, data.tamano) &&
+      (!data.reagenda || fecha !== data.fechaActual || slot !== data.horaActual);
   });
 }
 
@@ -1914,7 +1934,7 @@ function trSendAvailableHourList_(conversationId, phone, slots) {
     sections: [{
       title: "Horarios",
       rows: slots.map(function (slot) {
-        return { id: slot, title: slot, description: "" };
+        return { id: slot, title: slot, description: slot === SMALL_MEDIUM_TIME_SLOT ? "Solo perros chicos o medianos" : "" };
       })
     }]
   });

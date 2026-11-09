@@ -8,7 +8,7 @@ const code = fs.readFileSync(process.env.RESCHEDULE_SCRIPT_PATH ||
   path.resolve(__dirname, '../apps-script/Codigo.gs'), 'utf8');
 
 function booking(overrides = {}) {
-  return { fecha: '2026-11-10', hora: '12:00', nombre: 'Test', telefono: 'test',
+  return { fecha: '2026-11-10', hora: '12:30', nombre: 'Test', telefono: 'test',
     servicio: 'Bano', tamano: 'Chico', pelaje: 'Corto', nombreMascota: 'Test', ...overrides };
 }
 
@@ -156,7 +156,7 @@ test('ordinary WhatsApp booking rechecks availability while locked and sends aft
 test('a slot occupied after displaying the menu is not booked again and gets fresh options', () => {
   const { state, save } = setup();
   save(booking());
-  save(booking({ slots: ['12:00', '14:00', '16:00'] }));
+  save(booking({ slots: ['12:30', '14:00', '16:00'] }));
   assert.equal(state.rows.length, 2);
   assert.equal(state.confirmations.length, 1);
   assert.equal(state.conversation['Bot State'], 'esperando_hora');
@@ -176,7 +176,7 @@ test('web and WhatsApp bookings cannot take the same slot', () => {
 test('deslanado reserves the following slot and filters unavailable or last starts', () => {
   const { ctx, state, save } = setup();
   const data = booking({ servicio: 'Bano + deslanado' });
-  assert.deepEqual(Array.from(ctx.trAvailableReservationSlots_(data, data.fecha)), ['12:00', '14:00']);
+  assert.deepEqual(Array.from(ctx.trAvailableReservationSlots_(data, data.fecha)), ['12:30', '14:00']);
   save(data);
   assert.equal(state.rows[1][14], 'SI');
   assert.equal(state.rows[1][15], '14:00');
@@ -199,7 +199,7 @@ test('deslanado cannot use the last start or an occupied following slot', () => 
 test('the abbreviated deslanado and haircut service also blocks the following slot', () => {
   const { ctx, state, save } = setup();
   const data = booking({ servicio: 'Bano + desl. y corte' });
-  assert.deepEqual(Array.from(ctx.trAvailableReservationSlots_(data, data.fecha)), ['12:00', '14:00']);
+  assert.deepEqual(Array.from(ctx.trAvailableReservationSlots_(data, data.fecha)), ['12:30', '14:00']);
   save(data);
   assert.equal(state.rows[1][14], 'SI');
   assert.equal(state.rows[1][15], '14:00');
@@ -208,7 +208,8 @@ test('the abbreviated deslanado and haircut service also blocks the following sl
 
 test('invalid, past, holiday, elapsed and out-of-schedule slots are rejected without saving', () => {
   for (const [fecha, hora] of [
-    ['2026-02-31', '12:00'], ['2026-11-06', '12:00'], ['2026-12-25', '12:00'],
+    ['2026-02-31', '12:30'], ['2026-11-06', '12:30'], ['2026-12-25', '12:30'],
+    ['2026-11-10', '12:00'],
     ['2026-11-07', '09:00'], ['2026-11-07', '11:00'], ['2026-11-08', '15:00']
   ]) {
     const { state, save } = setup();
@@ -246,9 +247,21 @@ test('default welcome offers schedule, cancellation and rescheduling but no agen
   assert.doesNotMatch(menu.Texto, /agente/i);
 });
 
+test('WhatsApp rejects a stale 12:30 choice for a large dog and offers later times', () => {
+  const { ctx, state, save } = setup();
+  const data = booking({ tamano: 'Grande' });
+  assert.deepEqual(Array.from(ctx.trAvailableReservationSlots_(data, data.fecha)), ['14:00', '16:00']);
+  save(data);
+  assert.equal(state.rows.length, 1);
+  assert.match(state.messages.at(-1), /solo para perros chicos o medianos/);
+  assert.deepEqual(JSON.parse(state.conversation['Bot Data JSON']).slots, ['14:00', '16:00']);
+  save(booking({ tamano: 'Mediano' }));
+  assert.equal(state.rows[1][3], '12:30');
+});
+
 function rescheduleSession(overrides = {}) {
   const api = setup();
-  const row = ['TR-TEST-001', 'created', '2026-11-10', '12:00', 'Test', '099123456',
+  const row = ['TR-TEST-001', 'created', '2026-11-10', '12:30', 'Test', '099123456',
     'Bano', 'Chico', 'Corto', 'Test', 'Notes', '1 h', 720, 'Perfume', 'NO', '',
     'original@example.invalid', 'Confirmada', 'Operator', api.ctx.reservationCommissionFormula()];
   for (const [index, value] of Object.entries(overrides)) row[index] = value;
@@ -268,7 +281,7 @@ test('WhatsApp rescheduling keeps the original occupied until the new slot is co
   api.input('*tr-test-001*');
   assert.equal(api.state.conversation['Bot State'], 'esperando_reagenda_fecha');
   assert.deepEqual(api.state.rows[1], before);
-  assert.ok(!api.ctx.getAvailableSlots('2026-11-10').includes('12:00'));
+  assert.ok(!api.ctx.getAvailableSlots('2026-11-10').includes('12:30'));
   api.input('2026-11-11');
   assert.equal(api.state.conversation['Bot State'], 'esperando_reagenda_hora');
   api.input('14:00');
@@ -276,7 +289,7 @@ test('WhatsApp rescheduling keeps the original occupied until the new slot is co
   assert.deepEqual(api.state.rows[1], before);
   assert.equal(api.state.emails.length, 0);
   const preview = api.state.lists.at(-1);
-  assert.match(preview.text, /Turno anterior: 10\/11\/2026 a las 12:00/);
+  assert.match(preview.text, /Turno anterior: 10\/11\/2026 a las 12:30/);
   assert.match(preview.text, /Nuevo turno: 11\/11\/2026 a las 14:00/);
   assert.deepEqual(Array.from(preview.buttons, button => button.title), ['Confirmar cambio', 'Elegir otro turno', 'Mantener turno']);
   api.input('Confirmar cambio');
@@ -288,7 +301,7 @@ test('WhatsApp rescheduling keeps the original occupied until the new slot is co
   const after = [...api.state.rows[1]];
   for (const index of [2, 3, 15]) after[index] = before[index];
   assert.deepEqual(after, before);
-  assert.ok(api.ctx.getAvailableSlots('2026-11-10').includes('12:00'));
+  assert.ok(api.ctx.getAvailableSlots('2026-11-10').includes('12:30'));
   assert.equal(api.state.emails.length, 1);
   assert.equal(api.state.emails[0].to, 'original@example.invalid');
   assert.equal(api.state.conversation.Estado, 'Resuelto');
@@ -316,10 +329,10 @@ test('same-day rescheduling excludes only itself and does not offer the unchange
   api.input('TR-TEST-001');
   api.input('2026-11-10');
   assert.deepEqual(api.data().slots, ['14:00', '16:00']);
-  api.input('12:00');
+  api.input('12:30');
   assert.equal(api.state.writes, 0);
   api.input('14:00');
-  assert.equal(api.state.rows[1][3], '12:00');
+  assert.equal(api.state.rows[1][3], '12:30');
   api.input('1');
   assert.equal(api.state.rows[1][3], '14:00');
 });
@@ -328,12 +341,12 @@ test('deslanado can move backward into its released block and keeps the extra sl
   const api = rescheduleSession({ 3: '14:00', 6: 'Bano + desl. y corte', 14: 'SI', 15: '16:00' });
   api.input('TR-TEST-001');
   api.input('2026-11-10');
-  assert.deepEqual(api.data().slots, ['12:00']);
-  api.input('12:00');
+  assert.deepEqual(api.data().slots, ['12:30']);
+  api.input('12:30');
   assert.equal(api.state.rows[1][3], '14:00');
   assert.equal(api.state.rows[1][15], '16:00');
   api.input('Si');
-  assert.equal(api.state.rows[1][3], '12:00');
+  assert.equal(api.state.rows[1][3], '12:30');
   assert.equal(api.state.rows[1][15], '14:00');
   assert.ok(api.ctx.getAvailableSlots('2026-11-10').includes('16:00'));
 });
@@ -348,9 +361,9 @@ test('a slot taken during rescheduling refreshes choices without releasing the o
   api.input('Confirmar');
   assert.equal(api.state.writes, 0);
   assert.equal(api.state.rows[1][2], '2026-11-10');
-  assert.equal(api.state.rows[1][3], '12:00');
+  assert.equal(api.state.rows[1][3], '12:30');
   assert.equal(api.state.conversation['Bot State'], 'esperando_reagenda_hora');
-  assert.deepEqual(api.data().slots, ['12:00', '16:00']);
+  assert.deepEqual(api.data().slots, ['12:30', '16:00']);
   assert.match(api.state.messages.at(-1), /reserva anterior se mantiene/);
   assert.equal(api.state.emails.length, 0);
 });
@@ -380,8 +393,18 @@ test('closed or invalid dates and last deslanado starts are not offered for resc
     assert.equal(api.state.writes, 0);
   }
   api.input('2026-11-11');
-  assert.deepEqual(api.data().slots, ['12:00', '14:00']);
+  assert.deepEqual(api.data().slots, ['12:30', '14:00']);
   api.input('16:00');
+  assert.equal(api.state.writes, 0);
+});
+
+test('WhatsApp rescheduling does not offer 12:30 for a large dog', () => {
+  const api = rescheduleSession({ 3: '14:00', 7: 'Grande' });
+  api.input('TR-TEST-001');
+  api.input('2026-11-11');
+  assert.deepEqual(api.data().slots, ['14:00', '16:00']);
+  api.input('12:30');
+  assert.equal(api.state.conversation['Bot State'], 'esperando_reagenda_hora');
   assert.equal(api.state.writes, 0);
 });
 
@@ -434,7 +457,7 @@ test('unknown answers or old confirmation buttons never move the reservation', (
     assert.equal(api.state.writes, 0);
     assert.equal(api.state.emails.length, 0);
     assert.equal(api.state.conversation['Bot State'], 'esperando_reagenda_confirmacion');
-    assert.match(api.state.lists.at(-1).text, /Turno anterior: 10\/11\/2026 a las 12:00/);
+    assert.match(api.state.lists.at(-1).text, /Turno anterior: 10\/11\/2026 a las 12:30/);
     assert.match(api.state.lists.at(-1).text, /Nuevo turno: 11\/11\/2026 a las 14:00/);
   }
 });
