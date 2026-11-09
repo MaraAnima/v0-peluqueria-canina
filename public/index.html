@@ -63,11 +63,11 @@
             <img src="logo.svg" alt="TR Corte - Peluquería canina en El Pinar" class="logo-img" width="1220" height="730">
           </a>
         </h1>
-        <h2 class="tagline">El cuidado que tu mascota merece</h2>
-        <p class="description">Servicios completos y seguros para la higiene de tu mejor amigo.</p>
+        <h2 class="tagline">Peluquería canina en El Pinar</h2>
+        <p class="description">Baño, corte y deslanado con turno previo.</p>
 
-        <button class="cta-button" onclick="startBooking()">
-          <div class="dog-icon">
+        <button type="button" class="cta-button" onclick="startBooking()">
+          <div class="dog-icon" aria-hidden="true">
             <svg viewBox="0 0 60 60" class="dog-svg">
               <!-- Dog face -->
               <ellipse cx="30" cy="32" rx="22" ry="20" fill="#fff" />
@@ -88,34 +88,41 @@
             </svg>
           </div>
           <span class="cta-text">Agendar ahora</span>
-          <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path d="M5 12h14M12 5l7 7-7 7" />
           </svg>
         </button>
 
         <div class="appointment-actions">
-        <button type="button" class="cancel-cta-button" onclick="openRescheduleScreen()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <rect x="3" y="5" width="18" height="16" rx="2" />
-            <path d="M16 3v4M8 3v4M3 11h18M9 16h6" />
-          </svg>
-          <span>Reagendar cita</span>
-        </button>
-        <button type="button" class="cancel-cta-button" onclick="openCancelScreen()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M15 9l-6 6M9 9l6 6" />
-          </svg>
-          <span>Cancelar una cita</span>
-        </button>
+          <button type="button" class="cancel-cta-button" onclick="openRescheduleScreen()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <rect x="3" y="5" width="18" height="16" rx="2" />
+              <path d="M16 3v4M8 3v4M3 11h18M9 16h6" />
+            </svg>
+            <span>Reagendar cita</span>
+          </button>
+          <button type="button" class="cancel-cta-button" onclick="openCancelScreen()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M15 9l-6 6M9 9l6 6" />
+            </svg>
+            <span>Cancelar cita</span>
+          </button>
         </div>
+
+        <nav class="home-section-links" aria-label="Explorar TR Corte">
+          <a href="#servicios">Servicios</a>
+          <a href="#precios">Precios</a>
+          <a href="#clientes">Clientes</a>
+          <a href="#ubicacion">Ubicación</a>
+        </nav>
       </div>
 
       <div class="home-image">
         <div class="image-container">
           <img src="images/tr-corte-portada.webp"
             srcset="images/tr-corte-portada-800.webp 800w, images/tr-corte-portada.webp 1200w"
-            sizes="(max-width: 390px) calc(100vw - 40px), (max-width: 900px) 350px, (max-width: 1200px) calc((100vw - 140px) / 2), 500px"
+            sizes="(max-width: 360px) calc(100vw - 32px), (max-width: 460px) calc(100vw - 40px), (max-width: 900px) 420px, (max-width: 1200px) calc((100vw - 140px) / 2), 500px"
             width="1200" height="675" fetchpriority="high"
             alt="Tu Ración Pet Shop" class="hero-dog">
         </div>
@@ -189,7 +196,7 @@
         </div>
 
         <!-- Top Right: Services -->
-        <div class="grid-cell grid-services">
+        <div class="grid-cell grid-services" id="servicios" tabindex="-1">
           <span class="grid-subtitle">NUESTROS</span>
           <h2 class="grid-title">SERVICIOS</h2>
 
@@ -232,7 +239,7 @@
         <!-- Bottom Left: About -->
         <div class="grid-cell grid-about">
           <span class="grid-subtitle light">SOBRE</span>
-          <h2 class="grid-title light">NOSOTROS</h2>
+          <h2 class="grid-title">NOSOTROS</h2>
           <p class="grid-text">
             En TR Corte nos dedicamos al cuidado profesional de tu mascota.
             Contamos con personal capacitado y productos de primera calidad
@@ -260,7 +267,7 @@
       </div>
     </div>
     <!-- Pricing Section -->
-    <div class="pricing-section">
+    <div class="pricing-section" id="precios" tabindex="-1">
       <div class="pricing-container">
         <div class="pricing-header">
           <h2 class="pricing-title">Precios y tiempos estimados</h2>
@@ -500,7 +507,7 @@
     </div>
 
     <!-- Happy Clients Section -->
-    <div class="happy-clients-section">
+    <div class="happy-clients-section" id="clientes" tabindex="-1">
       <div class="happy-clients-container">
         <div class="happy-clients-header">
           <span class="happy-clients-kicker">CLIENTES FELICES</span>
@@ -613,7 +620,7 @@
     </div>
 
     <!-- Contact & Location Section -->
-    <div class="contact-location-section">
+    <div class="contact-location-section" id="ubicacion" tabindex="-1">
       <div class="contact-location-container">
         <!-- Map Side -->
         <div class="contact-map">

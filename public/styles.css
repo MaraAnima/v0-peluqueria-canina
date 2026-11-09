@@ -223,16 +223,17 @@ body {
 .home-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 60px 40px;
+  padding: 52px 40px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 60px;
-  min-height: 100vh;
+  min-height: min(700px, 92svh);
 }
 
 .home-content {
   flex: 1;
+  min-width: 0;
   max-width: 500px;
   z-index: 10;
 }
@@ -240,13 +241,14 @@ body {
 /* Logo Styling */
 .logo {
   font: inherit;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   display: flex;
   justify-content: flex-start;
 }
 
 .logo-img {
-  width: 420px;
+  display: block;
+  width: 360px;
   height: auto;
   max-width: 100%;
   object-fit: contain;
@@ -257,13 +259,13 @@ body {
   font-size: 1.8rem;
   font-weight: 600;
   color: var(--accent-cyan);
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .description {
   font-size: 1.1rem;
   color: var(--text-muted);
-  margin-bottom: 32px;
+  margin-bottom: 24px;
   line-height: 1.6;
 }
 
@@ -275,7 +277,7 @@ body {
   background: var(--accent-cyan);
   color: var(--white);
   border: none;
-  padding: 12px 28px 12px 12px;
+  padding: 10px 26px 10px 10px;
   border-radius: 50px;
   font-family: 'Poppins', sans-serif;
   font-size: 1.1rem;
@@ -322,6 +324,39 @@ body {
   transform: translateX(4px);
 }
 
+.home-section-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 20px;
+  margin-top: 14px;
+  border-top: 1px solid rgba(26, 75, 140, 0.16);
+}
+
+.home-section-links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  color: var(--primary-blue);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  text-underline-offset: 4px;
+}
+
+.home-section-links a:hover {
+  text-decoration: underline;
+}
+
+#home-screen :is(a, button):focus-visible {
+  outline: 2px solid var(--primary-dark);
+  outline-offset: 3px;
+}
+
+#home-screen :is(#servicios, #precios, #clientes, #ubicacion) {
+  scroll-margin-block-start: 16px;
+}
+
 /* Hero Image Section */
 .home-image {
   flex: 1;
@@ -337,6 +372,7 @@ body {
 }
 
 .hero-dog {
+  display: block;
   width: 100%;
   max-width: 500px;
   height: 400px;
@@ -2025,37 +2061,89 @@ body {
   .home-container {
     flex-direction: column;
     text-align: center;
-    padding: 40px 20px;
-    gap: 40px;
+    padding: 28px 20px 24px;
+    gap: 20px;
+    min-height: auto;
   }
 
   .home-content {
-    max-width: 100%;
+    width: 100%;
+    max-width: 420px;
   }
 
   .logo {
-    font-size: 2.5rem;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+
+  .logo-img {
+    width: 252px;
   }
 
   .tagline {
     font-size: 1.4rem;
   }
 
+  .description {
+    margin-bottom: 18px;
+  }
+
+  .home-section-links {
+    justify-content: space-between;
+    gap: 0 8px;
+    margin-top: 6px;
+  }
+
+  .home-section-links a {
+    min-width: 44px;
+    font-size: 0.8rem;
+  }
+
+  .home-image {
+    width: 100%;
+    max-width: 420px;
+  }
+
+  .image-container {
+    width: 100%;
+  }
+
   .hero-dog {
-    max-width: 350px;
-    height: 300px;
+    height: auto;
+    aspect-ratio: 16 / 10;
   }
 
   .cta-button {
     margin: 0 auto;
   }
+
+  .dog-icon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .dog-svg {
+    width: 46px;
+    height: 46px;
+  }
+}
+
+@media (max-width: 360px) {
+  .home-container {
+    padding: 20px 16px 16px;
+    gap: 14px;
+  }
+
+  .logo-img {
+    width: 212px;
+  }
+
+  .hero-dog {
+    aspect-ratio: 16 / 9;
+  }
 }
 
 @media (max-width: 500px) {
-  .logo {
-    font-size: 2rem;
-  }
-
   .tagline {
     font-size: 1.2rem;
   }
@@ -3111,8 +3199,7 @@ body {
 .grid-subtitle {
   font-family: 'Poppins', sans-serif;
   font-size: 0.75rem;
-  letter-spacing: 2px;
-  color: #ffffff;
+  color: var(--white);
   opacity: 0.7;
   display: block;
   margin-bottom: 2px;
@@ -3127,12 +3214,8 @@ body {
   font-family: 'Fredoka', sans-serif;
   font-size: 1.8rem;
   font-weight: 700;
-  color: #ffffff;
-  margin: 0 0 20px 0;
-}
-
-.grid-title.light {
   color: var(--white);
+  margin: 0 0 20px 0;
 }
 
 .services-list {
@@ -3155,7 +3238,7 @@ body {
   font-family: 'Fredoka', sans-serif;
   font-size: 1.2rem;
   font-weight: 700;
-  color: #ffffff !important;
+  color: var(--white);
   opacity: 0.4;
   min-width: 32px;
 }
@@ -3164,24 +3247,25 @@ body {
   flex: 1;
 }
 
-.service-name {
+.grid-services .service-name {
   font-family: 'Fredoka', sans-serif;
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 600;
-  color: #ffffff !important;
-  margin: 0 0 1px 0;
+  color: var(--white);
+  margin: 0 0 4px;
 }
 
-.service-desc {
+.grid-services .service-desc {
   font-family: 'Poppins', sans-serif;
-  font-size: 0.75rem;
-  color: #ffffff !important;
+  font-size: 0.8rem;
+  color: var(--white);
   opacity: 0.7;
   margin: 0;
 }
 
 .grid-cta {
   display: inline-block;
+  min-height: 44px;
   background: var(--accent-cyan);
   color: var(--white);
   border: none;
@@ -3217,7 +3301,10 @@ body {
 }
 
 .grid-btn {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
   padding: 10px 20px;
   border-radius: 30px;
   font-family: 'Poppins', sans-serif;
@@ -3249,11 +3336,15 @@ body {
 
 .grid-btn.secondary:hover {
   background: transparent;
-  color: #ffffff;
-  border-color: #ffffff;
+  color: var(--white);
+  border-color: var(--white);
 }
 
 @media (max-width: 768px) {
+  .info-grid-wrapper {
+    padding-top: 16px;
+  }
+
   .info-grid {
     grid-template-columns: 1fr;
     max-width: 450px;
@@ -3264,11 +3355,11 @@ body {
   }
 
   .grid-image:first-child {
-    order: 1;
+    order: 2;
   }
 
   .grid-services {
-    order: 2;
+    order: 1;
   }
 
   .grid-about {
@@ -3608,13 +3699,16 @@ body {
   stroke: var(--accent-cyan);
 }
 
+.contact-details {
+  min-width: 0;
+}
+
 .contact-details h4 {
   font-family: 'Fredoka', sans-serif;
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--white);
   margin-bottom: 6px;
-  letter-spacing: 0.5px;
 }
 
 .contact-details p {
@@ -3627,6 +3721,7 @@ body {
 .contact-details a {
   color: var(--white);
   text-decoration: none;
+  overflow-wrap: anywhere;
   transition: opacity 0.2s ease;
 }
 
@@ -3783,7 +3878,8 @@ body {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0 20px;
+  gap: 0 12px;
+  margin-top: 8px;
 }
 
 .cancel-cta-button {
@@ -3791,8 +3887,8 @@ body {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  margin-top: 14px;
-  padding: 6px 4px;
+  min-height: 44px;
+  padding: 6px 3px;
   background: transparent;
   border: none;
   color: var(--text-muted);
@@ -3820,6 +3916,7 @@ body {
 .cancel-cta-button svg {
   width: 16px;
   height: 16px;
+  flex-shrink: 0;
 }
 
 /* ==================== RESERVATION ID BOX ==================== */
