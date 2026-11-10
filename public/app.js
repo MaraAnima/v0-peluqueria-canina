@@ -987,6 +987,7 @@ function renderPetStep(container) {
   container.innerHTML = `
     <h2 class="step-title">Contanos sobre tu peludo</h2>
     <p class="step-subtitle">Queremos conocer mejor a tu mascota</p>
+    <div class="pet-notice"><span class="pet-notice-icon" aria-hidden="true">!</span><span>Solo aceptamos una mascota por turno.</span></div>
     
     <div class="form-group">
       <label class="form-label" for="pet-name">¿Cómo se llama tu mascota? <span style="color: #ef4444;">*</span></label>

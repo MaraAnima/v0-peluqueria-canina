@@ -981,6 +981,33 @@ body {
   font-size: 0.95rem;
 }
 
+.pet-notice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 24px;
+  padding: 12px 16px;
+  border: 1px solid #f4d3a1;
+  border-radius: 8px;
+  background: #fff4e5;
+  color: #74430c;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.pet-notice-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 22px;
+  height: 22px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  font-weight: 700;
+}
+
 /* Input Fields */
 .form-group {
   margin-bottom: 20px;

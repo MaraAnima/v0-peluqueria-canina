@@ -45,6 +45,7 @@ test('optional breed dropdown retains the selection and shows it in the summary'
   const app = bookingForm();
   const panel = {};
   app.ctx.renderPetStep(panel);
+  assert.match(panel.innerHTML, /Solo aceptamos una mascota por turno\./);
   assert.match(panel.innerHTML, /<select [^>]*id="pet-breed"/);
   assert.match(panel.innerHTML, /<option value="">/);
   assert.match(panel.innerHTML, /<option value="Mestizo">Mestizo<\/option>/);
