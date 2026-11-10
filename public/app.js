@@ -1462,12 +1462,18 @@ function renderReschedule() {
   }
   if (!state.reservation) {
     content.innerHTML = `
-      <p class="step-subtitle">Ingresá el ID que recibiste en el correo de confirmación.</p>
+      <p class="cancel-subtitle">Ingresá el ID que recibiste en el correo de confirmación.</p>
       <form onsubmit="lookupReschedule(event)">
         <div class="form-group">
           <label class="form-label" for="reschedule-id">ID de reserva</label>
-          <input id="reschedule-id" class="form-input" type="text" placeholder="TR-..." autocomplete="off"
-            maxlength="80" value="${escaped(state.id)}" required ${state.loading ? 'disabled' : ''}>
+          <div class="input-icon-wrapper">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="16" rx="2" />
+              <path d="M7 9h10M7 13h6" />
+            </svg>
+            <input id="reschedule-id" class="form-input" type="text" placeholder="TR-..." autocomplete="off"
+              maxlength="80" value="${escaped(state.id)}" required ${state.loading ? 'disabled' : ''}>
+          </div>
         </div>
         ${error}
         <button type="submit" class="continue-btn" ${state.loading ? 'disabled' : ''}>

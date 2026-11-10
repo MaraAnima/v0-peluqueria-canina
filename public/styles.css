@@ -3974,11 +3974,13 @@ body {
   position: relative;
   z-index: 2;
   min-height: 100vh;
+  min-height: 100svh;
   max-width: 560px;
   margin: 0 auto;
-  padding: 24px 20px 48px;
+  padding: 88px 20px 24px;
   display: flex;
   flex-direction: column;
+  justify-content: center;
 }
 
 .cancel-card {
@@ -4024,17 +4026,9 @@ body {
 }
 
 /* ==================== RESCHEDULE SCREEN ==================== */
-.reschedule-wrapper {
-  max-width: 600px;
-}
-
-.reschedule-wrapper .back-button-integrated {
-  position: static;
-  align-self: flex-start;
-}
-
-.reschedule-heading {
-  margin: 28px 0 24px;
+.reschedule-icon {
+  background: rgba(23, 179, 196, 0.1);
+  color: var(--accent-cyan);
 }
 
 .reschedule-summary {
