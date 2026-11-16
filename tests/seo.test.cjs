@@ -7,7 +7,7 @@ const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8').replace(/\r\n/g, '\n');
 const html = read('public/index.html');
 const origin = 'https://peluqueria.turacion.com.uy';
-const canonical = `${origin}/index.html`;
+const canonical = `${origin}/`;
 const title = 'TR Corte | Peluquería canina en El Pinar';
 const description = 'Baño, corte y deslanado en El Pinar. Conocé nuestros servicios y precios, y reservá tu turno online en TR Corte.';
 
@@ -34,24 +34,41 @@ test('public entry has consistent search and social metadata before JavaScript r
 test('old production host redirects to the new host without affecting preview domains', async () => {
   const config = (await import('../next.config.mjs')).default;
   const redirects = await config.redirects();
-  assert.deepEqual(redirects, [{
+  assert.deepEqual(redirects, [{ source: '/index.html', destination: '/', permanent: true }, {
     source: '/:path*',
     has: [{ type: 'host', value: 'v0-peluqueria-canina\\.vercel\\.app' }],
     destination: `${origin}/:path*`,
     permanent: true,
   }]);
+  assert.deepEqual(await config.rewrites(), { beforeFiles: [{ source: '/', destination: '/index.html' }] });
 });
 
-test('crawling files include only the canonical page and keep public resources accessible', () => {
+test('crawling files include the canonical pages and keep public resources accessible', () => {
   assert.equal(read('public/robots.txt').trim(), [
     'User-agent: *', 'Allow: /', '', `Sitemap: ${origin}/sitemap.xml`,
   ].join('\n'));
   assert.equal(read('public/sitemap.xml').trim(), [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-    '  <url>', `    <loc>${canonical}</loc>`, '  </url>', '</urlset>',
+    '  <url>', `    <loc>${canonical}</loc>`, '  </url>',
+    '  <url>', `    <loc>${origin}/preguntas-frecuentes.html</loc>`, '  </url>', '</urlset>',
   ].join('\n'));
-  assert.ok(read('app/page.tsx').includes("permanentRedirect('/index.html')"));
+});
+
+test('frequently asked questions have a linked, crawlable page', () => {
+  const faq = read('public/preguntas-frecuentes.html');
+  const section = faq.match(/<main class="faq-section"[\s\S]*?<\/main>/);
+  assert.ok(section);
+  assert.ok(html.includes('href="preguntas-frecuentes.html"'));
+  assert.ok(!html.includes('<section class="faq-section"'));
+  assert.ok(faq.includes(`<link rel="canonical" href="${origin}/preguntas-frecuentes.html">`));
+  assert.ok(faq.includes('href="/#precios"'));
+  assert.ok(faq.includes('class="back-button-integrated faq-back" href="/"'));
+  assert.equal((section[0].match(/<details>/g) || []).length, 7);
+  for (const text of ['¿Cómo reservo un turno', '¿Qué pasa si mi mascota tiene nudos?',
+    '¿Cómo puedo cancelar o reagendar mi cita?', 'una mascota por turno']) {
+    assert.ok(section[0].includes(text));
+  }
 });
 
 test('local business metadata and public contact links use the same reservation number', () => {
@@ -68,6 +85,7 @@ test('local business metadata and public contact links use the same reservation 
   assert.equal(business.openingHoursSpecification, undefined);
   const chatLink = `href="https://wa.me/${business.telephone.slice(1)}"`;
   assert.equal(html.split(chatLink).length - 1, 2);
+  assert.ok(read('public/preguntas-frecuentes.html').includes(chatLink));
   assert.ok(html.includes('>097 089 390</a>'));
 });
 
