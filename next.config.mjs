@@ -3,7 +3,7 @@ const nextConfig = {
   skipTrailingSlashRedirect: true,
   async redirects() {
     return [{
-      source: '/admin',
+      source: '/:admin(admin(?!/))',
       destination: '/admin/',
       permanent: false,
     }, {
