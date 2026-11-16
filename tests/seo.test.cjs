@@ -11,6 +11,16 @@ const canonical = `${origin}/`;
 const title = 'TR Corte | Peluquería canina en El Pinar';
 const description = 'Baño, corte y deslanado en El Pinar. Conocé nuestros servicios y precios, y reservá tu turno online en TR Corte.';
 
+test('favicon uses the same square brand image on public pages', () => {
+  const favicon = fs.readFileSync(path.join(root, 'public/images/Isotipo -8.png'));
+  assert.equal(favicon.readUInt32BE(16), favicon.readUInt32BE(20));
+  assert.ok(favicon.readUInt32BE(16) >= 48);
+  for (const page of [html, read('public/preguntas-frecuentes.html')]) {
+    assert.ok(page.includes('<link rel="icon" type="image/png" href="images/Isotipo%20-8.png">'));
+    assert.ok(page.includes('<link rel="apple-touch-icon" href="images/Isotipo%20-8.png">'));
+  }
+});
+
 test('public entry has consistent search and social metadata before JavaScript runs', () => {
   const head = html.slice(0, html.indexOf('</head>'));
   for (const tag of [
