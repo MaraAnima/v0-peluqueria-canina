@@ -416,7 +416,7 @@ function renderProgressSteps() {
             ` : ''}
             <span class="step-name">${step.name}</span>
           </div>
-          ${completedValue ? `<span class="step-value">${completedValue}</span>` : ''}
+          ${completedValue ? `<span class="step-value">${escapeHtml(completedValue)}</span>` : ''}
         </div>
       </div>
     `;
@@ -454,7 +454,7 @@ function renderContactStep(container) {
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
           <circle cx="12" cy="7" r="4"/>
         </svg>
-        <input type="text" class="form-input" id="client-name" name="name" autocomplete="name" placeholder="Ej: María García" value="${bookingData.clientName}">
+        <input type="text" class="form-input" id="client-name" name="name" autocomplete="name" placeholder="Ej: María García" value="${escapeHtml(bookingData.clientName)}">
       </div>
     </div>
     
@@ -464,7 +464,7 @@ function renderContactStep(container) {
         <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
         </svg>
-        <input type="tel" class="form-input" id="client-phone" name="tel" autocomplete="tel" placeholder="Ej: 094 719 944" value="${bookingData.clientPhone}">
+        <input type="tel" class="form-input" id="client-phone" name="tel" autocomplete="tel" placeholder="Ej: 094 719 944" value="${escapeHtml(bookingData.clientPhone)}">
       </div>
     </div>
 
@@ -475,7 +475,7 @@ function renderContactStep(container) {
           <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
           <polyline points="22,6 12,13 2,6"/>
         </svg>
-        <input type="email" class="form-input" id="client-email" name="email" autocomplete="email" autocapitalize="none" aria-describedby="client-email-hint" placeholder="Ej: maria@correo.com" value="${bookingData.clientEmail}">
+        <input type="email" class="form-input" id="client-email" name="email" autocomplete="email" autocapitalize="none" aria-describedby="client-email-hint" placeholder="Ej: maria@correo.com" value="${escapeHtml(bookingData.clientEmail)}">
       </div>
       <p class="form-hint" id="client-email-hint">Te enviaremos la confirmación y el ID de reserva a este correo.</p>
     </div>
@@ -995,7 +995,7 @@ function renderPetStep(container) {
         <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2a4 4 0 0 1 4 4c0 1.5-.8 2.8-2 3.5v1l3 3.5c.7.8 1 1.9 1 3v3H6v-3c0-1.1.3-2.2 1-3l3-3.5v-1c-1.2-.7-2-2-2-3.5a4 4 0 0 1 4-4z"/>
         </svg>
-        <input type="text" class="form-input" id="pet-name" placeholder="Ej: Firulais, Luna, Max" value="${bookingData.petName}">
+        <input type="text" class="form-input" id="pet-name" placeholder="Ej: Firulais, Luna, Max" value="${escapeHtml(bookingData.petName)}">
       </div>
     </div>
     
@@ -1009,7 +1009,7 @@ function renderPetStep(container) {
 
     <div class="form-group">
       <label class="form-label" for="pet-notes">¿Hay algo que debamos saber? <span style="color: var(--text-muted); font-weight: normal;">(opcional)</span></label>
-      <textarea class="form-textarea" id="pet-notes" placeholder="Contanos si tiene algún miedo, alergia, o algo especial que debamos tener en cuenta...">${bookingData.petNotes}</textarea>
+      <textarea class="form-textarea" id="pet-notes" placeholder="Contanos si tiene algún miedo, alergia, o algo especial que debamos tener en cuenta...">${escapeHtml(bookingData.petNotes)}</textarea>
     </div>
     
     <button class="continue-btn" onclick="savePetAndNext()">Continuar</button>
@@ -1056,15 +1056,15 @@ function renderSummaryStep(container) {
       </h3>
       <div class="summary-row">
         <span class="summary-label">Nombre</span>
-        <span class="summary-value">${bookingData.clientName}</span>
+        <span class="summary-value">${escapeHtml(bookingData.clientName)}</span>
       </div>
       <div class="summary-row">
         <span class="summary-label">Teléfono</span>
-        <span class="summary-value">${bookingData.clientPhone}</span>
+        <span class="summary-value">${escapeHtml(bookingData.clientPhone)}</span>
       </div>
       <div class="summary-row">
         <span class="summary-label">Email</span>
-        <span class="summary-value">${bookingData.clientEmail}</span>
+        <span class="summary-value">${escapeHtml(bookingData.clientEmail)}</span>
       </div>
     </div>
     
@@ -1077,12 +1077,12 @@ function renderSummaryStep(container) {
       </h3>
       <div class="summary-row">
         <span class="summary-label">Nombre</span>
-        <span class="summary-value">${bookingData.petName}</span>
+        <span class="summary-value">${escapeHtml(bookingData.petName)}</span>
       </div>
       ${bookingData.petBreed ? `
         <div class="summary-row">
           <span class="summary-label">Raza</span>
-          <span class="summary-value">${bookingData.petBreed}</span>
+          <span class="summary-value">${escapeHtml(bookingData.petBreed)}</span>
         </div>
       ` : ''}
       <div class="summary-row">
@@ -1092,7 +1092,7 @@ function renderSummaryStep(container) {
       ${bookingData.petNotes ? `
         <div class="summary-row">
           <span class="summary-label">Notas</span>
-          <span class="summary-value">${bookingData.petNotes}</span>
+          <span class="summary-value">${escapeHtml(bookingData.petNotes)}</span>
         </div>
       ` : ''}
     </div>
@@ -1403,7 +1403,7 @@ function initHappyClientsCarousel() {
 // ==================== REAGENDAR CITA ====================
 let rescheduleState = null;
 
-function escapeRescheduleText(value) {
+function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, char =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]
   );
@@ -1445,7 +1445,7 @@ function renderReschedule() {
   const state = rescheduleState;
   if (!state) return;
   const content = document.getElementById('reschedule-content');
-  const escaped = escapeRescheduleText;
+  const escaped = escapeHtml;
   document.getElementById('reschedule-back').disabled = state.saving;
   const error = state.error ? `<p class="reschedule-error" role="alert">${escaped(state.error)}</p>` : '';
   if (state.result) {

@@ -1,7 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  skipTrailingSlashRedirect: true,
   async redirects() {
     return [{
+      source: '/admin',
+      destination: '/admin/',
+      permanent: false,
+    }, {
+      source: '/:path((?!admin(?:/|$)).*[^/])/',
+      destination: '/:path',
+      permanent: true,
+    }, {
       source: '/index.html',
       destination: '/',
       permanent: true,
@@ -13,7 +22,13 @@ const nextConfig = {
     }]
   },
   async rewrites() {
-    return { beforeFiles: [{ source: '/', destination: '/index.html' }] }
+    return {
+      beforeFiles: [
+        { source: '/', destination: '/index.html' },
+        { source: '/admin/', destination: 'https://tu-racion-equipo-admin.vercel.app/admin/' },
+        { source: '/admin/:path*', destination: 'https://tu-racion-equipo-admin.vercel.app/admin/:path*' },
+      ],
+    }
   },
   typescript: {
     ignoreBuildErrors: true,

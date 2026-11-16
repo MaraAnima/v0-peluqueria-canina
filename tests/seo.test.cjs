@@ -44,13 +44,13 @@ test('public entry has consistent search and social metadata before JavaScript r
 test('old production host redirects to the new host without affecting preview domains', async () => {
   const config = (await import('../next.config.mjs')).default;
   const redirects = await config.redirects();
-  assert.deepEqual(redirects, [{ source: '/index.html', destination: '/', permanent: true }, {
+  assert.deepEqual(redirects.slice(-2), [{ source: '/index.html', destination: '/', permanent: true }, {
     source: '/:path*',
     has: [{ type: 'host', value: 'v0-peluqueria-canina\\.vercel\\.app' }],
     destination: `${origin}/:path*`,
     permanent: true,
   }]);
-  assert.deepEqual(await config.rewrites(), { beforeFiles: [{ source: '/', destination: '/index.html' }] });
+  assert.deepEqual((await config.rewrites()).beforeFiles[0], { source: '/', destination: '/index.html' });
 });
 
 test('crawling files include the canonical pages and keep public resources accessible', () => {
