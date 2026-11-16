@@ -6,7 +6,7 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8').replace(/\r\n/g, '\n');
 const html = read('public/index.html');
-const origin = 'https://v0-peluqueria-canina.vercel.app';
+const origin = 'https://peluqueria.turacion.com.uy';
 const canonical = `${origin}/index.html`;
 const title = 'TR Corte | Peluquería canina en El Pinar';
 const description = 'Baño, corte y deslanado en El Pinar. Conocé nuestros servicios y precios, y reservá tu turno online en TR Corte.';
@@ -29,6 +29,17 @@ test('public entry has consistent search and social metadata before JavaScript r
   const layout = read('app/layout.tsx');
   assert.ok(layout.includes(title));
   assert.ok(layout.includes(description));
+});
+
+test('old production host redirects to the new host without affecting preview domains', async () => {
+  const config = (await import('../next.config.mjs')).default;
+  const redirects = await config.redirects();
+  assert.deepEqual(redirects, [{
+    source: '/:path*',
+    has: [{ type: 'host', value: 'v0-peluqueria-canina\\.vercel\\.app' }],
+    destination: `${origin}/:path*`,
+    permanent: true,
+  }]);
 });
 
 test('crawling files include only the canonical page and keep public resources accessible', () => {
