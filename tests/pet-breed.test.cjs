@@ -29,6 +29,7 @@ function bookingForm() {
   };
   const ctx = vm.createContext({ Date, document, fetch, console });
   vm.runInContext(source, ctx);
+  ctx.getReservationOrigin = () => 'Instagram';
   ctx.nextStep = () => {};
   ctx.showModal = () => {};
   const data = vm.runInContext('bookingData', ctx);
@@ -74,6 +75,7 @@ test('booking submission sends breed and notes independently', async () => {
     assert.equal(app.sent[0].nombreMascota, 'Luna');
     assert.equal(app.sent[0].razaMascota, breed);
     assert.equal(app.sent[0].notasMascota, notes);
+    assert.equal(app.sent[0].origenLlegada, 'Instagram');
   }
 });
 
@@ -142,4 +144,34 @@ test('a missing breed column is added past used data; absent or formula-like bre
   assert.deepEqual(added, [1]);
   assert.equal(headers[21], 'Raza');
   assert.equal(rows[2][21], 'Mestizo');
+});
+
+test('channel and origin use separate columns without overwriting breed, notes or commission', () => {
+  const headers = Array(23).fill('');
+  headers[19] = 'Comisión';
+  headers[21] = 'Raza';
+  headers[22] = 'Dato existente';
+  const { ctx, rows } = reservationSheet(headers);
+  const result = ctx.saveReservation({ razaMascota: 'Mestizo', notasMascota: 'Nota',
+    canalReserva: 'Web', origenLlegada: 'Google Maps' });
+  assert.equal(result.success, true);
+  assert.equal(rows[0][10], 'Nota');
+  assert.equal(rows[0][19], ctx.reservationCommissionFormula());
+  assert.equal(rows[0][21], 'Mestizo');
+  assert.equal(rows[0][22], '');
+  assert.equal(headers[22], 'Dato existente');
+  assert.equal(headers[23], 'Canal de reserva');
+  assert.equal(headers[24], 'Origen de llegada');
+  assert.equal(rows[0][23], 'Web');
+  assert.equal(rows[0][24], 'Google Maps');
+  assert.equal(ctx.saveReservation({ canalReserva: 'WhatsApp', origenLlegada: '=malicioso' }).success, true);
+  assert.equal(rows[1][23], 'WhatsApp');
+  assert.equal(rows[1][24], 'Sin identificar');
+});
+
+test('a failure to create attribution columns does not prevent saving a reservation', () => {
+  const { ctx, rows } = reservationSheet(Array(20).fill(''));
+  ctx.reservationExtraColumn_ = () => { throw new Error('Header unavailable'); };
+  assert.equal(ctx.saveReservation({ canalReserva: 'Web', origenLlegada: 'Instagram' }).success, true);
+  assert.equal(rows.length, 1);
 });

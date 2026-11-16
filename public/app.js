@@ -1252,6 +1252,7 @@ async function confirmBooking() {
       pelaje: bookingData.category?.name || '',
       nombreMascota: bookingData.petName,
       razaMascota: bookingData.petBreed,
+      origenLlegada: typeof getReservationOrigin === 'function' ? getReservationOrigin() : 'Sin identificar',
       notasMascota: bookingData.petNotes,
       extras: getSelectedExtrasText(),
       deslanado: isDeslanado(),

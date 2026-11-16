@@ -36,6 +36,31 @@ La fuente de verdad para pegar en Google Apps Script es:
 - `actualizarComisionesReservas` aplica la formula a las reservas existentes.
 - Procesa los mensajes y estados entrantes de Meta mediante el modulo Inbox.
 
+## Origen de reservas
+
+- Las reservas nuevas registran `Canal de reserva` (`Web` o `WhatsApp`) y
+  `Origen de llegada` en columnas separadas despues de los datos existentes.
+  Las columnas se buscan por encabezado y se crean al final si faltan; las
+  reservas antiguas y los datos existentes no se modifican.
+- La web recuerda en `sessionStorage` la ultima fuente etiquetada de la pestana.
+  Sin etiqueta, puede reconocer algunos sitios de referencia. Solo se guarda
+  una categoria, nunca la URL de referencia ni los parametros completos.
+- WhatsApp registra el canal, pero su origen queda como `Sin identificar`:
+  no se puede deducir si la persona llego desde Instagram, Maps o el local.
+- Si falla la creacion de columnas, la reserva sigue adelante y el fallo se
+  registra en el log de Apps Script; la medicion de esa reserva puede faltar.
+
+Enlaces sugeridos para reservas desde la web:
+
+- Tu Racion: `https://peluqueria.turacion.com.uy/?utm_source=web_turacion&utm_medium=referral`
+- Google Maps: `https://peluqueria.turacion.com.uy/?utm_source=google_maps&utm_medium=referral`
+- Instagram: `https://peluqueria.turacion.com.uy/?utm_source=instagram&utm_medium=social`
+- Facebook: `https://peluqueria.turacion.com.uy/?utm_source=facebook&utm_medium=social`
+- QR del local: `https://peluqueria.turacion.com.uy/?utm_source=qr_local&utm_medium=qr`
+
+Los enlaces se deben colocar en cada canal; preparar el codigo no los cambia
+automaticamente. Para activarlo, actualizar Apps Script antes de publicar la web.
+
 ## Flujos de WhatsApp
 
 La fuente local incluye ahora el modulo Inbox que estaba desplegado, sin los

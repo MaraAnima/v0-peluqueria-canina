@@ -153,6 +153,20 @@ test('ordinary WhatsApp booking rechecks availability while locked and sends aft
   assert.equal(api.state.rows[1][19], api.ctx.reservationCommissionFormula());
 });
 
+test('booking channel is set by the actual entry point, without guessing WhatsApp origin', () => {
+  const api = setup();
+  const captured = [];
+  api.ctx.saveReservation = data => { captured.push({ ...data }); return { success: true, reservaId: 'TR-TEST-001' }; };
+  const response = api.ctx.doPost({ postData: { contents: JSON.stringify(booking({
+    canalReserva: 'WhatsApp', origenLlegada: 'Instagram' })) } });
+  assert.equal(JSON.parse(response.getContent()).success, true);
+  assert.equal(captured[0].canalReserva, 'Web');
+  assert.equal(captured[0].origenLlegada, 'Instagram');
+  api.save(booking({ canalReserva: 'Web', origenLlegada: 'Instagram' }));
+  assert.equal(captured[1].canalReserva, 'WhatsApp');
+  assert.equal(captured[1].origenLlegada, 'Sin identificar');
+});
+
 test('a slot occupied after displaying the menu is not booked again and gets fresh options', () => {
   const { state, save } = setup();
   save(booking());

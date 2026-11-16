@@ -115,6 +115,8 @@ function doPost(e) {
       data.horaBloqueada = siguiente;
     }
 
+    data.canalReserva = 'Web';
+    data.origenLlegada = reservationOrigin_(data.origenLlegada);
     const resultado = saveReservation(data);
     if (!resultado.success) {
       return createJsonResponse({ error: resultado.error });
@@ -235,19 +237,25 @@ function isSizeAllowedForSlot(hora, tamano) {
     ['rp', 'rm', 'chico', 'mediano'].includes(trNormalize_(tamano));
 }
 
-function reservationBreedColumn(sheet, fixedColumns) {
+function reservationExtraColumn_(sheet, fixedColumns, name) {
   const lastColumn = sheet.getLastColumn();
   if (lastColumn > fixedColumns) {
     const headers = sheet.getRange(1, fixedColumns + 1, 1, lastColumn - fixedColumns).getValues()[0];
-    const index = headers.findIndex(header => String(header).trim().toLowerCase() === 'raza');
+    const index = headers.findIndex(header => String(header).trim().toLowerCase() === name.toLowerCase());
     if (index >= 0) return fixedColumns + index + 1;
   }
 
   const column = Math.max(lastColumn, fixedColumns) + 1;
   const maxColumns = sheet.getMaxColumns();
   if (column > maxColumns) sheet.insertColumnsAfter(maxColumns, column - maxColumns);
-  sheet.getRange(1, column).setValue('Raza');
+  sheet.getRange(1, column).setValue(name);
   return column;
+}
+
+function reservationOrigin_(value) {
+  const allowed = ['Instagram', 'Facebook', 'Google Maps', 'Google (sin especificar)',
+    'Web Tu Racion', 'QR en local', 'Otra fuente etiquetada'];
+  return allowed.includes(value) ? value : 'Sin identificar';
 }
 
 function saveReservation(data) {
@@ -281,9 +289,20 @@ function saveReservation(data) {
 
     const breed = typeof data.razaMascota === 'string' ? data.razaMascota.trim() : '';
     if (breed && breed.length <= 80 && !/^[=+@-]|[\r\n]/.test(breed)) {
-      const breedColumn = reservationBreedColumn(sheet, row.length);
+      const breedColumn = reservationExtraColumn_(sheet, 20, 'Raza');
       while (row.length < breedColumn) row.push('');
       row[breedColumn - 1] = breed;
+    }
+    if (data.canalReserva === 'Web' || data.canalReserva === 'WhatsApp') {
+      try {
+        const channelColumn = reservationExtraColumn_(sheet, 20, 'Canal de reserva');
+        const originColumn = reservationExtraColumn_(sheet, 20, 'Origen de llegada');
+        while (row.length < Math.max(channelColumn, originColumn)) row.push('');
+        row[channelColumn - 1] = data.canalReserva;
+        row[originColumn - 1] = reservationOrigin_(data.origenLlegada);
+      } catch (error) {
+        Logger.log('No se pudo registrar el origen de la reserva: ' + error.toString());
+      }
     }
     sheet.appendRow(row);
     const ultimaFila = sheet.getLastRow();
@@ -1566,6 +1585,8 @@ function trRescheduleReservationFromWhatsapp_(conversationId, phone, data, confi
 }
 
 function trSaveReservationFromWhatsapp_(conversationId, phone, data) {
+  data.canalReserva = 'WhatsApp';
+  data.origenLlegada = 'Sin identificar';
   data.email = data.email || "";
   data.telefono = trNormalizePhone_(phone);
   data.notasMascota = data.notasMascota || "";
