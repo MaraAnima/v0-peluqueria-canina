@@ -74,8 +74,11 @@ test('frequently asked questions have a linked, crawlable page', () => {
   assert.ok(faq.includes(`<link rel="canonical" href="${origin}/preguntas-frecuentes.html">`));
   assert.ok(faq.includes('href="/#precios"'));
   assert.ok(faq.includes('class="back-button-integrated faq-back" href="/"'));
-  assert.equal((section[0].match(/<details>/g) || []).length, 7);
-  for (const text of ['¿Cómo reservo un turno', '¿Qué pasa si mi mascota tiene nudos?',
+  assert.equal((section[0].match(/<details>/g) || []).length, 9);
+  for (const text of ['¿Dónde queda la peluquería canina TR Corte?',
+    'Av. Pérez Butler esquina Eduardo Fabini', '¿Qué horarios tienen los turnos de peluquería?',
+    'href="/#ubicacion"', 'El turno de las 12:30 entre semana es solo para perros chicos o medianos.',
+    '¿Cómo reservo un turno', '¿Qué pasa si mi mascota tiene nudos?',
     '¿Cómo puedo cancelar o reagendar mi cita?', 'una mascota por turno']) {
     assert.ok(section[0].includes(text));
   }
