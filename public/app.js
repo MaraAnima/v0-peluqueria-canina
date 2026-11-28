@@ -22,41 +22,47 @@ const SERVICE_TYPES = [
   { id: 'bano-deslanado', name: 'Baño y Deslanado', description: 'Baño completo + deslanado (2 h extra)' }
 ];
 
+const SIZE_LABELS = {
+  RP: 'Raza Pequeña',
+  RM: 'Raza Mediana',
+  RG: 'Raza Grande'
+};
+
 // Tamaños con precios base
 // Nota: los precios de "Baño y Deslanado" ya incluyen el costo del deslanado (+$1200 sobre el baño).
 const SIZES = [
   // Pelo corto - Baño
-  { id: 'bano-rp', size: 'RP', description: 'Hasta 10 kg', duration: '1 h', price: 720, categoryId: 'pelo-corto', serviceTypeId: 'bano' },
-  { id: 'bano-rm', size: 'RM', description: '10 kg a 20 kg', duration: '1 h', price: 910, categoryId: 'pelo-corto', serviceTypeId: 'bano' },
-  { id: 'bano-rg', size: 'RG', description: '20 kg o más', duration: '1 h 15 min', price: 1280, categoryId: 'pelo-corto', serviceTypeId: 'bano' },
+  { id: 'bano-rp', size: 'RP', duration: '1 h', price: 720, categoryId: 'pelo-corto', serviceTypeId: 'bano' },
+  { id: 'bano-rm', size: 'RM', duration: '1 h', price: 910, categoryId: 'pelo-corto', serviceTypeId: 'bano' },
+  { id: 'bano-rg', size: 'RG', duration: '1 h 15 min', price: 1280, categoryId: 'pelo-corto', serviceTypeId: 'bano' },
   // Pelo corto - Baño y corte
-  { id: 'bano-corte-rp', size: 'RP', description: 'Hasta 10 kg', duration: '1 h 30 min', price: 875, categoryId: 'pelo-corto', serviceTypeId: 'bano-corte' },
-  { id: 'bano-corte-rm', size: 'RM', description: '10 kg a 20 kg', duration: '1 h 30 min', price: 1050, categoryId: 'pelo-corto', serviceTypeId: 'bano-corte' },
-  { id: 'bano-corte-rg', size: 'RG', description: '20 kg o más', duration: '2 h', price: 1515, categoryId: 'pelo-corto', serviceTypeId: 'bano-corte' },
+  { id: 'bano-corte-rp', size: 'RP', duration: '1 h 30 min', price: 875, categoryId: 'pelo-corto', serviceTypeId: 'bano-corte' },
+  { id: 'bano-corte-rm', size: 'RM', duration: '1 h 30 min', price: 1050, categoryId: 'pelo-corto', serviceTypeId: 'bano-corte' },
+  { id: 'bano-corte-rg', size: 'RG', duration: '2 h', price: 1515, categoryId: 'pelo-corto', serviceTypeId: 'bano-corte' },
   // Pelo corto - Baño y esquila
-  { id: 'bano-esquila-rp', size: 'RP', description: 'Hasta 10 kg', duration: '1 h 30 min', price: 770, categoryId: 'pelo-corto', serviceTypeId: 'bano-esquila' },
-  { id: 'bano-esquila-rm', size: 'RM', description: '10 kg a 20 kg', duration: '1 h 30 min', price: 925, categoryId: 'pelo-corto', serviceTypeId: 'bano-esquila' },
-  { id: 'bano-esquila-rg', size: 'RG', description: '20 kg o más', duration: '2 h', price: 1335, categoryId: 'pelo-corto', serviceTypeId: 'bano-esquila' },
+  { id: 'bano-esquila-rp', size: 'RP', duration: '1 h 30 min', price: 770, categoryId: 'pelo-corto', serviceTypeId: 'bano-esquila' },
+  { id: 'bano-esquila-rm', size: 'RM', duration: '1 h 30 min', price: 925, categoryId: 'pelo-corto', serviceTypeId: 'bano-esquila' },
+  { id: 'bano-esquila-rg', size: 'RG', duration: '2 h', price: 1335, categoryId: 'pelo-corto', serviceTypeId: 'bano-esquila' },
   // Pelo corto - Baño y Deslanado (precio = baño + $1200). corteRazaPrice lleva al precio "baño y corte + deslanado".
-  { id: 'bano-deslanado-rp', size: 'RP', description: 'Hasta 10 kg', duration: '1 h', price: 1920, corteRazaPrice: 155, categoryId: 'pelo-corto', serviceTypeId: 'bano-deslanado' },
-  { id: 'bano-deslanado-rm', size: 'RM', description: '10 kg a 20 kg', duration: '1 h', price: 2110, corteRazaPrice: 140, categoryId: 'pelo-corto', serviceTypeId: 'bano-deslanado' },
-  { id: 'bano-deslanado-rg', size: 'RG', description: '20 kg o más', duration: '1 h 15 min', price: 2480, corteRazaPrice: 235, categoryId: 'pelo-corto', serviceTypeId: 'bano-deslanado' },
+  { id: 'bano-deslanado-rp', size: 'RP', duration: '1 h', price: 1920, corteRazaPrice: 155, categoryId: 'pelo-corto', serviceTypeId: 'bano-deslanado' },
+  { id: 'bano-deslanado-rm', size: 'RM', duration: '1 h', price: 2110, corteRazaPrice: 140, categoryId: 'pelo-corto', serviceTypeId: 'bano-deslanado' },
+  { id: 'bano-deslanado-rg', size: 'RG', duration: '1 h 15 min', price: 2480, corteRazaPrice: 235, categoryId: 'pelo-corto', serviceTypeId: 'bano-deslanado' },
   // Pelo largo - Baño
-  { id: 'bano-rp-largo', size: 'RP', description: 'Hasta 10 kg', duration: '1 h', price: 795, categoryId: 'pelo-largo', serviceTypeId: 'bano' },
-  { id: 'bano-rm-largo', size: 'RM', description: '10 kg a 20 kg', duration: '1 h', price: 960, categoryId: 'pelo-largo', serviceTypeId: 'bano' },
-  { id: 'bano-rg-largo', size: 'RG', description: '20 kg o más', duration: '1 h 15 min', price: 1320, categoryId: 'pelo-largo', serviceTypeId: 'bano' },
+  { id: 'bano-rp-largo', size: 'RP', duration: '1 h', price: 795, categoryId: 'pelo-largo', serviceTypeId: 'bano' },
+  { id: 'bano-rm-largo', size: 'RM', duration: '1 h', price: 960, categoryId: 'pelo-largo', serviceTypeId: 'bano' },
+  { id: 'bano-rg-largo', size: 'RG', duration: '1 h 15 min', price: 1320, categoryId: 'pelo-largo', serviceTypeId: 'bano' },
   // Pelo largo - Baño y corte
-  { id: 'bano-corte-rp-largo', size: 'RP', description: 'Hasta 10 kg', duration: '1 h 30 min', price: 975, categoryId: 'pelo-largo', serviceTypeId: 'bano-corte' },
-  { id: 'bano-corte-rm-largo', size: 'RM', description: '10 kg a 20 kg', duration: '1 h 30 min', price: 1210, categoryId: 'pelo-largo', serviceTypeId: 'bano-corte' },
-  { id: 'bano-corte-rg-largo', size: 'RG', description: '20 kg o más', duration: '2 h', price: 1665, categoryId: 'pelo-largo', serviceTypeId: 'bano-corte' },
+  { id: 'bano-corte-rp-largo', size: 'RP', duration: '1 h 30 min', price: 975, categoryId: 'pelo-largo', serviceTypeId: 'bano-corte' },
+  { id: 'bano-corte-rm-largo', size: 'RM', duration: '1 h 30 min', price: 1210, categoryId: 'pelo-largo', serviceTypeId: 'bano-corte' },
+  { id: 'bano-corte-rg-largo', size: 'RG', duration: '2 h', price: 1665, categoryId: 'pelo-largo', serviceTypeId: 'bano-corte' },
   // Pelo largo - Baño y esquila
-  { id: 'bano-esquila-rp-largo', size: 'RP', description: 'Hasta 10 kg', duration: '1 h 30 min', price: 860, categoryId: 'pelo-largo', serviceTypeId: 'bano-esquila' },
-  { id: 'bano-esquila-rm-largo', size: 'RM', description: '10 kg a 20 kg', duration: '1 h 30 min', price: 1065, categoryId: 'pelo-largo', serviceTypeId: 'bano-esquila' },
-  { id: 'bano-esquila-rg-largo', size: 'RG', description: '20 kg o más', duration: '2 h', price: 1465, categoryId: 'pelo-largo', serviceTypeId: 'bano-esquila' },
+  { id: 'bano-esquila-rp-largo', size: 'RP', duration: '1 h 30 min', price: 860, categoryId: 'pelo-largo', serviceTypeId: 'bano-esquila' },
+  { id: 'bano-esquila-rm-largo', size: 'RM', duration: '1 h 30 min', price: 1065, categoryId: 'pelo-largo', serviceTypeId: 'bano-esquila' },
+  { id: 'bano-esquila-rg-largo', size: 'RG', duration: '2 h', price: 1465, categoryId: 'pelo-largo', serviceTypeId: 'bano-esquila' },
   // Pelo largo - Baño y Deslanado (precio = baño + $1200)
-  { id: 'bano-deslanado-rp-largo', size: 'RP', description: 'Hasta 10 kg', duration: '1 h', price: 1995, corteRazaPrice: 180, categoryId: 'pelo-largo', serviceTypeId: 'bano-deslanado' },
-  { id: 'bano-deslanado-rm-largo', size: 'RM', description: '10 kg a 20 kg', duration: '1 h', price: 2160, corteRazaPrice: 250, categoryId: 'pelo-largo', serviceTypeId: 'bano-deslanado' },
-  { id: 'bano-deslanado-rg-largo', size: 'RG', description: '20 kg o más', duration: '1 h 15 min', price: 2520, corteRazaPrice: 345, categoryId: 'pelo-largo', serviceTypeId: 'bano-deslanado' }
+  { id: 'bano-deslanado-rp-largo', size: 'RP', duration: '1 h', price: 1995, corteRazaPrice: 180, categoryId: 'pelo-largo', serviceTypeId: 'bano-deslanado' },
+  { id: 'bano-deslanado-rm-largo', size: 'RM', duration: '1 h', price: 2160, corteRazaPrice: 250, categoryId: 'pelo-largo', serviceTypeId: 'bano-deslanado' },
+  { id: 'bano-deslanado-rg-largo', size: 'RG', duration: '1 h 15 min', price: 2520, corteRazaPrice: 345, categoryId: 'pelo-largo', serviceTypeId: 'bano-deslanado' }
 ];
 
 // Deslanado: ahora es un tipo de servicio ("Baño y Deslanado").
@@ -625,7 +631,6 @@ function renderSizeStep(container) {
 
   container.innerHTML = `
     <h2 class="step-title">Tamaño de tu mascota</h2>
-    <p class="step-subtitle">Selecciona según el peso</p>
     
     <div class="service-list">
       ${sizes.map(size => `
@@ -634,8 +639,7 @@ function renderSizeStep(container) {
             <span style="font-size: 1.5rem; font-weight: bold; color: var(--primary-blue);">${size.size}</span>
           </div>
           <div class="service-info">
-            <h3>${size.size === 'RP' ? 'Raza Pequeña' : size.size === 'RM' ? 'Raza Mediana' : 'Raza Grande'}</h3>
-            <p>${size.description}</p>
+            <h3>${SIZE_LABELS[size.size]}</h3>
             <div class="service-meta">
               <span>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1113,7 +1117,7 @@ function renderSummaryStep(container) {
       </div>
       <div class="summary-row">
         <span class="summary-label">Tamaño</span>
-        <span class="summary-value">${bookingData.size?.size} (${bookingData.size?.description})</span>
+        <span class="summary-value">${SIZE_LABELS[bookingData.size?.size] ?? ''}</span>
       </div>
       <div class="summary-row">
         <span class="summary-label">Extras</span>
