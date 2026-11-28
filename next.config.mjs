@@ -25,8 +25,8 @@ const nextConfig = {
     return {
       beforeFiles: [
         { source: '/', destination: '/index.html' },
-        { source: '/admin/', destination: 'https://tu-racion-equipo-admin.vercel.app/admin/' },
-        { source: '/admin/:path*', destination: 'https://tu-racion-equipo-admin.vercel.app/admin/:path*' },
+        { source: '/admin/', destination: 'https://tu-racion-equipo-admin.pages.dev/admin/' },
+        { source: '/admin/:path*', destination: 'https://tu-racion-equipo-admin.pages.dev/admin/:path*' },
       ],
     }
   },
